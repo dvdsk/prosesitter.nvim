@@ -22,29 +22,31 @@ function open_split()
 	return buf
 end
 
-local function update_view(buf, suggestions)
-
+local function write_table(list, cols)
 	list = {}
 	local keys = "1234567890abcdefghijklmnopqrstuvwxyz"
-	for i=0,math.floor(#suggestions/3)-1 do
+	for i=0,math.floor(#suggestions/cols)-1 do
 		list[i+1] = ""
-		for j=3*i,3*i+2 do
+		for j=cols*i,cols*i+2 do
 			local key = keys:sub(j+1,j+1)
 			list[i+1] = list[i+1]..'\t\t'..key..': '..suggestions[j+1]
 		end
 	end
 
 	-- print remainder
-	local i = math.floor(#suggestions/3)
+	local i = math.floor(#suggestions/cols)
 	list[i+1] = ""
-	for j=3*i,#suggestions-1 do
+	for j=cols*i,#suggestions-1 do
 		local key = keys:sub(j+1,j+1)
 		list[i+1] = list[i+1]..'\t\t'..key..': '..suggestions[j+1]
 	end
+end
 
-	print(vim.inspect(list))
+local function update_view(buf, suggestions)
+	table = write_table(suggestions)
+
 	api.nvim_buf_set_option(buf, 'modifiable', true)
-	api.nvim_buf_set_lines(buf, 0, -1, false, list)
+	api.nvim_buf_set_lines(buf, 0, -1, false, table)
 	api.nvim_buf_set_option(buf, 'modifiable', false)
 end
 
