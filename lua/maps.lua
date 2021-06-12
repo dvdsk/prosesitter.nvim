@@ -1,7 +1,7 @@
 local cmd = vim.cmd;
 local map = vim.api.nvim_set_keymap
 local unmap = vim.api.nvim_del_keymap
-require('functions') -- set up user functions
+require('functions/spell_correct') -- set up user functions
 
 vim.g.mapleader = ' '
 
@@ -23,7 +23,7 @@ map('n', ';', ':', options)
 map('n', ':', ';', options)
 
 -- correct last word and jump back
-vim.api.nvim_set_keymap('n', ',', '<Cmd>lua _G.SpellCheck:go()<CR>', options)
+vim.api.nvim_set_keymap('n', ',', '<Cmd>lua _G.SpellCheck:correct()<CR>', options)
 -- vim.api.nvim_set_keymap('n', ',', '<Cmd>lua _G.SpellCheck:save_pos()<CR>', options)
 
 -- yank till end of line
