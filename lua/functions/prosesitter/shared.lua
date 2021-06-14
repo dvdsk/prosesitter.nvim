@@ -5,14 +5,6 @@ M.cfg = {
 }
 M.ns = nil
 
--- local result = vim.fn.system(
--- 	"vale"
--- 		.. " --config .vale.ini" -- TODO remove config path in favor of lua check for system config
--- 		.. " --output=JSON"
--- 		.. " --ignore-syntax"
--- 		.. " --ext='.md'",
--- 	text
--- )
 
 -- iterator that returns a span and highlight group
 function M.hl_iter(results, pieces)
@@ -39,13 +31,14 @@ end
 
 local Proses = {}
 function Proses:new()
-	self.prose = ""
+	self.text = ""
 	self.piece = {}
+	return self
 end
 
-function Proses:add(prose, start_col, lnum)
-	self.prose = self.prose..prose
-	self.piece[lnum] = {len= #prose, start_col= start_col}
+function Proses:add(text, start_col, lnum)
+	self.text = self.text..text
+	self.piece[lnum] = {len= #text, start_col= start_col}
 end
 
 function M:setup()

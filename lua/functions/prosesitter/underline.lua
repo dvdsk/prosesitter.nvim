@@ -34,19 +34,15 @@ local function preprocess(line, node, lnum)
 	end
 	local prose = line:sub(start_col + 1, end_col)
 	return prose, start_col
-	-- for p_start, p_end, hl_group in shared.hl_iter(prose) do
-	-- 	local hl_start = start_col + p_start
-	-- 	local hl_end = start_col + p_end
-	-- 	add_extmark(bufnr, lnum, hl_start, hl_end, hl_group)
-	-- end
 end
 
-local function postprocess(problems, bufnr, pieces)
-	for lnum, hl_start, hl_end, hl_group in shared.hl_iter(problems, pieces) do
+local function postprocess(results, bufnr, pieces)
+	for lnum, hl_start, hl_end, hl_group in shared.hl_iter(results, pieces) do
 		add_extmark(bufnr, lnum, hl_start, hl_end, hl_group)
 	end
 end
 
+local last_call = {} --TODO FIXME delay call until 
 local hl_queries = {}
 function M.on_line(_, _, bufnr, lnum)
 	local parser = get_parser(bufnr)
@@ -71,9 +67,28 @@ function M.on_line(_, _, bufnr, lnum)
 		end
 	end)
 
-
-	-- Cancel any existing vale job
-	-- Set and start new vale job
+	local Job = require("plenary.job")
+	Job:new({
+		command = "sleep",
+		args = { "0.05" },
+		on_exit = function(j, return_val)
+			print(return_val)
+			print(j:result())
+		end,
+	}):start()
+	-- Job:new({
+	-- 	command = "vale",
+	-- 	args = {
+	-- 		" --config .vale.ini", -- TODO remove config path in favor of lua check for system config
+	-- 		" --output=JSON",
+	-- 		" --ignore-syntax",
+	-- 		" --ext='.md'",
+	-- 		proses.text,
+	-- 	},
+	-- 	-- on_exit = vim.schedule_wrap(function(j, return_val)
+	-- 	-- 	postprocess(j:result(), bufnr, proses.pieces)
+	-- 	-- end),
+	-- }):spawn { raw_read = true }
 end
 
 function M.on_win(_, _, bufnr)
