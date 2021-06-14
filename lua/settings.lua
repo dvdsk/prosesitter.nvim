@@ -5,6 +5,7 @@ local g = vim.g
 local cmd = vim.cmd
 
 -- global options
+o.shortmess = "" -- usefull for debug handlers/autocommands
 o.ignorecase = true --ignore case in search
 o.smartcase = true --except when I put a capital in the query
 o.incsearch = true --highlight all matches:

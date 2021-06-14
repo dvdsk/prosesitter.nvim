@@ -1,4 +1,10 @@
--- local on_line = require("prosesitter/underline").on_line
+
+-- notes
+--
+-- schedule_wrap
+-- 
+--
+--
 
 local shared = require("functions/prosesitter/shared")
 local underline = require("functions/prosesitter/underline")
@@ -8,11 +14,11 @@ local api = vim.api
 local M = {}
 
 function M.test()
-	local prose = "When using the `write-good` style, this sentence will generate a warning by default "
+	local prose = "When usng the `write-good` style, this sentence will generate a warning by default "
 		.. "(extremely is a weasel word!). However, if we format `extremely` as inline code, "
 		.. "we will no longer receive a warning:"
-	for p_start, p_end in shared.prose_check_iter(prose) do
-		print("start col: " .. p_start .. ", end col: " .. p_end)
+	for p_start, p_end, hl in shared.hl_iter(prose) do
+		print("start col: " .. p_start .. ", end col: " .. p_end .. ", highlight: " .. hl)
 	end
 end
 
@@ -20,8 +26,8 @@ function M.setup()
 	shared:setup()
 
 	api.nvim_set_decoration_provider(shared.ns, {
-		on_win = M.on_win,
-		-- on_line = M.on_line,
+		on_win = underline.on_win,
+		on_line = underline.on_line,
 	})
 	local opt = { noremap = true, silent = true, nowait = true }
 	local cmd = "<Cmd>lua _G.ProseCheck:test()<CR>"
