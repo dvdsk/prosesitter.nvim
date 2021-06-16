@@ -1,4 +1,5 @@
 local shared = require("functions/prosesitter/shared")
+local log = require("functions/prosesitter/log")
 local query = require("vim.treesitter.query")
 local get_parser = vim.treesitter.get_parser
 local api = vim.api
@@ -36,19 +37,49 @@ local function preprocess(line, node, lnum)
 	return prose, start_col
 end
 
-local function postprocess(results, bufnr, pieces)
+local function postprocess(bufnr, results, pieces)
 	for lnum, hl_start, hl_end, hl_group in shared.hl_iter(results, pieces) do
 		add_extmark(bufnr, lnum, hl_start, hl_end, hl_group)
 	end
 end
 
-local last_call = {} --TODO FIXME delay call until 
+local checking_prose = false
+local function start_check(bufnr, text, pieces)
+	local results = nil
+	local function on_stdout(_, data, _)
+		-- print(vim.inspect(data))
+		results=data
+	end
+	-- local function on_stderr(_, data, _) print("ERROR: "..vim.inspect(data)) end
+	local function on_exit(_,_)
+		postprocess(bufnr, results, pieces)
+		checking_prose = false
+	end
+
+	log.info(vim.inspect(text))
+	local cmd = {
+		"vale",
+		"--config", ".vale.ini", -- TODO remove config path in favor of lua check for system config
+		"--output=JSON",
+		"--ignore-syntax",
+		"--ext='.md'",
+		text,
+	}
+	vim.fn.jobstart(cmd, {
+		on_stdout = on_stdout,
+		-- on_stderr = on_stderr,
+		-- on_exit= on_exit,
+		stdout_buffered = true,
+		-- stderr_buffered = true,
+	})
+end
+
 local hl_queries = {}
+local proses = shared.Proses:new()
 function M.on_line(_, _, bufnr, lnum)
 	local parser = get_parser(bufnr)
 	local hl_query = hl_queries[parser:lang()]
 	local line = api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
-	local proses = shared.Proses:new()
 
 	parser:for_each_tree(function(tstree, _)
 		local root_node = tstree:root()
@@ -67,28 +98,10 @@ function M.on_line(_, _, bufnr, lnum)
 		end
 	end)
 
-	local Job = require("plenary.job")
-	Job:new({
-		command = "sleep",
-		args = { "0.05" },
-		on_exit = function(j, return_val)
-			print(return_val)
-			print(j:result())
-		end,
-	}):start()
-	-- Job:new({
-	-- 	command = "vale",
-	-- 	args = {
-	-- 		" --config .vale.ini", -- TODO remove config path in favor of lua check for system config
-	-- 		" --output=JSON",
-	-- 		" --ignore-syntax",
-	-- 		" --ext='.md'",
-	-- 		proses.text,
-	-- 	},
-	-- 	-- on_exit = vim.schedule_wrap(function(j, return_val)
-	-- 	-- 	postprocess(j:result(), bufnr, proses.pieces)
-	-- 	-- end),
-	-- }):spawn { raw_read = true }
+	if not checking_prose then
+		checking_prose = true
+		start_check(bufnr, proses:reset())
+	end
 end
 
 function M.on_win(_, _, bufnr)

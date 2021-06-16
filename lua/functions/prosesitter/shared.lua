@@ -1,3 +1,4 @@
+local log = require("functions/prosesitter/log")
 local M = {}
 M.cfg = {
 	captures = { "comment" },
@@ -30,15 +31,29 @@ function M.hl_iter(results, pieces)
 end
 
 local Proses = {}
-function Proses:new()
+Proses.__index = Proses -- failed table lookups on the instances should fallback to the class table, to get methods
+function Proses.new()
+	local self = setmetatable({}, Proses)
+	-- local time_str = vim.fn.reltime()
+	-- self.last_update = vim.fn.reltimefloat(time_str)
 	self.text = ""
 	self.piece = {}
 	return self
 end
 
 function Proses:add(text, start_col, lnum)
-	self.text = self.text..text
-	self.piece[lnum] = {len= #text, start_col= start_col}
+	if self.piece[lnum] == nil then
+		self.text = self.text..text
+		self.piece[lnum] = {len= #text, start_col= start_col}
+	end
+end
+
+function Proses:reset()
+	log.info(vim.inspect(self))
+	local text = self.text
+	local pieces = self.pieces
+	self = {}
+	return text, pieces
 end
 
 function M:setup()
