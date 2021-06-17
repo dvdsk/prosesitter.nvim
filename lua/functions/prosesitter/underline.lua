@@ -44,38 +44,42 @@ local function postprocess(bufnr, results, pieces)
 end
 
 local checking_prose = false
+local proses = shared.Proses:new()
 local function start_check(bufnr, text, pieces)
 	local results = nil
-	local function on_stdout(_, data, _)
-		-- print(vim.inspect(data))
+	local function on_stdout(a1, data, a3)
+		log.info("data: "..vim.inspect(results))
 		results=data
 	end
-	-- local function on_stderr(_, data, _) print("ERROR: "..vim.inspect(data)) end
+	local function on_stderr(_, data, _) log.error(vim.inspect(data)) end
 	local function on_exit(_,_)
 		postprocess(bufnr, results, pieces)
 		checking_prose = false
+		if proses:is_empty() then -- safe since single threaded
+			checking_prose = true
+			start_check(bufnr, unpack(proses.reset()))
+		end
 	end
 
-	log.info(vim.inspect(text))
 	local cmd = {
 		"vale",
 		"--config", ".vale.ini", -- TODO remove config path in favor of lua check for system config
 		"--output=JSON",
 		"--ignore-syntax",
 		"--ext='.md'",
-		text,
+		"big test scentence"
+		-- '"'..text..'"'
 	}
 	vim.fn.jobstart(cmd, {
 		on_stdout = on_stdout,
-		-- on_stderr = on_stderr,
+		on_stderr = on_stderr,
 		-- on_exit= on_exit,
-		stdout_buffered = true,
-		-- stderr_buffered = true,
+		stdout_buffered = false,
+		stderr_buffered = false,
 	})
 end
 
 local hl_queries = {}
-local proses = shared.Proses:new()
 function M.on_line(_, _, bufnr, lnum)
 	local parser = get_parser(bufnr)
 	local hl_query = hl_queries[parser:lang()]
@@ -98,9 +102,10 @@ function M.on_line(_, _, bufnr, lnum)
 		end
 	end)
 
-	if not checking_prose then
+	if not checking_prose and not proses:is_empty() then
 		checking_prose = true
-		start_check(bufnr, proses:reset())
+		local text, pieces = proses:reset()
+		start_check(bufnr, text, pieces)
 	end
 end
 

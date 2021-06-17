@@ -6,7 +6,6 @@ M.cfg = {
 }
 M.ns = nil
 
-
 -- iterator that returns a span and highlight group
 function M.hl_iter(results, pieces)
 	local problems = vim.fn.json_decode(results)["stdin.md"]
@@ -22,10 +21,10 @@ function M.hl_iter(results, pieces)
 			local hl = M.cfg.vale_to_hl[severity]
 			local line = problems[i].Line -- relative line numb in chunk send to vale
 
-			local offset = pieces[line].start_col
+			local offset = pieces[line]
 			local startc, endc = unpack(problems[i]["Span"])
-			local lnum = pieces[line].lnum -- get original line numb back
-			return lnum, startc+offset, endc+offset, hl
+			local lnum = pieces[line].org_lnum -- get original line numb back
+			return lnum, startc + offset, endc + offset, hl
 		end
 	end
 end
@@ -36,23 +35,29 @@ function Proses.new()
 	local self = setmetatable({}, Proses)
 	-- local time_str = vim.fn.reltime()
 	-- self.last_update = vim.fn.reltimefloat(time_str)
-	self.text = ""
-	self.piece = {}
+	self.start_col = {}
+	self.text = {}
 	return self
 end
 
 function Proses:add(text, start_col, lnum)
-	if self.piece[lnum] == nil then
-		self.text = self.text..text
-		self.piece[lnum] = {len= #text, start_col= start_col}
-	end
+	self.text[lnum] = text
+	self.start_col[lnum] = start_col
+end
+
+function Proses:is_empty()
+	local empty = next(self.text) == nil
+	return empty
 end
 
 function Proses:reset()
-	log.info(vim.inspect(self))
-	local text = self.text
-	local pieces = self.pieces
-	self = {}
+	local text = table.concat(self.text, "\n")
+	local pieces = {}
+	for lnum, start_col in pairs(self.start_col) do -- works if text and start_col order matches
+		pieces[#pieces+1] = { org_lnum = lnum, start_col = start_col }
+	end
+	self.text = {}
+	self.start_col = {}
 	return text, pieces
 end
 
