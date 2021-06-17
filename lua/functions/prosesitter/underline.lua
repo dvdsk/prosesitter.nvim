@@ -9,6 +9,8 @@ local ns = shared.ns
 
 local M = {}
 
+
+
 local function add_extmark(bufnr, lnum, start_col, end_col, hl)
 	-- TODO: This errors because of an out of bounds column when inserting
 	-- newlines. Wrapping in pcall hides the issue.
@@ -47,42 +49,55 @@ local checking_prose = false
 local proses = shared.Proses:new()
 local function start_check(bufnr, text, pieces)
 	local results = nil
-	local function on_stdout(a1, data, a3)
-		log.info("data: "..vim.inspect(results))
-		results=data
+	local function on_stdout(job_id, data, event)
+		log.info("job_id: "..job_id.." event: "..event)
+		log.info("before")
+		log.info("data: " .. vim.inspect(data))
+		log.info("after")
+		results = data
 	end
-	local function on_stderr(_, data, _) log.error(vim.inspect(data)) end
-	local function on_exit(_,_)
-		postprocess(bufnr, results, pieces)
-		checking_prose = false
-		if proses:is_empty() then -- safe since single threaded
-			checking_prose = true
-			start_check(bufnr, unpack(proses.reset()))
-		end
+	local function on_stderr(job_id, data, event)
+		log.info("job_id: "..job_id.." event: "..event)
+		log.error(vim.inspect(data))
+	end
+	local function on_exit(_, _)
+		log.info("job is done")
+		-- postprocess(bufnr, results, pieces)
+		-- checking_prose = false
+		-- if proses:is_empty() then -- safe since single threaded
+		-- 	checking_prose = true
+		-- 	start_check(bufnr, unpack(proses.reset()))
+		-- end
 	end
 
+	-- TODO FIXME PIPE text into vale
+	log.warn(vim.fn.shellescape(text))
 	local cmd = {
 		"vale",
-		"--config", ".vale.ini", -- TODO remove config path in favor of lua check for system config
-		"--output=JSON",
+		"--config",
+		".vale.ini",
+		-- "--output=JSON", --does not like this
 		"--ignore-syntax",
 		"--ext='.md'",
-		"big test scentence"
-		-- '"'..text..'"'
+		vim.fn.shellescape(text)
 	}
-	vim.fn.jobstart(cmd, {
+	local options = {
 		on_stdout = on_stdout,
 		on_stderr = on_stderr,
-		-- on_exit= on_exit,
-		stdout_buffered = false,
-		stderr_buffered = false,
-	})
+		on_exit= on_exit,
+		stdout_buffered = true,
+		-- stderr_buffered = true,
+		-- TODO add keys for use by callbacks
+	}
+	local _ = vim.fn.jobstart(cmd, options)
+	-- vim.fn.chansend(text)
 end
 
 local hl_queries = {}
 function M.on_line(_, _, bufnr, lnum)
 	local parser = get_parser(bufnr)
-	local hl_query = hl_queries[parser:lang()]
+	local lang = parser:lang()
+	local hl_query = hl_queries[lang]
 	local line = api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
 
 	parser:for_each_tree(function(tstree, _)
@@ -97,7 +112,7 @@ function M.on_line(_, _, bufnr, lnum)
 		for id, node in hl_query:iter_captures(root_node, bufnr, lnum, lnum + 1) do
 			if vim.tbl_contains(cfg.captures, hl_query.captures[id]) then
 				local prose, start_col = preprocess(line, node, lnum)
-				proses:add(prose, start_col, lnum)
+				proses:add(prose, lang, start_col, lnum)
 			end
 		end
 	end)
@@ -127,6 +142,13 @@ function M.on_win(_, _, bufnr)
 	-- FIXME: shouldn't be required. Possibly related to:
 	-- https://github.com/nvim-treesitter/nvim-treesitter/issues/1124
 	parser:parse()
+end
+
+function M.test()
+	local prose = "When usng the `write-good` style, this sentence will generate a warning by default "
+		.. "(extremely is a weasel word!). However, if we format `extremely` as inline code, "
+		.. "we will no longer receive a warning:"
+	start_check(nil, prose, nil)
 end
 
 return M

@@ -40,7 +40,8 @@ function Proses.new()
 	return self
 end
 
-function Proses:add(text, start_col, lnum)
+function Proses:add(text, lang, start_col, lnum)
+	-- self.text[lnum] = strip_comment(text, lang)
 	self.text[lnum] = text
 	self.start_col[lnum] = start_col
 end
