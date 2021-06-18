@@ -28,7 +28,7 @@ function M.setup()
 
 	api.nvim_set_decoration_provider(shared.ns, {
 		on_win = underline.on_win,
-		on_line = underline.on_line,
+		-- on_line = underline.on_line,
 	})
 	local opt = { noremap = true, silent = true, nowait = true }
 	local cmd = "<Cmd>lua _G.ProseCheck:test()<CR>"

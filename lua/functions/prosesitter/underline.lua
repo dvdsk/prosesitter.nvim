@@ -1,6 +1,7 @@
 local shared = require("functions/prosesitter/shared")
 local log = require("functions/prosesitter/log")
 local query = require("vim.treesitter.query")
+local async = require("functions/prosesitter/async_cmd")
 local get_parser = vim.treesitter.get_parser
 local api = vim.api
 
@@ -8,8 +9,6 @@ local cfg = shared.cfg
 local ns = shared.ns
 
 local M = {}
-
-
 
 local function add_extmark(bufnr, lnum, start_col, end_col, hl)
 	-- TODO: This errors because of an out of bounds column when inserting
@@ -46,54 +45,18 @@ local function postprocess(bufnr, results, pieces)
 end
 
 local checking_prose = false
-local proses = shared.Proses:new()
 local function start_check(bufnr, text, pieces)
-	local results = nil
-	local function on_stdout(job_id, data, event)
-		log.info("job_id: "..job_id.." event: "..event)
-		log.info("before")
-		log.info("data: " .. vim.inspect(data))
-		log.info("after")
-		results = data
-	end
-	local function on_stderr(job_id, data, event)
-		log.info("job_id: "..job_id.." event: "..event)
-		log.error(vim.inspect(data))
-	end
-	local function on_exit(_, _)
-		log.info("job is done")
-		-- postprocess(bufnr, results, pieces)
-		-- checking_prose = false
-		-- if proses:is_empty() then -- safe since single threaded
-		-- 	checking_prose = true
-		-- 	start_check(bufnr, unpack(proses.reset()))
-		-- end
+	local function on_exit(results)
+		checking_prose = false
+		postprocess(bufnr, results, pieces)
 	end
 
-	-- TODO FIXME PIPE text into vale
-	log.warn(vim.fn.shellescape(text))
-	local cmd = {
-		"vale",
-		"--config",
-		".vale.ini",
-		-- "--output=JSON", --does not like this
-		"--ignore-syntax",
-		"--ext='.md'",
-		vim.fn.shellescape(text)
-	}
-	local options = {
-		on_stdout = on_stdout,
-		on_stderr = on_stderr,
-		on_exit= on_exit,
-		stdout_buffered = true,
-		-- stderr_buffered = true,
-		-- TODO add keys for use by callbacks
-	}
-	local _ = vim.fn.jobstart(cmd, options)
-	-- vim.fn.chansend(text)
+	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+	async.dispatch_with_stdin(text, "vale", args, on_exit)
 end
 
 local hl_queries = {}
+local proses = shared.Proses:new()
 function M.on_line(_, _, bufnr, lnum)
 	local parser = get_parser(bufnr)
 	local lang = parser:lang()

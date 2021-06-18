@@ -14,6 +14,7 @@ function M.hl_iter(results, pieces)
 	end
 
 	local i = 0
+	log.info("pieces: "..vim.inspect(pieces))
 	return function() -- lua iterator
 		while i < #problems do
 			i = i + 1
