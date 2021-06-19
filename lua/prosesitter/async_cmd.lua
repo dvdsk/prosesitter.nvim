@@ -1,5 +1,5 @@
 local M = {}
-local log = require("functions/prosesitter/log")
+local log = require("prosesitter/log")
 local loop = vim.loop
 
 local uv = loop

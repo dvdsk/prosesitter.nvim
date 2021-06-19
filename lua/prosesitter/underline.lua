@@ -1,7 +1,7 @@
-local shared = require("functions/prosesitter/shared")
-local log = require("functions/prosesitter/log")
+local shared = require("prosesitter/shared")
+local log = require("prosesitter/log")
 local query = require("vim.treesitter.query")
-local async = require("functions/prosesitter/async_cmd")
+local async = require("prosesitter/async_cmd")
 local get_parser = vim.treesitter.get_parser
 local api = vim.api
 

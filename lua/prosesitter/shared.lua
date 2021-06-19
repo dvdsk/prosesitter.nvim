@@ -1,4 +1,4 @@
-local log = require("functions/prosesitter/log")
+local log = require("prosesitter/log")
 local M = {}
 M.cfg = {
 	captures = { "comment" },

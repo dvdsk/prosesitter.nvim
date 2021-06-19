@@ -6,10 +6,10 @@
 --
 --
 
-local log = require("functions/prosesitter/log")
-local shared = require("functions/prosesitter/shared")
-local underline = require("functions/prosesitter/underline")
-local hover = require("functions/prosesitter/hover")
+local log = require("prosesitter/log")
+local shared = require("prosesitter/shared")
+local underline = require("prosesitter/underline")
+local hover = require("prosesitter/hover")
 local api = vim.api
 
 local M = {}
