@@ -6,6 +6,7 @@
 --
 --
 
+local log = require("functions/prosesitter/log")
 local shared = require("functions/prosesitter/shared")
 local underline = require("functions/prosesitter/underline")
 local hover = require("functions/prosesitter/hover")
@@ -24,11 +25,12 @@ function M.test()
 end
 
 function M.setup()
-	shared:setup()
+	local ns = shared:setup()
+	underline.ns = ns
 
-	api.nvim_set_decoration_provider(shared.ns, {
+	api.nvim_set_decoration_provider(ns, {
 		on_win = underline.on_win,
-		-- on_line = underline.on_line,
+		on_line = underline.on_line,
 	})
 	local opt = { noremap = true, silent = true, nowait = true }
 	local cmd = "<Cmd>lua _G.ProseCheck:test()<CR>"

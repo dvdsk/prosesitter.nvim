@@ -6,4 +6,4 @@ require("kommentary.config").configure_language("default", {
 })
 
 -- should probaly use autocommand to chance settings for latex
-require("spellsitter").setup()
+-- require("spellsitter").setup()

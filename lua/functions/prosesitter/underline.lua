@@ -6,7 +6,6 @@ local get_parser = vim.treesitter.get_parser
 local api = vim.api
 
 local cfg = shared.cfg
-local ns = shared.ns
 
 local M = {}
 
@@ -14,15 +13,15 @@ local function add_extmark(bufnr, lnum, start_col, end_col, hl)
 	-- TODO: This errors because of an out of bounds column when inserting
 	-- newlines. Wrapping in pcall hides the issue.
 
-	local ok, _ = pcall(api.nvim_buf_set_extmark, bufnr, ns, lnum, start_col, {
+	local opt = {
 		end_line = lnum,
 		end_col = end_col,
 		hl_group = hl,
-		ephemeral = true,
-	})
-
+		-- ephemeral = true, -- only keep for one draw
+	}
+	local ok, _ = pcall(api.nvim_buf_set_extmark, bufnr, M.ns, lnum, start_col, opt)
 	if not ok then
-		print(("ERROR: Failed to add extmark, lnum=%d pos=%d"):format(lnum, end_col))
+		log.error("Failed to add extmark, lnum="..vim.inspect(lnum).." pos="..start_col)
 	end
 end
 
@@ -56,7 +55,7 @@ local function start_check(bufnr, text, pieces)
 end
 
 local hl_queries = {}
-local proses = shared.Proses:new()
+local proses = shared.Proses.new()
 function M.on_line(_, _, bufnr, lnum)
 	local parser = get_parser(bufnr)
 	local lang = parser:lang()

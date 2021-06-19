@@ -29,7 +29,7 @@ paq("folke/which-key.nvim")
 paq("vim-scripts/Align")
 paq("b3nj5m1n/kommentary")
 paq("conradirwin/vim-bracketed-paste")
-paq("lewis6991/spellsitter.nvim")
+-- paq("lewis6991/spellsitter.nvim") -- disabled to check in progress prosesitter
 -- paq 'airblade/vim-rooter' -- has issues with rust workspaces
 
 -- Nouns, Verbs, textobjects
@@ -47,9 +47,9 @@ paq("neovim/nvim-lspconfig")
 paq("glepnir/lspsaga.nvim") -- extend lsp ui
 
 -- Completions
+-- paq 'L3MON4D3/LuaSnip' -- switch to in future
 paq("hrsh7th/nvim-compe")
 paq("hrsh7th/vim-vsnip")
--- paq 'L3MON4D3/LuaSnip' -- switch to in future
 paq("rafamadriz/friendly-snippets")
 
 require("settings")

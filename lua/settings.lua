@@ -26,6 +26,7 @@ o.foldmethod = "syntax"
 o.foldenable = true
 o.foldlevel = 1
 o.foldlevelstart = 99
+o.completeopt= "menuone,noselect"
 
 -- gui related
 wo.number = true

@@ -14,7 +14,6 @@ function M.hl_iter(results, pieces)
 	end
 
 	local i = 0
-	log.info("pieces: "..vim.inspect(pieces))
 	return function() -- lua iterator
 		while i < #problems do
 			i = i + 1
@@ -22,10 +21,11 @@ function M.hl_iter(results, pieces)
 			local hl = M.cfg.vale_to_hl[severity]
 			local line = problems[i].Line -- relative line numb in chunk send to vale
 
-			local offset = pieces[line]
+			local offset = pieces[line].start_col
 			local startc, endc = unpack(problems[i]["Span"])
 			local lnum = pieces[line].org_lnum -- get original line numb back
-			return lnum, startc + offset, endc + offset, hl
+			-- subtract one to get to 0 based coll
+			return lnum, startc + offset - 1, endc + offset - 1, hl
 		end
 	end
 end
@@ -34,16 +34,13 @@ local Proses = {}
 Proses.__index = Proses -- failed table lookups on the instances should fallback to the class table, to get methods
 function Proses.new()
 	local self = setmetatable({}, Proses)
-	-- local time_str = vim.fn.reltime()
-	-- self.last_update = vim.fn.reltimefloat(time_str)
 	self.start_col = {}
 	self.text = {}
 	return self
 end
 
 function Proses:add(text, lang, start_col, lnum)
-	-- self.text[lnum] = strip_comment(text, lang)
-	self.text[lnum] = text
+	self.text[lnum+1] = text -- needs +1 for table.concat to work (arrays start at 1)
 	self.start_col[lnum] = start_col
 end
 
@@ -64,10 +61,11 @@ function Proses:reset()
 end
 
 function M:setup()
-	self.ns = vim.api.nvim_create_namespace("prosesitter")
+	local ns = vim.api.nvim_create_namespace("prosesitter")
 	for _, hl in pairs(self.cfg.vale_to_hl) do
 		hl = vim.api.nvim_get_hl_id_by_name(hl)
 	end
+	return ns
 end
 
 M.Proses = Proses

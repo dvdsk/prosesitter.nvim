@@ -31,8 +31,8 @@ function M.dispatch_with_stdin(input, cmd, args, user_callback)
 		assert(not err, err)
 		if data then
 			output = data
-		else
-			log.error("stdout err:", data)
+		elseif err then
+			log.error("stdout err:", err)
 		end
 	end))
 
