@@ -10,23 +10,24 @@ M.ns = nil
 function M.hl_iter(results, pieces)
 	local problems = vim.fn.json_decode(results)["stdin.md"]
 	if problems == nil then
-		return
+		return function() return nil end -- caller needs a function, see lua iterators
 	end
 
 	local i = 0
 	return function() -- lua iterator
-		while i < #problems do
-			i = i + 1
-			local severity = problems[i].Severity
-			local hl = M.cfg.vale_to_hl[severity]
-			local line = problems[i].Line -- relative line numb in chunk send to vale
-
-			local offset = pieces[line].start_col
-			local startc, endc = unpack(problems[i]["Span"])
-			local lnum = pieces[line].org_lnum -- get original line numb back
-			-- subtract one to get to 0 based coll
-			return lnum, startc + offset - 1, endc + offset - 1, hl
+		i = i + 1
+		if i > #problems then
+			return nil
 		end
+		local severity = problems[i].Severity
+		local hl = M.cfg.vale_to_hl[severity]
+		local line = problems[i].Line -- relative line numb in chunk send to vale
+
+		local offset = pieces[line].start_col
+		local startc, endc = unpack(problems[i]["Span"])
+		local lnum = pieces[line].org_lnum -- get original line numb back
+		-- subtract one to get to 0 based coll
+		return lnum, startc + offset - 1, endc + offset, hl
 	end
 end
 
@@ -40,7 +41,7 @@ function Proses.new()
 end
 
 function Proses:add(text, lang, start_col, lnum)
-	self.text[lnum+1] = text -- needs +1 for table.concat to work (arrays start at 1)
+	self.text[lnum] = text
 	self.start_col[lnum] = start_col
 end
 
@@ -49,8 +50,21 @@ function Proses:is_empty()
 	return empty
 end
 
+-- for some unknown reason table.concat hangs infinitly. Since we usually do not have
+-- that many strings in table this is an okay alternative
+local function to_string(table)
+	-- local array = {}
+	local text = ""
+	for _, v in pairs(table) do
+		text=text..v.."\n"
+		-- array[#array+1] = v
+	end
+	-- local text = table.concat(array, "\n", 1, 2)
+	return text
+end
+
 function Proses:reset()
-	local text = table.concat(self.text, "\n")
+	local text = to_string(self.text)
 	local pieces = {}
 	for lnum, start_col in pairs(self.start_col) do -- works if text and start_col order matches
 		pieces[#pieces+1] = { org_lnum = lnum, start_col = start_col }

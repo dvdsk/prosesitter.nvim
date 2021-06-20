@@ -79,6 +79,7 @@ function M.on_line(_, _, bufnr, lnum)
 		end
 	end)
 
+
 	if not checking_prose and not proses:is_empty() then
 		checking_prose = true
 		local text, pieces = proses:reset()
