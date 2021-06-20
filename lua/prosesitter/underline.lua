@@ -1,4 +1,5 @@
 local shared = require("prosesitter/shared")
+local marks = require("prosesitter/extmarks")
 local log = require("prosesitter/log")
 local query = require("vim.treesitter.query")
 local async = require("prosesitter/async_cmd")
@@ -8,22 +9,6 @@ local api = vim.api
 local cfg = shared.cfg
 
 local M = {}
-
-local function add_extmark(bufnr, lnum, start_col, end_col, hl)
-	-- TODO: This errors because of an out of bounds column when inserting
-	-- newlines. Wrapping in pcall hides the issue.
-
-	local opt = {
-		end_line = lnum,
-		end_col = end_col,
-		hl_group = hl,
-		-- ephemeral = true, -- only keep for one draw
-	}
-	local ok, _ = pcall(api.nvim_buf_set_extmark, bufnr, M.ns, lnum, start_col, opt)
-	if not ok then
-		log.error("Failed to add extmark, lnum="..vim.inspect(lnum).." pos="..start_col)
-	end
-end
 
 local function preprocess(line, node, lnum)
 	local start_row, start_col, end_row, end_col = node:range()
@@ -39,7 +24,7 @@ end
 
 local function postprocess(bufnr, results, pieces)
 	for lnum, hl_start, hl_end, hl_group in shared.hl_iter(results, pieces) do
-		add_extmark(bufnr, lnum, hl_start, hl_end, hl_group)
+		marks:add(bufnr, lnum, hl_start, hl_end, hl_group)
 	end
 end
 
