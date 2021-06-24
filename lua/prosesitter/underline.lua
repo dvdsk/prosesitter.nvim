@@ -1,8 +1,8 @@
 local shared = require("prosesitter/shared")
 local marks = require("prosesitter/extmarks")
+local check = require("prosesitter/check")
 local log = require("prosesitter/log")
 local query = require("vim.treesitter.query")
-local async = require("prosesitter/async_cmd")
 local get_parser = vim.treesitter.get_parser
 local api = vim.api
 
@@ -10,67 +10,86 @@ local cfg = shared.cfg
 
 local M = {}
 
-local function preprocess(line, node, lnum)
-	local start_row, start_col, end_row, end_col = node:range()
-	if lnum ~= start_row then
-		start_col = 0
-	end
-	if lnum ~= end_row then
-		end_col = -1
-	end
-	local prose = line:sub(start_col + 1, end_col)
-	return prose, start_col
-end
-
 local function postprocess(bufnr, results, pieces)
 	for lnum, hl_start, hl_end, hl_group in shared.hl_iter(results, pieces) do
 		marks:add(bufnr, lnum, hl_start, hl_end, hl_group)
 	end
 end
 
-local checking_prose = false
-local function start_check(bufnr, text, pieces)
-	local function on_exit(results)
-		checking_prose = false
-		postprocess(bufnr, results, pieces)
-	end
-
-	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-	async.dispatch_with_stdin(text, "vale", args, on_exit)
-end
-
 local hl_queries = {}
-local proses = shared.Proses.new()
-function M.on_line(_, _, bufnr, lnum)
+local function iter_comments(bufnr, start_l, end_l)
 	local parser = get_parser(bufnr)
 	local lang = parser:lang()
 	local hl_query = hl_queries[lang]
-	local line = api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
 
 	parser:for_each_tree(function(tstree, _)
 		local root_node = tstree:root()
 		local root_start_row, _, root_end_row, _ = root_node:range()
 
 		-- Only worry about trees within the line range
-		if root_start_row > lnum or root_end_row < lnum then
+		if root_start_row > start_l or root_end_row < end_l then
 			return
 		end
 
-		for id, node in hl_query:iter_captures(root_node, bufnr, lnum, lnum + 1) do
+		for id, node in hl_query:iter_captures(root_node, bufnr, start_l, end_l) do
 			if vim.tbl_contains(cfg.captures, hl_query.captures[id]) then
-				local prose, start_col = preprocess(line, node, lnum)
-				proses:add(prose, lang, start_col, lnum)
+				return node
 			end
 		end
 	end)
-
-
-	if not checking_prose and not proses:is_empty() then
-		checking_prose = true
-		local text, pieces = proses:reset()
-		start_check(bufnr, text, pieces)
-	end
 end
+
+
+
+function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_count, _, _)
+	local lines_removed = first_changed == last_updated
+	if lines_removed then
+		log.info("lines removed from: " .. first_changed .. " to: " .. last_changed)
+		marks.remove(first_changed, last_changed)
+		return
+	end
+
+	for comment in iter_comments() do
+		local start_row, start_col, end_row, end_col = comment:range()
+		local lines = api.nvim_buf_get_lines(buf, start_row, end_row, true)
+
+		lines[1] = lines[1]:sub(start_col+1)
+		lines[#lines] = lines[1]:sub(1, end_col)
+		for line in lines do
+			check.lint_req:add(line, start_row)
+			start_row = 0 -- only relevent for first line of comment
+		end
+	end
+
+	if byte_count < 5 then
+		if not check.schedualled then
+			check.schedual()
+			check.schedualled = true
+		end
+		return
+	end
+
+	-- TODO FIXME what if check already running?
+	check.cancelled_schedualled()
+	check.now()
+end
+
+	-- local opts = { end_line = last_updated }
+	-- local id = api.nvim_buf_set_extmark(buf, ns, first_changed, 0, { end_line = last_updated })
+	-- local text, start_col = preprocess(line, node, lnum)
+
+	-- if not checking_prose and not lint_req:is_empty() then
+	-- 	checking_prose = true
+	-- 	local text, pieces = lint_req:reset()
+	-- 	start_check(buf, text, pieces)
+	-- end
+
+	-- -- callback
+	-- local res = api.nvim_buf_get_extmark_by_id(buf, ns, id, { details = true })
+	-- local start_row = res[1]
+	-- local end_row = res[3].end_row
+	-- log.info("res: "..vim.inspect(res))
+	-- log.info(start_row,end_row)
 
 function M.on_win(_, _, bufnr)
 	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
@@ -92,11 +111,10 @@ function M.on_win(_, _, bufnr)
 	parser:parse()
 end
 
-function M.test()
-	local prose = "When usng the `write-good` style, this sentence will generate a warning by default "
-		.. "(extremely is a weasel word!). However, if we format `extremely` as inline code, "
-		.. "we will no longer receive a warning:"
-	start_check(nil, prose, nil)
+function M.setup(ns)
+	marks.ns = ns
+	check.callback = postprocess
+	check.lint_req = shared.LintReq.new()
 end
 
 return M

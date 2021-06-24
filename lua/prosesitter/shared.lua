@@ -35,14 +35,16 @@ local Proses = {}
 Proses.__index = Proses -- failed table lookups on the instances should fallback to the class table, to get methods
 function Proses.new()
 	local self = setmetatable({}, Proses)
+	self.placeholder_id = {}
 	self.start_col = {}
 	self.text = {}
 	return self
 end
 
-function Proses:add(text, lang, start_col, lnum)
+function Proses:add(text, placeholder_id, start_col, lnum)
 	self.text[lnum] = text
 	self.start_col[lnum] = start_col
+	self.placeholder_id[lnum] = placeholder_id
 end
 
 function Proses:is_empty()

@@ -1,0 +1,29 @@
+local async = require("prosesitter/async_cmd")
+local M
+
+M.callback = nil
+M.schedualled = false
+M.lint_req = nil
+M.job = nil
+
+function M.now()
+	local text, meta = M.lint_req:reset()
+	local function on_exit(results)
+		M.callback(results, meta)
+	end
+
+	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+	async.dispatch_with_stdin(text, "vale", args, on_exit)
+end
+
+function M.cancelled_schedualled()
+	if M.job ~= nil then
+		M.job.stop()
+		M.schedualled = false
+	end
+end
+
+function M.schedual()
+	M.job = vim.defer_fn(fn, timeout)
+
+end
