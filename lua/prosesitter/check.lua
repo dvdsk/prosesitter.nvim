@@ -24,6 +24,7 @@ function M.cancelled_schedualled()
 end
 
 function M.schedual()
-	M.job = vim.defer_fn(fn, timeout)
-
+	local timeout_ms = 2000
+	M.job = vim.defer_fn(M.now(), timeout_ms)
+	M.schedualled = true
 end

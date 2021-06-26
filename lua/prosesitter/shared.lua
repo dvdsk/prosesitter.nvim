@@ -1,3 +1,4 @@
+local api = vim.api
 local log = require("prosesitter/log")
 local M = {}
 M.cfg = {
@@ -31,23 +32,42 @@ function M.hl_iter(results, pieces)
 	end
 end
 
-local Proses = {}
-Proses.__index = Proses -- failed table lookups on the instances should fallback to the class table, to get methods
-function Proses.new()
-	local self = setmetatable({}, Proses)
-	self.placeholder_id = {}
-	self.start_col = {}
+local LintReqBuilder = {}
+LintReqBuilder.__index = LintReqBuilder -- failed table lookups on the instances should fallback to the class table, to get methods
+function LintReqBuilder.new()
+	local self = setmetatable({}, LintReqBuilder)
 	self.text = {}
+	self.meta_by_id = {}
 	return self
 end
 
-function Proses:add(text, placeholder_id, start_col, lnum)
-	self.text[lnum] = text
-	self.start_col[lnum] = start_col
-	self.placeholder_id[lnum] = placeholder_id
+function LintReqBuilder:update(marks, buf, row, start_col, end_col)
+	local id = marks[1]
+	local opt = { id = id, end_col= end_col }
+	api.nvim_buf_set_extmark(buf, M.ns, row, start_col, opt) -- update placeholder
+	local new_line = api.nvim_buf_get_lines(buf, row, row, true).sub(start_col, end_col)
+	local idx = self.meta_by_id[id].text_idx
+	self.text[idx] = new_line
 end
 
-function Proses:is_empty()
+-- only single lines are added... issue if line breaks connect scentences
+function LintReqBuilder:add(buf, row, start_col, end_col)
+	local marks = api.nvim_buf_get_extmarks(buf, M.ns, (row, start_col), (row, end_col))
+	if #marks > 0 then
+		self.update(marks, buf, row, start_col, end_col)
+		return
+	end
+
+	local opt = { id = 0, end_col= end_col }
+	local placeholder_id = api.nvim_buf_set_extmark(buf, M.ns, row, start_col, opt)
+	local line = api.nvim_buf_get_lines(buf, row, row, true).sub(start_col, end_col)
+	self.text[#self.text+1] = line
+
+	local meta = {buf=buf, text_idx=#self.text}
+	self.meta_by_id[placeholder_id] = meta
+end
+
+function LintReqBuilder:is_empty()
 	local empty = next(self.text) == nil
 	return empty
 end
@@ -65,24 +85,24 @@ local function to_string(table)
 	return text
 end
 
-function Proses:reset()
-	local text = to_string(self.text)
+function LintReqBuilder:build() -- TODO FIXME
+	local text = to_string(self.text_by_id)
 	local pieces = {}
 	for lnum, start_col in pairs(self.start_col) do -- works if text and start_col order matches
 		pieces[#pieces+1] = { org_lnum = lnum, start_col = start_col }
 	end
-	self.text = {}
+	self.text_by_id = {}
 	self.start_col = {}
 	return text, pieces
 end
 
 function M:setup()
-	local ns = vim.api.nvim_create_namespace("prosesitter")
+	M.ns = vim.api.nvim_create_namespace("prosesitter")
 	for _, hl in pairs(self.cfg.vale_to_hl) do
 		hl = vim.api.nvim_get_hl_id_by_name(hl)
 	end
-	return ns
+	return M.ns
 end
 
-M.Proses = Proses
+M.Proses = LintReqBuilder
 return M

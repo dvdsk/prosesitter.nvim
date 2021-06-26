@@ -39,8 +39,6 @@ local function iter_comments(bufnr, start_l, end_l)
 	end)
 end
 
-
-
 function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_count, _, _)
 	local lines_removed = first_changed == last_updated
 	if lines_removed then
@@ -51,13 +49,15 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 
 	for comment in iter_comments() do
 		local start_row, start_col, end_row, end_col = comment:range()
-		local lines = api.nvim_buf_get_lines(buf, start_row, end_row, true)
 
-		lines[1] = lines[1]:sub(start_col+1)
-		lines[#lines] = lines[1]:sub(1, end_col)
-		for line in lines do
-			check.lint_req:add(line, start_row)
-			start_row = 0 -- only relevent for first line of comment
+		if start_row == end_row then
+			check.lint_req:add(buf, start_row, start_col, end_col)
+		else
+			for row=start_row,end_row-1 do
+				check.lint_req:add(buf, row, start_col, 0)
+				start_col = 0 -- only relevent for first line of comment
+			end
+			check.lint_req:add(buf, end_row, 0, end_col)
 		end
 	end
 
