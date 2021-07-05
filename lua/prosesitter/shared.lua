@@ -7,10 +7,22 @@ M.cfg = {
 }
 M.ns = nil
 
+local function closest_smaller(target, table)
+	local prev_k, prev_v
+	for k,v in pairs(table) do
+		if k > target then
+			return prev_k, prev_v
+		end
+		prev_k = k
+		prev_v = v
+	end
+end
+
 -- iterator that returns a span and highlight group
-function M.hl_iter(results, pieces)
+function M.hl_iter(results, meta_by_flatcol)
 	local problems = vim.fn.json_decode(results)["stdin.md"]
 	if problems == nil then
+		-- TODO cleanup remove placeholders
 		return function() return nil end -- caller needs a function, see lua iterators
 	end
 
@@ -22,13 +34,16 @@ function M.hl_iter(results, pieces)
 		end
 		local severity = problems[i].Severity
 		local hl = M.cfg.vale_to_hl[severity]
-		local line = problems[i].Line -- relative line numb in chunk send to vale
 
-		local offset = pieces[line].start_col
-		local startc, endc = unpack(problems[i]["Span"])
-		local lnum = pieces[line].org_lnum -- get original line numb back
-		-- subtract one to get to 0 based coll
-		return lnum, startc + offset - 1, endc + offset, hl
+		-- get the metadata for the line that was written to the flattend
+		-- input for vale. Then calculate the the column positions in the buffer
+		-- and get the placeholder extmark for recovering the line number later
+		local flatcol_start, flatcol_end = unpack(problems[i]["Span"])
+		local col_start, meta = closest_smaller(flatcol_start, meta_by_flatcol)
+		local rel_start = flatcol_start - col_start
+		local rel_end = flatcol_end - col_start
+
+		return meta.buf, meta.id, rel_start, rel_end, hl
 	end
 end
 
@@ -37,7 +52,8 @@ LintReqBuilder.__index = LintReqBuilder -- failed table lookups on the instances
 function LintReqBuilder.new()
 	local self = setmetatable({}, LintReqBuilder)
 	self.text = {}
-	self.meta_by_id = {}
+	self.meta_by_mark = {}
+	self.meta_by_idx = {}
 	return self
 end
 
@@ -46,13 +62,13 @@ function LintReqBuilder:update(marks, buf, row, start_col, end_col)
 	local opt = { id = id, end_col= end_col }
 	api.nvim_buf_set_extmark(buf, M.ns, row, start_col, opt) -- update placeholder
 	local new_line = api.nvim_buf_get_lines(buf, row, row, true).sub(start_col, end_col)
-	local idx = self.meta_by_id[id].text_idx
+	local idx = self.meta_by_mark[id].text_idx
 	self.text[idx] = new_line
 end
 
 -- only single lines are added... issue if line breaks connect scentences
 function LintReqBuilder:add(buf, row, start_col, end_col)
-	local marks = api.nvim_buf_get_extmarks(buf, M.ns, (row, start_col), (row, end_col))
+	local marks = api.nvim_buf_get_extmarks(buf, M.ns, {row, start_col}, {row, end_col})
 	if #marks > 0 then
 		self.update(marks, buf, row, start_col, end_col)
 		return
@@ -63,8 +79,9 @@ function LintReqBuilder:add(buf, row, start_col, end_col)
 	local line = api.nvim_buf_get_lines(buf, row, row, true).sub(start_col, end_col)
 	self.text[#self.text+1] = line
 
-	local meta = {buf=buf, text_idx=#self.text}
-	self.meta_by_id[placeholder_id] = meta
+	local meta = {buf=buf, text_idx=#self.text, id=placeholder_id}
+	self.meta_by_mark[placeholder_id] = meta
+	self.meta_by_idx[#self.text] = meta
 end
 
 function LintReqBuilder:is_empty()
@@ -78,7 +95,7 @@ local function to_string(table)
 	-- local array = {}
 	local text = ""
 	for _, v in pairs(table) do
-		text=text..v.."\n"
+		text=text..v.." "
 		-- array[#array+1] = v
 	end
 	-- local text = table.concat(array, "\n", 1, 2)
@@ -86,14 +103,17 @@ local function to_string(table)
 end
 
 function LintReqBuilder:build() -- TODO FIXME
-	local text = to_string(self.text_by_id)
-	local pieces = {}
-	for lnum, start_col in pairs(self.start_col) do -- works if text and start_col order matches
-		pieces[#pieces+1] = { org_lnum = lnum, start_col = start_col }
+	local req = {}
+	req.text = to_string(self.text)
+	req.meta_by_flatcol = {}
+
+	local col = 0
+	for i=1,#self.text do
+		req.meta_by_flatcol[col] = self.meta_by_idx[i]
+		col = col + #self.text[i]
 	end
-	self.text_by_id = {}
-	self.start_col = {}
-	return text, pieces
+
+	return req
 end
 
 function M:setup()

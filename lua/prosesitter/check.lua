@@ -1,5 +1,5 @@
 local async = require("prosesitter/async_cmd")
-local M
+local M = {}
 
 M.callback = nil
 M.schedualled = false
@@ -7,7 +7,7 @@ M.lint_req = nil
 M.job = nil
 
 function M.now()
-	local text, meta = M.lint_req:reset()
+	local text, meta = M.lint_req:build()
 	local function on_exit(results)
 		M.callback(results, meta)
 	end
@@ -28,3 +28,5 @@ function M.schedual()
 	M.job = vim.defer_fn(M.now(), timeout_ms)
 	M.schedualled = true
 end
+
+return M

@@ -10,9 +10,9 @@ local cfg = shared.cfg
 
 local M = {}
 
-local function postprocess(bufnr, results, pieces)
-	for lnum, hl_start, hl_end, hl_group in shared.hl_iter(results, pieces) do
-		marks:add(bufnr, lnum, hl_start, hl_end, hl_group)
+local function postprocess(results, meta)
+	for buf, id, start_c, end_c, hl_group in shared.hl_iter(results, meta) do
+		marks:underline(buf, id, start_c, end_c, hl_group)
 	end
 end
 
@@ -74,23 +74,6 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 	check.now()
 end
 
-	-- local opts = { end_line = last_updated }
-	-- local id = api.nvim_buf_set_extmark(buf, ns, first_changed, 0, { end_line = last_updated })
-	-- local text, start_col = preprocess(line, node, lnum)
-
-	-- if not checking_prose and not lint_req:is_empty() then
-	-- 	checking_prose = true
-	-- 	local text, pieces = lint_req:reset()
-	-- 	start_check(buf, text, pieces)
-	-- end
-
-	-- -- callback
-	-- local res = api.nvim_buf_get_extmark_by_id(buf, ns, id, { details = true })
-	-- local start_row = res[1]
-	-- local end_row = res[3].end_row
-	-- log.info("res: "..vim.inspect(res))
-	-- log.info(start_row,end_row)
-
 function M.on_win(_, _, bufnr)
 	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
 		return false
@@ -114,7 +97,7 @@ end
 function M.setup(ns)
 	marks.ns = ns
 	check.callback = postprocess
-	check.lint_req = shared.LintReq.new()
+	check.lint_req = shared.LintReq.new() --TODO should be made a list
 end
 
 return M
