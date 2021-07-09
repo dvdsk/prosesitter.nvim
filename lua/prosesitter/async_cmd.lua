@@ -37,7 +37,6 @@ function M.dispatch_with_stdin(input, cmd, args, user_callback)
 	end))
 
 	uv.read_start(stderr, on_stderr)
-
 	uv.write(stdin, input)
 	uv.shutdown(stdin)
 end

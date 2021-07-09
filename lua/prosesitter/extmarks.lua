@@ -15,13 +15,15 @@ function M.remove_line_extmarks(bufnr, start, stop)
 end
 
 function M.underline(bufnr, id, start_col, end_col, hl)
-	local row, _ = api.nvim_buf_get_extmark_by_id(bufnr, M.ns, id, {details = true})
+	local mark = api.nvim_buf_get_extmark_by_id(bufnr, M.ns, id, {details = false})
+	local row = mark[1]
 
 	local opt = {
 		end_col = end_col,
 		hl_group = hl,
 		id = id,
 	}
+	log.info("adding extmark: lnum= "..row.." pos= "..start_col.."-"..end_col)
 	local ok, _ = pcall(api.nvim_buf_set_extmark, bufnr, M.ns, row, start_col, opt)
 	if not ok then
 		log.error("Failed to add extmark, lnum="..vim.inspect(row).." pos="..start_col)

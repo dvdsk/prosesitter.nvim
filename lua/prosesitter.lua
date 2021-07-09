@@ -10,10 +10,8 @@ local attached = {}
 local function on_win(_, _, bufnr)
 	if not attached[bufnr] then
 		attached[bufnr] = true
+		underline.on_win(nil, nil, bufnr)
 		log.info("bufnr: " .. bufnr)
-		api.nvim_buf_attach(bufnr, false, {
-			on_lines = underline.on_lines,
-		})
 	end
 end
 

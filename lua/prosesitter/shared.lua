@@ -11,11 +11,12 @@ local function closest_smaller(target, table)
 	local prev_k, prev_v
 	for k,v in pairs(table) do
 		if k > target then
-			return prev_k, prev_v
+			break
 		end
 		prev_k = k
 		prev_v = v
 	end
+	return prev_k, prev_v
 end
 
 -- iterator that returns a span and highlight group
@@ -68,15 +69,16 @@ end
 
 -- only single lines are added... issue if line breaks connect scentences
 function LintReqBuilder:add(buf, row, start_col, end_col)
-	local marks = api.nvim_buf_get_extmarks(buf, M.ns, {row, start_col}, {row, end_col})
+	local marks = api.nvim_buf_get_extmarks(buf, M.ns, {row, start_col}, {row, end_col}, {})
 	if #marks > 0 then
 		self.update(marks, buf, row, start_col, end_col)
 		return
 	end
 
-	local opt = { id = 0, end_col= end_col }
+	local opt = { end_col= end_col }
 	local placeholder_id = api.nvim_buf_set_extmark(buf, M.ns, row, start_col, opt)
-	local line = api.nvim_buf_get_lines(buf, row, row, true).sub(start_col, end_col)
+	local full_line = api.nvim_buf_get_lines(buf, row, row+1, true)
+	local line = string.sub(full_line[1], start_col, end_col)
 	self.text[#self.text+1] = line
 
 	local meta = {buf=buf, text_idx=#self.text, id=placeholder_id}
@@ -124,5 +126,5 @@ function M:setup()
 	return M.ns
 end
 
-M.Proses = LintReqBuilder
+M.LintReqBuilder = LintReqBuilder
 return M
