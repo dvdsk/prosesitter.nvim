@@ -9,9 +9,7 @@ M.job = nil
 
 function M.now()
 	local req = M.lint_req:build()
-	log.info("meta: "..vim.inspect(req.meta_by_flatcol))
 	local function on_exit(results)
-		log.info("res: "..results)
 		M.callback(results, req.meta_by_flatcol)
 	end
 

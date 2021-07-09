@@ -12,13 +12,11 @@ local M = {}
 
 local function postprocess(results, meta)
 	for buf, id, start_c, end_c, hl_group in shared.hl_iter(results, meta) do
-		marks:underline(buf, id, start_c, end_c, hl_group)
+		marks.underline(buf, id, start_c, end_c, hl_group)
 	end
 end
 
 local hl_queries = {}
--- Callback ... can not use as iterator...
--- usage: for var_1, ···, var_n in explist do block end
 local function comments(bufnr, start_l, end_l)
 	local parser = get_parser(bufnr)
 	local lang = parser:lang()
@@ -30,7 +28,6 @@ local function comments(bufnr, start_l, end_l)
 		local root_start_row, _, root_end_row, _ = root_node:range()
 
 		-- Only worry about trees within the line range
-		log.info(root_start_row, start_l, root_end_row, end_l)
 		if root_start_row > start_l or root_end_row < end_l then
 			return
 		end
@@ -55,7 +52,6 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 
 	for _, comment in pairs(comments(buf, first_changed, last_changed)) do
 		local start_row, start_col, end_row, end_col = comment:range()
-		log.info(start_row, end_row)
 
 		if start_row == end_row then
 			check.lint_req:add(buf, start_row, start_col, end_col)
@@ -71,17 +67,14 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 	log.info("byte_count: "..byte_count) -- FIXME TODO not working
 	if byte_count < 5 then
 		if not check.schedualled then
-			log.info("schedualling new check")
 			check.schedual()
 			check.schedualled = true
 		end
-		log.info("changes included in schedualled check")
 		return
 	end
 
 	-- TODO FIXME what if check already running?
 	check.cancelled_schedualled()
-	log.info("checking immediately")
 	check.now()
 end
 
@@ -110,7 +103,8 @@ function M.on_win(_, _, bufnr)
 end
 
 function M.setup(ns)
-	marks.ns = ns
+	marks.placeholder_ns = ns -- seperate namespace for placeholder marks
+	marks.ns = vim.api.nvim_create_namespace("prosesitter_marks")
 	check.callback = postprocess
 	check.lint_req = shared.LintReqBuilder.new() --TODO should be made a list
 end

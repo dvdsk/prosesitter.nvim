@@ -40,6 +40,7 @@ function M.hl_iter(results, meta_by_flatcol)
 		-- input for vale. Then calculate the the column positions in the buffer
 		-- and get the placeholder extmark for recovering the line number later
 		local flatcol_start, flatcol_end = unpack(problems[i]["Span"])
+		-- log.info("problem: "..problems[i]["Message"]) TODO probably want to store in lookup db (key: bufnr+mark_id)
 		local col_start, meta = closest_smaller(flatcol_start, meta_by_flatcol)
 		local rel_start = flatcol_start - col_start
 		local rel_end = flatcol_end - col_start
@@ -59,10 +60,13 @@ function LintReqBuilder.new()
 end
 
 function LintReqBuilder:update(marks, buf, row, start_col, end_col)
-	local id = marks[1]
+	-- remove all but first mark on the current line, change that first mark
+	-- into a placeholder mark
+	local id = marks[1][1] -- there can be a max of 1 placeholder per line
 	local opt = { id = id, end_col= end_col }
 	api.nvim_buf_set_extmark(buf, M.ns, row, start_col, opt) -- update placeholder
-	local new_line = api.nvim_buf_get_lines(buf, row, row, true).sub(start_col, end_col)
+	local full_new_line = api.nvim_buf_get_lines(buf, row, row+1, true)[1]
+	local new_line = string.sub(full_new_line, start_col, end_col)
 	local idx = self.meta_by_mark[id].text_idx
 	self.text[idx] = new_line
 end
@@ -71,7 +75,7 @@ end
 function LintReqBuilder:add(buf, row, start_col, end_col)
 	local marks = api.nvim_buf_get_extmarks(buf, M.ns, {row, start_col}, {row, end_col}, {})
 	if #marks > 0 then
-		self.update(marks, buf, row, start_col, end_col)
+		self:update(marks, buf, row, start_col, end_col)
 		return
 	end
 
