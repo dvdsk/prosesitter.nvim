@@ -34,9 +34,10 @@ local function comments(bufnr, start_l, end_l)
 		end
 		log.info("start/endl: "..start_l.." "..end_l)
 		for id, node in hl_query:iter_captures(root_node, bufnr, start_l, end_l) do
+			local a,b,c,d = node:range()
+			log.info(a,b,c,d)
 			if vim.tbl_contains(cfg.captures, hl_query.captures[id]) then
 				nodes[#nodes+1] = node
-				return node
 			end
 		end
 	end)
