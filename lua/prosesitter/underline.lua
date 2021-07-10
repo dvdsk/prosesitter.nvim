@@ -28,10 +28,11 @@ local function comments(bufnr, start_l, end_l)
 		local root_start_row, _, root_end_row, _ = root_node:range()
 
 		-- Only worry about trees within the line range
+		log.info(root_start_row, start_l, root_end_row, end_l)
 		if root_start_row > start_l or root_end_row < end_l then
 			return
 		end
-
+		log.info("start/endl: "..start_l.." "..end_l)
 		for id, node in hl_query:iter_captures(root_node, bufnr, start_l, end_l) do
 			if vim.tbl_contains(cfg.captures, hl_query.captures[id]) then
 				nodes[#nodes+1] = node
@@ -43,6 +44,7 @@ local function comments(bufnr, start_l, end_l)
 end
 
 function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_count, _, _)
+	log.info(first_changed, last_changed, last_updated)
 	local lines_removed = first_changed == last_updated
 	if lines_removed then
 		log.info("lines removed from: " .. first_changed .. " to: " .. last_changed)

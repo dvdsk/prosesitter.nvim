@@ -11,6 +11,10 @@ local function on_win(_, _, bufnr)
 	if not attached[bufnr] then
 		attached[bufnr] = true
 		underline.on_win(nil, nil, bufnr)
+
+		local info = vim.fn.getbufinfo(bufnr)
+		local last_line = info[1].linecount
+		underline.on_lines(nil, bufnr, nil, 0, last_line, last_line, 9999, nil, nil)
 		log.info("bufnr: " .. bufnr)
 	end
 end
