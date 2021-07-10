@@ -7,20 +7,19 @@ M.cfg = {
 }
 M.ns = nil
 
-local function closest_smaller(target, table)
-	local prev_k, prev_v
-	for k,v in pairs(table) do
-		if k > target then
+local function closest_smaller(target, array)
+	local prev
+	for i=1,#array do
+		if array[i].col > target then
 			break
 		end
-		prev_k = k
-		prev_v = v
+		prev = array[i]
 	end
-	return prev_k, prev_v
+	return prev
 end
 
 -- iterator that returns a span and highlight group
-function M.hl_iter(results, meta_by_flatcol)
+function M.hl_iter(results, meta_array)
 	local problems = vim.fn.json_decode(results)["stdin.md"]
 	if problems == nil then
 		-- TODO cleanup remove placeholders
@@ -40,10 +39,10 @@ function M.hl_iter(results, meta_by_flatcol)
 		-- input for vale. Then calculate the the column positions in the buffer
 		-- and get the placeholder extmark for recovering the line number later
 		local flatcol_start, flatcol_end = unpack(problems[i]["Span"])
-		-- log.info("problem: "..problems[i]["Message"]) TODO probably want to store in lookup db (key: bufnr+mark_id)
-		local col_start, meta = closest_smaller(flatcol_start, meta_by_flatcol)
-		local rel_start = flatcol_start - col_start
-		local rel_end = flatcol_end - col_start
+		-- log.info("problem: "..problems[i]["Message"]) -- TODO probably want to store in lookup db (key: bufnr+mark_id)
+		local meta = closest_smaller(flatcol_start, meta_array)
+		local rel_start = flatcol_start - meta.col
+		local rel_end = flatcol_end - meta.col
 
 		return meta.buf, meta.id, rel_start, rel_end, hl
 	end
@@ -111,11 +110,13 @@ end
 function LintReqBuilder:build()
 	local req = {}
 	req.text = to_string(self.text)
-	req.meta_by_flatcol = {}
+	req.meta_array = {}
 
 	local col = 0
 	for i=1,#self.text do
-		req.meta_by_flatcol[col] = self.meta_by_idx[i]
+		local meta = self.meta_by_idx[i]
+		meta.col = col
+		req.meta_array[#req.meta_array+1] = meta
 		col = col + #self.text[i] + 1 -- plus one for the line end
 	end
 

@@ -10,7 +10,7 @@ M.job = nil
 function M.now()
 	local req = M.lint_req:build()
 	local function on_exit(results)
-		M.callback(results, req.meta_by_flatcol)
+		M.callback(results, req.meta_array)
 	end
 
 	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }

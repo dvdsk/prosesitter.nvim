@@ -23,7 +23,6 @@ function M.dispatch_with_stdin(input, cmd, args, user_callback)
 		args = args,
 		stdio = { stdin, stdout, stderr },
 	}, vim.schedule_wrap(function(_, _) -- on exit
-		uv.close(handle)
 		user_callback(output)
 	end))
 

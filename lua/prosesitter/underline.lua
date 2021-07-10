@@ -10,8 +10,8 @@ local cfg = shared.cfg
 
 local M = {}
 
-local function postprocess(results, meta)
-	for buf, id, start_c, end_c, hl_group in shared.hl_iter(results, meta) do
+local function postprocess(results, meta_array)
+	for buf, id, start_c, end_c, hl_group in shared.hl_iter(results, meta_array) do
 		marks.underline(buf, id, start_c, end_c, hl_group)
 	end
 end
@@ -62,18 +62,10 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 		end
 	end
 
-	log.info("byte_count: "..byte_count) -- FIXME TODO not working
-	if byte_count < 5 then
-		if not check.schedualled then
-			check.schedual()
-			check.schedualled = true
-		end
-		return
+	if not check.schedualled then
+		check.schedual()
+		check.schedualled = true
 	end
-
-	-- TODO FIXME what if check already running?
-	check.cancelled_schedualled()
-	check.now()
 end
 
 function M.on_win(_, _, bufnr)
@@ -95,9 +87,14 @@ function M.on_win(_, _, bufnr)
 	api.nvim_buf_attach(bufnr, false, {
 		on_lines = M.on_lines,
 	})
+
+	parser:parse()
+	local info = vim.fn.getbufinfo(bufnr)
+	local last_line = info[1].linecount
+	M.on_lines(nil, bufnr, nil, 0, last_line, last_line, 9999, nil, nil)
+
 	-- FIXME: shouldn't be required. Possibly related to:
 	-- https://github.com/nvim-treesitter/nvim-treesitter/issues/1124
-	parser:parse()
 end
 
 function M.setup(ns)
