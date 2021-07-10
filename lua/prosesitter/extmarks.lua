@@ -5,8 +5,6 @@ local M = {}
 M.placeholder_ns = nil
 M.ns = nil
 
-
-
 -- remove extmarks between line start and stop
 function M.remove_line_extmarks(bufnr, start, stop)
 	-- remove permanent extmarks
@@ -28,9 +26,7 @@ function M.underline(bufnr, id, start_col, end_col, hl)
 	local opt = {
 		end_col = end_col,
 		hl_group = hl,
-		id = id,
 	}
-	log.info("adding extmark: lnum= "..row.." pos= "..start_col.."-"..end_col.." hl: "..hl)
 	local ok, _ = pcall(api.nvim_buf_set_extmark, bufnr, M.ns, row, start_col-1, opt)
 	if not ok then
 		log.error("Failed to add extmark, lnum="..vim.inspect(row).." pos="..start_col)
