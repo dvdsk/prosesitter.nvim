@@ -40,8 +40,10 @@ function M.hl_iter(results, meta_by_flatcol)
 		-- input for vale. Then calculate the the column positions in the buffer
 		-- and get the placeholder extmark for recovering the line number later
 		local flatcol_start, flatcol_end = unpack(problems[i]["Span"])
+		log.info(flatcol_start)
 		-- log.info("problem: "..problems[i]["Message"]) TODO probably want to store in lookup db (key: bufnr+mark_id)
 		local col_start, meta = closest_smaller(flatcol_start, meta_by_flatcol)
+		log.info("col_start: "..col_start)
 		local rel_start = flatcol_start - col_start
 		local rel_end = flatcol_end - col_start
 
@@ -108,7 +110,7 @@ local function to_string(table)
 	return text
 end
 
-function LintReqBuilder:build() -- TODO FIXME
+function LintReqBuilder:build()
 	local req = {}
 	req.text = to_string(self.text)
 	req.meta_by_flatcol = {}
@@ -116,7 +118,7 @@ function LintReqBuilder:build() -- TODO FIXME
 	local col = 0
 	for i=1,#self.text do
 		req.meta_by_flatcol[col] = self.meta_by_idx[i]
-		col = col + #self.text[i]
+		col = col + #self.text[i] + 1 -- plus one for the line end
 	end
 
 	return req
