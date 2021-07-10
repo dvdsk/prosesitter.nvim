@@ -19,7 +19,7 @@ end
 
 function M.cancelled_schedualled()
 	if M.job ~= nil then
-		M.job.stop()
+		M.job:stop()
 		M.schedualled = false
 	end
 end
