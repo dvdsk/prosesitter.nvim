@@ -64,7 +64,6 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 
 	if not check.schedualled then
 		check.schedual()
-		check.schedualled = true
 	end
 end
 

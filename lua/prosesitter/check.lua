@@ -7,7 +7,8 @@ M.schedualled = false
 M.lint_req = nil
 M.job = nil
 
-function M.now()
+local function do_check()
+	M.schedualled = false
 	local req = M.lint_req:build()
 	local function on_exit(results)
 		M.callback(results, req.meta_array)
@@ -26,8 +27,7 @@ end
 
 function M.schedual()
 	local timeout_ms = 2000
-	M.job = vim.defer_fn(M.now(), timeout_ms)
-	M.schedualled = true
+	M.job = vim.defer_fn(do_check, timeout_ms)
 end
 
 return M
