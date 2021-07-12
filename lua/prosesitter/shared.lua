@@ -124,7 +124,7 @@ function LintReqBuilder:build()
 end
 
 function M:setup()
-	M.ns = vim.api.nvim_create_namespace("prosesitter")
+	M.ns = vim.api.nvim_create_namespace("prosesitter_placeholders")
 	for _, hl in pairs(self.cfg.vale_to_hl) do
 		hl = vim.api.nvim_get_hl_id_by_name(hl)
 	end
