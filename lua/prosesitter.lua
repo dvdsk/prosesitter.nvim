@@ -1,7 +1,7 @@
 local log = require("prosesitter/log")
 local shared = require("prosesitter/shared")
-local underline = require("prosesitter/underline")
--- local hover = require("prosesitter/hover") -- TODO add hover support
+local on_event = require("prosesitter/on_event/on_event")
+local hover = require("prosesitter/hover") -- TODO add hover support
 local api = vim.api
 
 local M = {}
@@ -10,17 +10,16 @@ local attached = {}
 local function on_win(_, _, bufnr)
 	if not attached[bufnr] then
 		attached[bufnr] = true
-		underline.on_win(nil, nil, bufnr)
+		on_event.on_win(nil, nil, bufnr)
 	end
 end
 
 function M.setup()
-	-- local ns = shared:setup()
-	local ns = shared:setup()
-	underline.setup(ns)
-	underline.ns = ns
+	shared:setup()
+	on_event.setup(shared)
+	hover.setup(shared)
 
-	api.nvim_set_decoration_provider(ns, {
+	api.nvim_set_decoration_provider(shared.ns_placeholders, {
 		on_win = on_win,
 	})
 	local opt = { noremap = true, silent = true, nowait = true }
@@ -28,5 +27,5 @@ function M.setup()
 	vim.api.nvim_set_keymap("n", ",", cmd, opt)
 end
 
-_G.ProseCheck = M
+_G.ProseSitter = M
 return M

@@ -1,5 +1,6 @@
 local log = require("prosesitter/log")
 local api = vim.api
+local shared = nil
 
 M = {}
 M.mark_to_meta = nil
@@ -8,7 +9,8 @@ function M:add_meta(id, meta)
 	self.mark_to_meta[id] = meta
 end
 
-function M:setup()
+function M:setup(_shared)
+	shared = _shared
 	self.mark_to_meta = {}
 end
 
@@ -34,3 +36,5 @@ function M.popup()
 
 	-- TODO how to exit win
 end
+
+return M

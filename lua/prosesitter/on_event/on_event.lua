@@ -1,17 +1,16 @@
-local shared = require("prosesitter/shared")
-local marks = require("prosesitter/extmarks")
-local check = require("prosesitter/check")
 local log = require("prosesitter/log")
+local marks = require("prosesitter/on_event/marks")
+local check = require("prosesitter/on_event/check/check")
+local lintreq = require("prosesitter/on_event/lintreq")
 local query = require("vim.treesitter.query")
+
 local get_parser = vim.treesitter.get_parser
 local api = vim.api
-
-local cfg = shared.cfg
-
+local cfg = nil
 local M = {}
 
 local function postprocess(results, meta_array)
-	for buf, id, start_c, end_c, hl_group in shared.hl_iter(results, meta_array) do
+	for buf, id, start_c, end_c, hl_group in check.hl_iter(results, meta_array) do
 		marks.underline(buf, id, start_c, end_c, hl_group)
 	end
 end
@@ -52,7 +51,9 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 		local start_row, start_col, end_row, end_col = comment:range()
 
 		if start_row == end_row then
+			log.info("yo")
 			check.lint_req:add(buf, start_row, start_col, end_col)
+			log.info("yo")
 		else
 			for row=start_row,end_row-1 do
 				check.lint_req:add(buf, row, start_col, 0)
@@ -62,6 +63,7 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 		end
 	end
 
+	log.info("yo")
 	if not check.schedualled then
 		check.schedual()
 	end
@@ -71,13 +73,16 @@ function M.on_win(_, _, bufnr)
 	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
 		return false
 	end
+
 	if vim.tbl_isempty(cfg.captures) then
 		return false
 	end
+
 	local ok, parser = pcall(get_parser, bufnr)
 	if not ok then
 		return false
 	end
+
 	local lang = parser:lang()
 	if not hl_queries[lang] then
 		hl_queries[lang] = query.get_query(lang, "highlights")
@@ -87,20 +92,20 @@ function M.on_win(_, _, bufnr)
 		on_lines = M.on_lines,
 	})
 
+	-- FIXME: shouldn't be required. Possibly related to:
+	-- https://github.com/nvim-treesitter/nvim-treesitter/issues/1124
 	parser:parse()
 	local info = vim.fn.getbufinfo(bufnr)
 	local last_line = info[1].linecount
 	M.on_lines(nil, bufnr, nil, 0, last_line, last_line, 9999, nil, nil)
-
-	-- FIXME: shouldn't be required. Possibly related to:
-	-- https://github.com/nvim-treesitter/nvim-treesitter/issues/1124
 end
 
-function M.setup(ns)
-	marks.placeholder_ns = ns -- seperate namespace for placeholder marks
-	marks.ns = vim.api.nvim_create_namespace("prosesitter_marks")
+function M.setup(shared)
+	marks.ns_placeholder = shared.ns_placeholders -- seperate namespace for placeholder marks
+	marks.ns_marks = shared.ns_placeholders
 	check.callback = postprocess
-	check.lint_req = shared.LintReqBuilder.new() --TODO should be made a list
+	check.lint_req = lintreq.new()
+	cfg = shared.cfg
 end
 
 return M
