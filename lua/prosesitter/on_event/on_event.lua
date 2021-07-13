@@ -1,7 +1,6 @@
 local log = require("prosesitter/log")
 local marks = require("prosesitter/on_event/marks")
 local check = require("prosesitter/on_event/check/check")
-local lintreq = require("prosesitter/on_event/lintreq")
 local query = require("vim.treesitter.query")
 
 local get_parser = vim.treesitter.get_parser
@@ -51,9 +50,7 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 		local start_row, start_col, end_row, end_col = comment:range()
 
 		if start_row == end_row then
-			log.info("yo")
-			check.lint_req:add(buf, start_row, start_col, end_col)
-			log.info("yo")
+			check.lint_req:add(buf, start_row, start_col, end_col) -- FIXME this is not running... why?
 		else
 			for row=start_row,end_row-1 do
 				check.lint_req:add(buf, row, start_col, 0)
@@ -63,7 +60,6 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 		end
 	end
 
-	log.info("yo")
 	if not check.schedualled then
 		check.schedual()
 	end
@@ -101,10 +97,8 @@ function M.on_win(_, _, bufnr)
 end
 
 function M.setup(shared)
-	marks.ns_placeholder = shared.ns_placeholders -- seperate namespace for placeholder marks
-	marks.ns_marks = shared.ns_placeholders
-	check.callback = postprocess
-	check.lint_req = lintreq.new()
+	check:setup(shared, postprocess)
+	marks.setup(shared)
 	cfg = shared.cfg
 end
 

@@ -1,17 +1,19 @@
 local async = require("prosesitter/on_event/check/async_cmd")
+local lintreq = require("prosesitter/on_event/lintreq")
 local log = require("prosesitter/log")
 local M = {}
 
-M.callback = nil
 M.schedualled = false
 M.lint_req = nil
-M.job = nil
+local callback = nil
+local job = nil
+local cfg = nil
 
 local function do_check()
 	M.schedualled = false
 	local req = M.lint_req:build()
 	local function on_exit(results)
-		M.callback(results, req.meta_array)
+		callback(results, req.meta_array)
 	end
 
 	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
@@ -19,15 +21,15 @@ local function do_check()
 end
 
 function M.cancelled_schedualled()
-	if M.job ~= nil then
-		M.job:stop()
+	if job ~= nil then
+		job:stop()
 		M.schedualled = false
 	end
 end
 
 function M.schedual()
 	local timeout_ms = 2000
-	M.job = vim.defer_fn(do_check, timeout_ms)
+	job = vim.defer_fn(do_check, timeout_ms)
 end
 
 local function closest_smaller(target, array)
@@ -56,7 +58,7 @@ function M.hl_iter(results, meta_array)
 			return nil
 		end
 		local severity = problems[i].Severity
-		local hl = M.cfg.vale_to_hl[severity]
+		local hl = cfg.vale_to_hl[severity]
 
 		-- get the metadata for the line that was written to the flattend
 		-- input for vale. Then calculate the the column positions in the buffer
@@ -69,6 +71,13 @@ function M.hl_iter(results, meta_array)
 
 		return meta.buf, meta.id, rel_start, rel_end, hl
 	end
+end
+
+function M:setup(shared, _callback)
+	lintreq.setup(shared)
+	self.lint_req = lintreq.new()
+	callback = _callback
+	cfg = shared.cfg
 end
 
 return M
