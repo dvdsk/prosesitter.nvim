@@ -1,10 +1,10 @@
 local log = require("prosesitter/log")
 local shared = require("prosesitter/shared")
 local on_event = require("prosesitter/on_event/on_event")
-local hover = require("prosesitter/hover") -- TODO add hover support
 local api = vim.api
 
 local M = {}
+M.hover = require("prosesitter/hover") -- exposed for keybindings
 
 local attached = {}
 local function on_win(_, _, bufnr)
@@ -14,17 +14,14 @@ local function on_win(_, _, bufnr)
 	end
 end
 
-function M.setup()
+function M:setup()
 	shared:setup()
 	on_event.setup(shared)
-	hover.setup(shared)
+	self.hover.setup(shared)
 
 	api.nvim_set_decoration_provider(shared.ns_placeholders, {
 		on_win = on_win,
 	})
-	local opt = { noremap = true, silent = true, nowait = true }
-	local cmd = "<Cmd>lua _G.ProseCheck:test()<CR>"
-	vim.api.nvim_set_keymap("n", ",", cmd, opt)
 end
 
 _G.ProseSitter = M

@@ -9,8 +9,8 @@ local cfg = nil
 local M = {}
 
 local function postprocess(results, meta_array)
-	for buf, id, start_c, end_c, hl_group in check.hl_iter(results, meta_array) do
-		marks.underline(buf, id, start_c, end_c, hl_group)
+	for buf, id, start_c, end_c, hl_group, hover_txt in check.hl_iter(results, meta_array) do
+		marks.underline(buf, id, start_c, end_c, hl_group, hover_txt)
 	end
 end
 

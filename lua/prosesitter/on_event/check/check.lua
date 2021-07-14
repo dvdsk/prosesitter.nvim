@@ -64,12 +64,13 @@ function M.hl_iter(results, meta_array)
 		-- input for vale. Then calculate the the column positions in the buffer
 		-- and get the placeholder extmark for recovering the line number later
 		local flatcol_start, flatcol_end = unpack(problems[i]["Span"])
-		-- log.info("problem: "..problems[i]["Message"]) -- TODO probably want to store in lookup db (key: bufnr+mark_id)
+		local hover_txt = problems[i]["Message"]
+
 		local meta = closest_smaller(flatcol_start, meta_array)
 		local rel_start = flatcol_start - meta.col
 		local rel_end = flatcol_end - meta.col
 
-		return meta.buf, meta.id, rel_start, rel_end, hl
+		return meta.buf, meta.id, rel_start, rel_end, hl, hover_txt
 	end
 end
 

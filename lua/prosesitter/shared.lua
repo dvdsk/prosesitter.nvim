@@ -6,6 +6,7 @@ M.cfg = {
 }
 M.ns_placeholders = nil
 M.ns_marks = nil
+M.mark_to_hover = {}
 
 function M:setup()
 	M.ns_marks = vim.api.nvim_create_namespace("prosesitter_marks")
