@@ -2,7 +2,6 @@ local log = require("prosesitter/log")
 local api = vim.api
 
 local shared = nil
-local win = nil
 M = {}
 
 function M.add_meta(id, meta)
@@ -11,6 +10,40 @@ end
 
 function M.setup(_shared)
 	shared = _shared
+end
+
+local org_cursor = nil
+local function hide_cursor()
+	org_cursor = vim.opt.guicursor
+	vim.cmd('hi Cursor blend=100')
+	vim.opt.guicursor = {'a:Cursor/lCursor'}
+end
+
+local function restore_cursor()
+	vim.opt.guicursor = org_cursor
+end
+
+local function map_keys(buf)
+	local opt = { nowait = true, noremap = true, silent = true }
+	local cmd = ":lua _G.ProseSitter.hover:close_popup()<CR>"
+	local chars = "abcdefghijklmnopqrstuvwxyz"
+	for i=1,#chars do
+		local key = chars:sub(i, i)
+		api.nvim_buf_set_keymap(buf, 'n', key, cmd, opt)
+		api.nvim_buf_set_keymap(buf, 'n', key:upper(), cmd, opt)
+	end
+
+	local special_keys = {'<Right>','<Left>','<Up>','<Down>','<leader>', 'Esc'}
+	for _, key in ipairs(special_keys) do
+		api.nvim_buf_set_keymap(buf, 'n', key, cmd, opt)
+	end
+end
+
+local win = nil
+function M.close_popup()
+	api.nvim_win_close(win, true)
+	win = false
+	restore_cursor()
 end
 
 -- open hover window if lint error on current pos
@@ -30,6 +63,7 @@ function M.popup()
 	api.nvim_buf_set_option(buf, "filetype", "whid")
 	api.nvim_buf_set_lines(buf, 0, -1, false, { text })
 	api.nvim_buf_set_option(buf, "modifiable", false)
+	hide_cursor()
 	-- https://dev.to/2nit/how-to-write-neovim-plugins-in-lua-5cca
 
 	local opt = {
@@ -41,11 +75,8 @@ function M.popup()
 		col = 0,
 	}
 
-	if win == nil then
-		win = api.nvim_open_win(buf, true, opt) --	TODO see if there is dep for this
-	end
-
-	-- TODO how to exit win
+	win = api.nvim_open_win(buf, true, opt)
+	map_keys() -- make any key close the window
 end
 
 return M
