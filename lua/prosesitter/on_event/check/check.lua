@@ -28,7 +28,7 @@ function M.cancelled_schedualled()
 end
 
 function M.schedual()
-	local timeout_ms = 2000
+	local timeout_ms = 500
 	job = vim.defer_fn(do_check, timeout_ms)
 end
 
@@ -79,6 +79,11 @@ function M:setup(shared, _callback)
 	self.lint_req = lintreq.new()
 	callback = _callback
 	cfg = shared.cfg
+end
+
+function M:disable()
+	self.lint_req = lintreq:new() -- reset lint req
+	self.cancelled_schedualled() -- stop any running async jobs
 end
 
 return M

@@ -2,12 +2,15 @@ local log = require("prosesitter/log")
 local shared = require("prosesitter/shared")
 local on_event = require("prosesitter/on_event/on_event")
 local api = vim.api
+local disabled = false -- weather the plugin has been disabled
 
 local M = {}
 M.hover = require("prosesitter/hover") -- exposed for keybindings
 
 local attached = {}
 local function on_win(_, _, bufnr)
+	if disabled then return true end  -- stop calling on lines if the plugin was just disabled
+
 	if not attached[bufnr] then
 		attached[bufnr] = true
 		on_event.on_win(nil, nil, bufnr)
@@ -18,6 +21,29 @@ function M:setup()
 	shared:setup()
 	on_event.setup(shared)
 	self.hover.setup(shared)
+
+	-- TODO replace with https://neovim.io/doc/user/api.html nvim_subscribe
+	api.nvim_set_decoration_provider(shared.ns_placeholders, {
+		on_win = on_win,
+	})
+end
+
+function M.disable()
+	-- make future events cause the event handler to stop
+	disabled = true
+	on_event.disable()
+
+	-- disable and remove all extmarks
+	for buf, _ in ipairs(attached) do
+		api.nvim_buf_clear_namespace(buf, shared.ns_placeholders, 0, -1)
+		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
+	end
+	attached = {}
+end
+
+function M.enable()
+	disabled = false
+	on_event.enable()
 
 	api.nvim_set_decoration_provider(shared.ns_placeholders, {
 		on_win = on_win,

@@ -7,11 +7,11 @@ local ns_placeholders = nil
 local mark_to_hover = nil
 
 -- remove extmarks between line start and stop
-function M.remove_line_extmarks(bufnr, start, stop)
+function M.remove_line(bufnr, start, stop)
 	-- remove permanent extmarks
 	local es = api.nvim_buf_get_extmarks(bufnr, ns_marks, {start,0}, {stop,-1}, {})
 	for _, e in ipairs(es) do
-	api.nvim_buf_del_extmark(bufnr, M.ns, e[1])
+		api.nvim_buf_del_extmark(bufnr, ns_marks, e[1])
 	end
 	-- remove placeholder marks (max one per line)
 	local placeholders = api.nvim_buf_get_extmarks(bufnr, ns_placeholders, {start,0}, {stop,-1}, {})
@@ -30,7 +30,7 @@ function M.underline(bufnr, id, start_col, end_col, hl, hover_txt)
 	local ok, mark_id = pcall(api.nvim_buf_set_extmark, bufnr, ns_marks, row, start_col-1, opt)
 	mark_to_hover[mark_id] = hover_txt
 	if not ok then
-		log.error("Failed to add extmark, lnum="..vim.inspect(row).." pos="..start_col)
+		log.error("Failed to add extmark, lnum="..vim.inspect(row).." pos="..start_col.." text="..hover_txt)
 	end
 end
 

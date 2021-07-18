@@ -33,7 +33,10 @@ function M:add(buf, row, start_col, end_col)
 	end
 
 	local opt = { end_col= end_col }
-	local placeholder_id = api.nvim_buf_set_extmark(buf, ns, row, start_col, opt)
+	local ok, placeholder_id = pcall(api.nvim_buf_set_extmark, buf, ns, row, start_col, opt)
+	if ok == false then
+		log.info("could not add placeholder: ",buf, ns, row, start_col, end_col)
+	end
 	local full_line = api.nvim_buf_get_lines(buf, row, row+1, true)
 	local line = string.sub(full_line[1], start_col, end_col)
 	self.text[#self.text+1] = line

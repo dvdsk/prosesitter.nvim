@@ -69,7 +69,7 @@ function M.popup()
 	local opt = {
 		style = "minimal",
 		relative = "cursor",
-		width = 20,
+		width = math.min(40, #text),
 		height = 2,
 		row = 1,
 		col = 0,

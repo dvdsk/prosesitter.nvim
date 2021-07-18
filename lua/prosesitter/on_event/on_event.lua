@@ -3,6 +3,7 @@ local marks = require("prosesitter/on_event/marks")
 local check = require("prosesitter/on_event/check/check")
 local query = require("vim.treesitter.query")
 
+local disabled = false -- weather the plugin has been disabled
 local get_parser = vim.treesitter.get_parser
 local api = vim.api
 local cfg = nil
@@ -39,10 +40,12 @@ local function comments(bufnr, start_l, end_l)
 end
 
 function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_count, _, _)
+	if disabled then return true end  -- stop calling on lines if the plugin was just disabled
+
 	local lines_removed = first_changed == last_updated
 	if lines_removed then
 		log.info("lines removed from: " .. first_changed .. " to: " .. last_changed)
-		marks.remove(first_changed, last_changed)
+		marks.remove_line(buf, first_changed, last_changed)
 		return
 	end
 
@@ -99,7 +102,17 @@ end
 function M.setup(shared)
 	check:setup(shared, postprocess)
 	marks.setup(shared)
+
 	cfg = shared.cfg
+end
+
+function M.enable()
+	disabled = false
+end
+
+function M.disable()
+	disabled = true
+	check:disable()
 end
 
 return M
