@@ -6,18 +6,6 @@ local ns_marks = nil
 local ns_placeholders = nil
 local mark_to_hover = nil
 
--- remove extmarks between line start and stop
-function M.remove_line(bufnr, start, stop)
-	-- remove permanent extmarks
-	local es = api.nvim_buf_get_extmarks(bufnr, ns_marks, {start,0}, {stop-1,0}, {})
-	for _, e in ipairs(es) do
-		api.nvim_buf_del_extmark(bufnr, ns_marks, e[1])
-	end
-	-- remove placeholder marks (max one per line)
-	local placeholders = api.nvim_buf_get_extmarks(bufnr, ns_placeholders, {start,0}, {stop,-1}, {})
-	api.nvim_buf_del_extmark(bufnr, ns_placeholders, placeholders[1][1])
-end
-
 function M.underline(bufnr, id, start_col, end_col, hl, hover_txt)
 	local mark = api.nvim_buf_get_extmark_by_id(bufnr, ns_placeholders, id, {details = false})
 	-- TODO cleanup placeholders

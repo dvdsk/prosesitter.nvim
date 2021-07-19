@@ -44,8 +44,7 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 
 	local lines_removed = first_changed == last_updated
 	if lines_removed then
-		log.info("lines removed from: " .. first_changed .. " to: " .. last_changed)
-		marks.remove_line(buf, first_changed, last_changed)
+		-- do not clean up extmarks, they are still needed in case of undo
 		return
 	end
 
