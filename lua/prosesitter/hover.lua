@@ -15,8 +15,8 @@ end
 local org_cursor = nil
 local function hide_cursor()
 	org_cursor = vim.opt.guicursor
-	vim.cmd('hi Cursor blend=100')
-	vim.opt.guicursor = {'a:Cursor/lCursor'}
+	vim.cmd("hi Cursor blend=100")
+	vim.opt.guicursor = { "a:Cursor/lCursor" }
 end
 
 local function restore_cursor()
@@ -26,16 +26,28 @@ end
 local function map_keys(buf)
 	local opt = { nowait = true, noremap = true, silent = true }
 	local cmd = ":lua _G.ProseSitter.hover:close_popup()<CR>"
-	local chars = "abcdefghijklmnopqrstuvwxyz"
-	for i=1,#chars do
+	local chars = "1234567890abcdefghijklmnopqrstuvwxyz/;.,"
+	for i = 1, #chars do
 		local key = chars:sub(i, i)
-		api.nvim_buf_set_keymap(buf, 'n', key, cmd, opt)
-		api.nvim_buf_set_keymap(buf, 'n', key:upper(), cmd, opt)
+		api.nvim_buf_set_keymap(buf, "n", key, cmd, opt)
+		api.nvim_buf_set_keymap(buf, "n", key:upper(), cmd, opt)
 	end
 
-	local special_keys = {'<Right>','<Left>','<Up>','<Down>','<leader>', 'Esc'}
+	local special_keys = {
+		"<Right>",
+		"<Left>",
+		"<Up>",
+		"<Down>",
+		"<Space>",
+		"<LeftMouse>",
+		"<RightMouse>",
+		"<Esc>",
+		"<CR>",
+		"<Tab>",
+		"<Del>",
+	}
 	for _, key in ipairs(special_keys) do
-		api.nvim_buf_set_keymap(buf, 'n', key, cmd, opt)
+		api.nvim_buf_set_keymap(buf, "n", key, cmd, opt)
 	end
 end
 
@@ -53,7 +65,9 @@ function M.popup()
 	local start = { row - 1, col } -- row needs to be zero indexed for get_extmarks
 	local stop = { row - 1, 0 } -- search entire line, TODO handle multi line extmarks
 	local es = api.nvim_buf_get_extmarks(0, shared.ns_marks, start, stop, { limit = 1 })
-	if #es == 0 then return end
+	if #es == 0 then
+		return
+	end
 
 	local id = es[1][1]
 	local text = shared.mark_to_hover[id]
