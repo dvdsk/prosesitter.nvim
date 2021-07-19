@@ -9,7 +9,7 @@ local mark_to_hover = nil
 -- remove extmarks between line start and stop
 function M.remove_line(bufnr, start, stop)
 	-- remove permanent extmarks
-	local es = api.nvim_buf_get_extmarks(bufnr, ns_marks, {start,0}, {stop,-1}, {})
+	local es = api.nvim_buf_get_extmarks(bufnr, ns_marks, {start,0}, {stop-1,0}, {})
 	for _, e in ipairs(es) do
 		api.nvim_buf_del_extmark(bufnr, ns_marks, e[1])
 	end

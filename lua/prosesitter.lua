@@ -50,5 +50,20 @@ function M.enable()
 	})
 end
 
+local es = nil
+function M.test1()
+	local start = 3
+	local stop = 3
+	es = api.nvim_buf_get_extmarks(0, shared.ns_marks, {start,0}, {stop,-1}, {})
+	log.info(vim.inspect(es))
+end
+
+function M.test2()
+	for _, e in ipairs(es) do
+		local m = api.nvim_buf_get_extmark_by_id(0, shared.ns_marks, e[1], {})
+		log.info(vim.inspect(m))
+	end
+end
+
 _G.ProseSitter = M
 return M
