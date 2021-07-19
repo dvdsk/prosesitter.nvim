@@ -52,7 +52,7 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 		local start_row, start_col, end_row, end_col = comment:range()
 
 		if start_row == end_row then
-			check.lint_req:add(buf, start_row, start_col, end_col) -- FIXME this is not running... why?
+			check.lint_req:add(buf, start_row, start_col, end_col)
 		else
 			for row=start_row,end_row-1 do
 				check.lint_req:add(buf, row, start_col, 0)

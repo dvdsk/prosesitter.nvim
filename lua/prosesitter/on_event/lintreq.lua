@@ -26,6 +26,8 @@ end
 
 -- only single lines are added... issue if line breaks connect scentences
 function M:add(buf, row, start_col, end_col)
+	-- TODO do we want start_col till end coll? 
+	-- what happens if a comment is moved further from the line start?
 	local marks = api.nvim_buf_get_extmarks(buf, ns, {row, start_col}, {row, end_col}, {})
 	if #marks > 0 then
 		self:update(marks, buf, row, start_col, end_col)
