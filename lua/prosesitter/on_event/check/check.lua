@@ -7,7 +7,6 @@ M.schedualled = false
 M.lint_req = nil
 local callback = nil
 local job = nil
-local cfg = nil
 
 local function do_check()
 	M.schedualled = false
@@ -43,6 +42,7 @@ local function closest_smaller(target, array)
 	return prev
 end
 
+local cfg = nil
 -- iterator that returns a span and highlight group
 function M.hl_iter(results, meta_array)
 	local problems = vim.fn.json_decode(results)["stdin.md"]

@@ -2,15 +2,21 @@ local log = require("prosesitter/log")
 local shared = require("prosesitter/shared")
 local on_event = require("prosesitter/on_event/on_event")
 local api = vim.api
+local buf_cfg = shared.cfg.by_buf
 
 local M = {}
 M.hover = require("prosesitter/hover") -- exposed for keybindings
 
-local attached = {}
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
-	if not attached[bufnr] then
-		attached[bufnr] = true
+	if buf_cfg[bufnr] == nil then
+		local extension = vim.fn.expand('%:e')
+		local cfg = shared.cfg.by_ext[extension]
+		if cfg == nil then
+			cfg = shared.cfg.default
+		end
+
+		buf_cfg[bufnr] = cfg
 		on_event.on_win(bufnr)
 	end
 end

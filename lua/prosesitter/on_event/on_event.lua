@@ -6,7 +6,6 @@ local query = require("vim.treesitter.query")
 local disabled = false -- weather the plugin has been disabled
 local get_parser = vim.treesitter.get_parser
 local api = vim.api
-local cfg = nil
 local M = {}
 
 local function postprocess(results, meta_array)
@@ -15,6 +14,7 @@ local function postprocess(results, meta_array)
 	end
 end
 
+local cfg = nil
 local hl_queries = {}
 local function comments(bufnr, start_l, end_l)
 	local parser = get_parser(bufnr)
@@ -31,16 +31,18 @@ local function comments(bufnr, start_l, end_l)
 			return
 		end
 		for id, node in hl_query:iter_captures(root_node, bufnr, start_l, end_l) do
-			if vim.tbl_contains(cfg.captures, hl_query.captures[id]) then
-				nodes[#nodes+1] = node
+			if vim.tbl_contains(cfg[bufnr].captures, hl_query.captures[id]) then
+				nodes[#nodes + 1] = node
 			end
 		end
 	end)
 	return nodes
 end
 
-function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_count, _, _)
-	if disabled then return true end  -- stop calling on lines if the plugin was just disabled
+function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, _)
+	if disabled then
+		return true
+	end -- stop calling on lines if the plugin was just disabled
 
 	local lines_removed = first_changed == last_updated
 	if lines_removed then
@@ -54,7 +56,7 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 		if start_row == end_row then
 			check.lint_req:add(buf, start_row, start_col, end_col)
 		else
-			for row=start_row,end_row-1 do
+			for row = start_row, end_row - 1 do
 				check.lint_req:add(buf, row, start_col, 0)
 				start_col = 0 -- only relevent for first line of comment
 			end
@@ -72,11 +74,6 @@ function M.on_win(bufnr)
 		return false
 	end
 
-	if vim.tbl_isempty(cfg.captures) then
-		return false
-	end
-
-	get_parser(bufnr)
 	local ok, parser = pcall(get_parser, bufnr)
 	if not ok then
 		return false
@@ -102,8 +99,7 @@ end
 function M.setup(shared)
 	check:setup(shared, postprocess)
 	marks.setup(shared)
-
-	cfg = shared.cfg
+	cfg = shared.cfg.by_buf
 end
 
 function M.enable()

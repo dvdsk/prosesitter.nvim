@@ -1,12 +1,15 @@
 local M = {}
 
 M.cfg = {
-	captures = { "comment" },
+	by_buf = {},
+	by_ext = {},
+	default = { captures = { "comment" } },
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 }
+
+M.mark_to_hover = {}
 M.ns_placeholders = nil
 M.ns_marks = nil
-M.mark_to_hover = {}
 
 function M:setup()
 	M.ns_marks = vim.api.nvim_create_namespace("prosesitter_marks")
