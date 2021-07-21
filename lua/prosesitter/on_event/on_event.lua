@@ -67,7 +67,7 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, byte_c
 	end
 end
 
-function M.on_win(_, _, bufnr)
+function M.on_win(bufnr)
 	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
 		return false
 	end
@@ -76,6 +76,7 @@ function M.on_win(_, _, bufnr)
 		return false
 	end
 
+	get_parser(bufnr)
 	local ok, parser = pcall(get_parser, bufnr)
 	if not ok then
 		return false

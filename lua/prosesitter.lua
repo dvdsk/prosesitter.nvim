@@ -2,20 +2,16 @@ local log = require("prosesitter/log")
 local shared = require("prosesitter/shared")
 local on_event = require("prosesitter/on_event/on_event")
 local api = vim.api
-local disabled = false -- weather the plugin has been disabled
 
 local M = {}
 M.hover = require("prosesitter/hover") -- exposed for keybindings
 
 local attached = {}
-local function on_win(_, _, bufnr)
-	if disabled then
-		return true
-	end -- stop calling on lines if the plugin was just disabled
-
+function M.attach()
+	local bufnr = api.nvim_get_current_buf()
 	if not attached[bufnr] then
 		attached[bufnr] = true
-		on_event.on_win(nil, nil, bufnr)
+		on_event.on_win(bufnr)
 	end
 end
 
@@ -23,16 +19,12 @@ function M:setup()
 	shared:setup()
 	on_event.setup(shared)
 	self.hover.setup(shared)
-
-	-- TODO replace with https://neovim.io/doc/user/api.html nvim_subscribe
-	api.nvim_set_decoration_provider(shared.ns_placeholders, {
-		on_win = on_win,
-	})
+	vim.cmd("augroup prosesitter")
+	vim.cmd("autocmd prosesitter BufEnter * lua _G.ProseSitter.attach()")
 end
 
 function M.disable()
 	-- make future events cause the event handler to stop
-	disabled = true
 	on_event.disable()
 
 	-- disable and remove all extmarks
@@ -40,16 +32,15 @@ function M.disable()
 		api.nvim_buf_clear_namespace(buf, shared.ns_placeholders, 0, -1)
 		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
 	end
+
+	vim.cmd('autocmd! prosesitter') -- remove autocmd
 	attached = {}
 end
 
 function M.enable()
-	disabled = false
 	on_event.enable()
-
-	api.nvim_set_decoration_provider(shared.ns_placeholders, {
-		on_win = on_win,
-	})
+	vim.cmd("autocmd prosesitter BufEnter * lua _G.ProseSitter.attach()")
+	M.attach()
 end
 
 local es = nil
@@ -84,6 +75,7 @@ function M.showhl()
 			local start_row, start_col, end_row, end_col = node:range()
 			if start_row > row or end_row < row then goto continue end
 			if start_col > col or end_col < col then goto continue end
+			log.info(hl_group)
 			hl_group = hl.captures[id]
 			::continue::
 		end
