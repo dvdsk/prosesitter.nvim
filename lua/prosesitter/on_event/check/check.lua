@@ -1,16 +1,21 @@
 local async = require("prosesitter/on_event/check/async_cmd")
-local lintreq = require("prosesitter/on_event/lintreq")
+local lint_allowlist = require("prosesitter/on_event/lint_allow")
+local lint_denylist = require("prosesitter/on_event/lint_deny")
 local log = require("prosesitter/log")
 local M = {}
 
 M.schedualled = false
-M.lint_req = nil
+M.allowlist_req = nil
+M.denylist_req = nil
 local callback = nil
 local job = nil
 
 local function do_check()
 	M.schedualled = false
-	local req = M.lint_req:build()
+	-- we need to build from allow list and deny list here
+	-- need to merge two requests here
+	local req = M.allowlist_req:build()
+	-- TODO deny list request build and merge
 	local function on_exit(results)
 		callback(results, req.meta_array)
 	end
@@ -75,14 +80,17 @@ function M.hl_iter(results, meta_array)
 end
 
 function M:setup(shared, _callback)
-	lintreq.setup(shared)
-	self.lint_req = lintreq.new()
+	lint_allowlist.setup(shared)
+	lint_denylist.setup(shared)
+	self.allowlist_req = lint_allowlist.new()
+	self.denylist_req = lint_denylist.new()
 	callback = _callback
 	cfg = shared.cfg
 end
 
 function M:disable()
-	self.lint_req = lintreq:new() -- reset lint req
+	self.allowlist_req = lint_allowlist:new() -- reset lint req
+	self.denylist_req = lint_denylist:new() -- reset lint req
 	self.cancelled_schedualled() -- stop any running async jobs
 end
 

@@ -82,6 +82,22 @@ function M:build()
 	return req
 end
 
+function M:on_lines(buf, nodes)
+	for _, node in pairs(nodes) do
+		local start_row, start_col, end_row, end_col = node:range()
+
+		if start_row == end_row then
+			self:add(buf, start_row, start_col, end_col)
+		else
+			for row = start_row, end_row - 1 do
+				self:add(buf, row, start_col, 0)
+				start_col = 0 -- only relevent for first line of comment
+			end
+			self:add(buf, end_row, 0, end_col)
+		end
+	end
+end
+
 function M.setup(shared)
 	ns = shared.ns_placeholders
 end

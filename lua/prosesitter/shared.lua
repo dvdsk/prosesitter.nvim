@@ -3,7 +3,7 @@ local M = {}
 M.cfg = {
 	by_buf = {},
 	by_ext = {},
-	default = { captures = { "comment" } },
+	default = { captures = { "comment" }, list = "allowlist" },
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 }
 
