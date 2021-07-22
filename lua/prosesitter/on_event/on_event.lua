@@ -40,16 +40,18 @@ local function comments(bufnr, start_l, end_l)
 end
 
 function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, _)
-	if disabled then
+	 -- stop calling on lines if the plugin was just disabled
+	if cfg[buf] == nil then
 		return true
-	end -- stop calling on lines if the plugin was just disabled
+	end
 
+	-- do not clean up extmarks, they are still needed in case of undo
 	local lines_removed = first_changed == last_updated
 	if lines_removed then
-		-- do not clean up extmarks, they are still needed in case of undo
 		return
 	end
 
+	-- TODO some init for lintreq builder using cfg_by_buf
 	for _, comment in pairs(comments(buf, first_changed, last_changed)) do
 		local start_row, start_col, end_row, end_col = comment:range()
 

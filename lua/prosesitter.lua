@@ -34,13 +34,13 @@ function M.disable()
 	on_event.disable()
 
 	-- disable and remove all extmarks
-	for buf, _ in ipairs(attached) do
+	for buf, _ in ipairs(buf_cfg) do
 		api.nvim_buf_clear_namespace(buf, shared.ns_placeholders, 0, -1)
 		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
 	end
 
 	vim.cmd('autocmd! prosesitter') -- remove autocmd
-	attached = {}
+	buf_cfg = {}
 end
 
 function M.enable()
