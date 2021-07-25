@@ -8,15 +8,15 @@ local get_parser = vim.treesitter.get_parser
 local api = vim.api
 local M = {}
 
-local function postprocess(results, meta_array)
-	for buf, id, start_c, end_c, hl_group, hover_txt in check.hl_iter(results, meta_array) do
+local function postprocess(results, lintreq)
+	for buf, id, start_c, end_c, hl_group, hover_txt in check.hl_iter(results, lintreq) do
 		marks.underline(buf, id, start_c, end_c, hl_group, hover_txt)
 	end
 end
 
 local cfg_by_buf = nil
 local hl_queries = {}
-local function hl_nodes(bufnr, cfg, start_l, end_l)
+local function get_hl_nodes(bufnr, cfg, start_l, end_l)
 	local parser = get_parser(bufnr)
 	local lang = parser:lang()
 	local hl_query = hl_queries[lang]
@@ -52,7 +52,7 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, 
 		return
 	end
 
-	local nodes = hl_nodes(buf, cfg, first_changed, last_changed)
+	local nodes = get_hl_nodes(buf, cfg, first_changed, last_changed)
 	cfg.lint_req:on_lines(buf, nodes, first_changed, last_changed)
 
 	if not check.schedualled then
