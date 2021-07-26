@@ -12,10 +12,12 @@ local job = nil
 
 local function do_check()
 	M.schedualled = false
-	local allowlist_req = M.allowlist_req:build()
-	-- local denylist_req = M.denylist_req:build()
-	local areas = allowlist_req.areas -- TODO merge etc
-	local text = allowlist_req.text
+	-- local allowlist_req = M.allowlist_req:build()
+	local denylist_req = M.denylist_req:build()
+	-- local areas = allowlist_req.areas -- TODO merge etc
+	local areas = denylist_req.areas -- TODO merge etc
+	-- local text = allowlist_req.text
+	local text = table.concat(denylist_req.text, "")
 
 	local function on_exit(results)
 		callback(results, areas)

@@ -7,43 +7,54 @@ M.__index = M -- failed table lookups on the instances should fallback to the cl
 function M.new()
 	local self = setmetatable({}, M)
 	self.meta_by_mark = {}
+	self.marks = {}
 	return self
 end
-
 
 function M:is_empty()
 	log.error("not implemented")
 	return empty
 end
 
--- for some unknown reason table.concat hangs infinitly. Since we usually do not have
--- that many strings in table this is an okay alternative
-local function to_string(table)
-	-- local array = {}
-	local text = ""
-	for _, v in pairs(table) do
-		text = text .. v .. " "
-		-- array[#array+1] = v
+-- returns placeholder ext-marks array sorted by
+-- buffer then row number
+local large_numb = math.huge/4
+function M:marks_sorted_by_row()
+	local unsorted = {}
+	log.info(vim.inspect(self.marks))
+	for _, mark in ipairs(self.marks) do
+		local row, _ = api.nvim_buf_get_extmark_by_id(mark.buf, ns, mark.id, {})
+		unsorted[#unsorted + 1] = { buf = mark.buf, row = row, id = mark.id }
 	end
-	-- local text = table.concat(array, "\n", 1, 2)
-	return text
+	table.sort(unsorted, function(a, b) -- ascending sort
+		return a.buf * large_numb + a.row < b.buf * large_numb + b.row
+	end)
+	return unsorted -- is now sorted
 end
 
 function M:build()
-	local text = {}
-	local req = {}
-	req.meta_array = {}
+	local req = { text = {}, areas = {} }
+	local marks = self:marks_sorted_by_row()
 
-	local marks = sorted_marks()
-	for _, line_id in ipairs(marks) do
-		local line_txt = get_line(line_id)
-		local line_meta = self.meta_by_mark[line_id]
+	local col = 0
+	for _, mark in ipairs(marks) do
+		local line_txt = api.nvim_buf_get_lines(mark.buf, mark.row, mark.row, true)[1]
+		local line_meta = self.meta_by_mark[mark.id]
 		if line_meta == nil then
-			text[#text+1] = line_txt
-		end
-
-		for _, meta in ipairs() do
-			text[#text+1] = line_txt:sub(meta.start_col, meta.end_col)
+			req.text[#req.text + 1] = line_txt
+			col = col + #line_txt + 1
+		else
+			for _, meta in ipairs() do
+				local area = {
+					col = col, -- column in text passed to linter
+					row_col = meta.start_col, -- column in buffer
+					row_id = mark.id, -- extmark at the start of the row
+					buf_id = meta.buf,
+				}
+				req.areas[#req.areas + 1] = area
+				req.text[#req.text + 1] = line_txt:sub(meta.start_col, meta.end_col)
+				col = col + meta.end_col - meta.start_col
+			end
 		end
 	end
 
@@ -58,7 +69,8 @@ function M:ensure_placeholders(buf, start_l, end_l)
 		if marks[j][2] == i + 1 then -- i uses zero based indexing
 			j = j + 1
 		else
-			self.marks[#self.marks + 1] = api.nvim_buf_set_extmark(buf, ns, i, 0, {})
+			local id = api.nvim_buf_set_extmark(buf, ns, i, 0, {})
+			self.marks[#self.marks + 1] = { id = id, buf = buf }
 		end
 	end
 end
@@ -67,7 +79,7 @@ end
 function M:note_hl(buf, row, start_col, end_col)
 	local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
 	local line_meta = self.meta_by_mark[marks[1]]
-	line_meta[#line_meta+1] = { start_col = start_col, end_col = end_col }
+	line_meta[#line_meta + 1] = { buf = buf, start_col = start_col, end_col = end_col }
 end
 
 function M:on_lines(buf, nodes, start_l, end_l)

@@ -1,9 +1,22 @@
 local M = {}
 
+local latex = {
+	captures = {
+		"type",
+		"include",
+		"punctuation.bracket",
+		"punctuation.delimiter",
+		"functions.macro",
+		"text.environment.name",
+		"parameter",
+	},
+	mode = "deny",
+}
+
 M.cfg = {
 	by_buf = {},
-	by_ext = {},
-	default = { captures = { "comment" }, list = "allowlist" },
+	by_ext = { latex = latex },
+	default = { captures = { "comment" }, mode = "allow" },
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 }
 

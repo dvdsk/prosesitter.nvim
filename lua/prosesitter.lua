@@ -18,12 +18,12 @@ function M.attach()
 			cfg = shared.cfg.default
 		end
 
-		if cfg.list == "allowlist" then
+		if cfg.mode == "allow" then
 			cfg.lint_req = allowlist_req
-		elseif cfg.list == "denylist" then
+		elseif cfg.mode == "deny" then
 			cfg.lint_req = denylist_req
 		else
-			print("need to specify weather list kind is 'allowlist' or 'denylist'")
+			print("need to specify wheather mode is 'allow' or 'deny'")
 		end
 
 		buf_cfg[bufnr] = cfg
