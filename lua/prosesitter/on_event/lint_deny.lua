@@ -31,33 +31,26 @@ function M:marks_sorted_by_row()
 	return unsorted -- is now sorted
 end
 
+-- TODO refactor: too long!
 function M:build()
 	local req = { text = {}, areas = {} }
 	local marks = self:marks_sorted_by_row()
 
 	local col = 0
-	local row = 1
 	for _, line in ipairs(marks) do
 		local line_txt = api.nvim_buf_get_lines(line.buf, line.row, line.row+1, false)[1]
 		local forbidden = self.meta_by_mark[line.id]
 		if forbidden == nil then
-			log.info(#line_txt)
 			if #line_txt > 0 then
 				req.text[#req.text+1] = line_txt
 				req.areas[#req.areas+1] = {
 					col = col,
-					row = row,
-					row_col = 0,
+					row_col = 1,
 					row_id = line.id,
 					buf_id = line.buf,
 				}
+				col = col + #line_txt + 1
 			end
-			log.info(vim.inspect(req.areas[#req.areas]))
-			log.info(vim.inspect(req.text[#req.text]))
-			-- add a newline after each buffer line
-			req.text[#req.text+1] = "\n"
-			col = col + #line_txt + 1
-			row = row + 1
 			goto continue1
 		end
 
@@ -65,23 +58,28 @@ function M:build()
 		for _, forbidden_area in ipairs(forbidden) do
 			local next_start = forbidden_area.start_col
 			if next_start - current_end > 0 then
-				-- log.info(vim.inspect(line_txt:sub(current_end, next_start)))
 				req.text[#req.text+1] = line_txt:sub(current_end, next_start)
 				req.areas[#req.areas+1] = {
 					col = col,
-					row = row,
 					row_col = current_end,
 					row_id = line.id,
 					buf_id = line.buf,
 				}
+				col = col + next_start - current_end + 2
 			end
-			col = col + next_start - current_end + 1
 			current_end = forbidden_area.end_col + 1
 		end
-		-- add a newline after each buffer line
-		req.text[#req.text+1] = "\n"
-		row = row + 1
-		col = col + 1
+
+		if current_end ~= #line_txt then
+			req.text[#req.text+1] = line_txt:sub(current_end, -1)
+			req.areas[#req.areas+1] = {
+				col = col,
+				row_col = current_end,
+				row_id = line.id,
+				buf_id = line.buf,
+			}
+			col = col + #line_txt - current_end + 2
+		end
 
 		::continue1::
 	end
