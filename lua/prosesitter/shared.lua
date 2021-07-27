@@ -8,6 +8,8 @@ local latex = {
 		"punctuation.delimiter",
 		"functions.macro",
 		"text.environment.name",
+		"text.environment",
+		"_name",
 		"parameter",
 	},
 	mode = "deny",
@@ -15,7 +17,7 @@ local latex = {
 
 M.cfg = {
 	by_buf = {},
-	by_ext = { latex = latex },
+	by_ext = { tex = latex },
 	default = { captures = { "comment" }, mode = "allow" },
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 }

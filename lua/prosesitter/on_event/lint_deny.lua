@@ -13,17 +13,16 @@ end
 
 function M:is_empty()
 	log.error("not implemented")
-	return empty
+	return false
 end
 
 -- returns placeholder ext-marks array sorted by
 -- buffer then row number
-local large_numb = math.huge/4
+local large_numb = 2 ^ 20 -- about 1 million
 function M:marks_sorted_by_row()
 	local unsorted = {}
-	log.info(vim.inspect(self.marks))
 	for _, mark in ipairs(self.marks) do
-		local row, _ = api.nvim_buf_get_extmark_by_id(mark.buf, ns, mark.id, {})
+		local row = api.nvim_buf_get_extmark_by_id(mark.buf, ns, mark.id, {})[1]
 		unsorted[#unsorted + 1] = { buf = mark.buf, row = row, id = mark.id }
 	end
 	table.sort(unsorted, function(a, b) -- ascending sort
@@ -37,49 +36,89 @@ function M:build()
 	local marks = self:marks_sorted_by_row()
 
 	local col = 0
-	for _, mark in ipairs(marks) do
-		local line_txt = api.nvim_buf_get_lines(mark.buf, mark.row, mark.row, true)[1]
-		local line_meta = self.meta_by_mark[mark.id]
-		if line_meta == nil then
-			req.text[#req.text + 1] = line_txt
-			col = col + #line_txt + 1
-		else
-			for _, meta in ipairs() do
-				local area = {
-					col = col, -- column in text passed to linter
-					row_col = meta.start_col, -- column in buffer
-					row_id = mark.id, -- extmark at the start of the row
-					buf_id = meta.buf,
+	local row = 1
+	for _, line in ipairs(marks) do
+		local line_txt = api.nvim_buf_get_lines(line.buf, line.row, line.row+1, false)[1]
+		local forbidden = self.meta_by_mark[line.id]
+		if forbidden == nil then
+			log.info(#line_txt)
+			if #line_txt > 0 then
+				req.text[#req.text+1] = line_txt
+				req.areas[#req.areas+1] = {
+					col = col,
+					row = row,
+					row_col = 0,
+					row_id = line.id,
+					buf_id = line.buf,
 				}
-				req.areas[#req.areas + 1] = area
-				req.text[#req.text + 1] = line_txt:sub(meta.start_col, meta.end_col)
-				col = col + meta.end_col - meta.start_col
 			end
+			log.info(vim.inspect(req.areas[#req.areas]))
+			log.info(vim.inspect(req.text[#req.text]))
+			-- add a newline after each buffer line
+			req.text[#req.text+1] = "\n"
+			col = col + #line_txt + 1
+			row = row + 1
+			goto continue1
 		end
+
+		local current_end = 1
+		for _, forbidden_area in ipairs(forbidden) do
+			local next_start = forbidden_area.start_col
+			if next_start - current_end > 0 then
+				-- log.info(vim.inspect(line_txt:sub(current_end, next_start)))
+				req.text[#req.text+1] = line_txt:sub(current_end, next_start)
+				req.areas[#req.areas+1] = {
+					col = col,
+					row = row,
+					row_col = current_end,
+					row_id = line.id,
+					buf_id = line.buf,
+				}
+			end
+			col = col + next_start - current_end + 1
+			current_end = forbidden_area.end_col + 1
+		end
+		-- add a newline after each buffer line
+		req.text[#req.text+1] = "\n"
+		row = row + 1
+		col = col + 1
+
+		::continue1::
 	end
 
 	return req
 end
 
 function M:ensure_placeholders(buf, start_l, end_l)
-	local marks = api.nvim_buf_get_extmarks(buf, ns, { start_l, 0 }, { end_l + 1, 0 }, {})
+	local existing_marks = api.nvim_buf_get_extmarks(buf, ns, { start_l, 0 }, { end_l, 0 }, {})
 	local j = 1
-	for i = start_l, end_l do
-		-- second element of mark is the row
-		if marks[j][2] == i + 1 then -- i uses zero based indexing
-			j = j + 1
-		else
-			local id = api.nvim_buf_set_extmark(buf, ns, i, 0, {})
-			self.marks[#self.marks + 1] = { id = id, buf = buf }
+	for row = start_l, end_l-1 do
+		-- check for existing extmark to reuse
+		if existing_marks[j] ~= nil then
+			local marks_row = existing_marks[j][2]
+			-- existing marks and for loop have same order
+			if marks_row == row+1 then
+				j = j + 1
+				goto continue
+			end
 		end
+		local id = api.nvim_buf_set_extmark(buf, ns, row, 0, {})
+		self.marks[#self.marks + 1] = { id = id, buf = buf }
+		::continue::
 	end
 end
 
 -- nodes should be arriving in order, therefore line_meta is correctly sorted
 function M:note_hl(buf, row, start_col, end_col)
 	local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
-	local line_meta = self.meta_by_mark[marks[1]]
-	line_meta[#line_meta + 1] = { buf = buf, start_col = start_col, end_col = end_col }
+	local mark_id = marks[1][1]
+	local line_meta = self.meta_by_mark[mark_id]
+	local meta = { buf = buf, start_col = start_col, end_col = end_col }
+	if line_meta == nil then
+		self.meta_by_mark[mark_id] = { meta }
+	else
+		line_meta[#line_meta + 1] = meta
+	end
 end
 
 function M:on_lines(buf, nodes, start_l, end_l)
@@ -98,8 +137,6 @@ function M:on_lines(buf, nodes, start_l, end_l)
 			self:note_hl(buf, end_row, 0, end_col)
 		end
 	end
-
-	log.error("unimplemented")
 end
 
 function M.setup(shared)

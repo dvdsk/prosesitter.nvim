@@ -17,9 +17,11 @@ local function do_check()
 	-- local areas = allowlist_req.areas -- TODO merge etc
 	local areas = denylist_req.areas -- TODO merge etc
 	-- local text = allowlist_req.text
-	local text = table.concat(denylist_req.text, "")
+	local text = table.concat(denylist_req.text, " ")
+	log.info(text)
 
 	local function on_exit(results)
+		log.info(results)
 		callback(results, areas)
 	end
 
@@ -48,11 +50,22 @@ local function next_col(self, j)
 	end
 end
 
+local function next_row(self, j)
+	local next_area = self[j + 1]
+	if next_area == nil then
+		return math.huge
+	else
+		return next_area.row
+	end
+end
+
 local cfg = nil
 -- iterator that returns a span and highlight group
 -- TODO rewrite to take into account gaps in text that should be highlighted
 function M.hl_iter(results, areas)
+	-- log.info(vim.inspect(areas))
 	local problems = vim.fn.json_decode(results)["stdin.md"]
+	-- log.info(vim.inspect(problems))
 	if problems == nil then
 		-- TODO cleanup remove placeholders
 		return function()
@@ -63,15 +76,20 @@ function M.hl_iter(results, areas)
 	local i = 0
 	local j = 1
 	areas.next_col = next_col
+	areas.next_row = next_row
 	return function() -- lua iterator
 		i = i + 1
 		if i > #problems then
 			return nil
 		end
 
+		local lint_row = problems[i]["Line"]
 		local lint_col, lint_end_col = unpack(problems[i]["Span"])
-		while lint_col > areas:next_col(j) do
+		while lint_row > areas:next_row(j) do
 			j = j + 1
+			while lint_col > areas:next_col(j) do
+				j = j + 1
+			end
 		end
 		local hl_start = lint_col - areas[j].col + areas[j].row_col
 
