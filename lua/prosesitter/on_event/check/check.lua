@@ -18,6 +18,7 @@ local function do_check()
 	local areas = denylist_req.areas -- TODO merge etc
 	-- local text = allowlist_req.text
 	local text = table.concat(denylist_req.text, " ")
+	log.info(text)
 
 	local function on_exit(results)
 		callback(results, areas)
@@ -39,6 +40,16 @@ function M.schedual()
 	job = vim.defer_fn(do_check, timeout_ms)
 end
 
+local function next_problem_match(problems, i)
+	local next_problem = problems[i+1]
+	if next_problem == nil then
+		return ""
+	else
+		return next_problem.Match
+	end
+end
+
+
 local function next_col(self, j)
 	local next_area = self[j + 1]
 	if next_area == nil then
@@ -54,7 +65,7 @@ local cfg = nil
 function M.hl_iter(results, areas)
 	-- log.info(vim.inspect(areas))
 	local problems = vim.fn.json_decode(results)["stdin.md"]
-	-- log.info(vim.inspect(problems))
+	log.info(vim.inspect(problems))
 	if problems == nil then
 		-- TODO cleanup remove placeholders
 		return function()
@@ -69,6 +80,13 @@ function M.hl_iter(results, areas)
 		i = i + 1
 		if i > #problems then
 			return nil
+		end
+
+		while problems[i].Match == next_problem_match(problems, i) do
+			if problems[i]["Message"] ~= problems[i+1]["Message"] then
+				problems[i+1]["Message"] = problems[i+1]["Message"].."\n"..problems[i]["Message"]
+			end
+			i = i+1
 		end
 
 		local lint_col, lint_end_col = unpack(problems[i]["Span"])

@@ -3,7 +3,6 @@ local marks = require("prosesitter/on_event/marks")
 local check = require("prosesitter/on_event/check/check")
 local query = require("vim.treesitter.query")
 
-local disabled = false -- weather the plugin has been disabled
 local get_parser = vim.treesitter.get_parser
 local api = vim.api
 local M = {}

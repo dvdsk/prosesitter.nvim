@@ -11,6 +11,11 @@ function M.new()
 	return self
 end
 
+function M:reset()
+	self.meta_by_mark = {}
+	self.marks = {}
+end
+
 function M:is_empty()
 	log.error("not implemented")
 	return false
@@ -83,7 +88,8 @@ function M:build()
 
 		::continue1::
 	end
-
+	log.info(vim.inspect(req))
+	self:reset()
 	return req
 end
 
@@ -95,7 +101,7 @@ function M:ensure_placeholders(buf, start_l, end_l)
 		if existing_marks[j] ~= nil then
 			local marks_row = existing_marks[j][2]
 			-- existing marks and for loop have same order
-			if marks_row == row+1 then
+			if marks_row == row then
 				j = j + 1
 				goto continue
 			end
