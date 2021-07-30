@@ -18,7 +18,6 @@ local function do_check()
 	local areas = denylist_req.areas -- TODO merge etc
 	-- local text = allowlist_req.text
 	local text = table.concat(denylist_req.text, " ")
-	log.info(text)
 
 	local function on_exit(results)
 		callback(results, areas)
@@ -63,11 +62,7 @@ local cfg = nil
 -- iterator that returns a span and highlight group
 -- TODO rewrite to take into account gaps in text that should be highlighted
 function M.hl_iter(results, areas)
-	-- log.info(vim.inspect(areas))
 	local problems = vim.fn.json_decode(results)["stdin.md"]
-	log.info(vim.inspect(problems))
-	log.info(vim.inspect(areas))
-
 	if problems == nil then
 		-- TODO cleanup remove placeholders
 		return function()
@@ -93,10 +88,8 @@ function M.hl_iter(results, areas)
 
 		local lint_col, lint_end_col = unpack(problems[i]["Span"])
 		while lint_col > areas:next_col(j) do
-			log.info("lint_col: "..lint_col.." areas[j].col: "..areas[j].col)
 			j = j + 1
 		end
-		log.info("start: "..vim.inspect(areas[j]))
 		local hl_start = lint_col - areas[j].col + areas[j].row_col
 
 		local k = j
@@ -109,7 +102,6 @@ function M.hl_iter(results, areas)
 		local hl_group = cfg.vale_to_hl[severity]
 		local hover_txt = problems[i]["Message"]
 
-		log.info(vim.inspect(areas[j]))
 		return areas[j].buf_id, areas[j].row_id, hl_start, hl_end, hl_group, hover_txt
 	end
 end

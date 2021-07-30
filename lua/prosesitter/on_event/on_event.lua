@@ -51,8 +51,8 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, 
 		return
 	end
 
-	local nodes = get_hl_nodes(buf, cfg, first_changed, last_changed)
-	cfg.lint_req:on_lines(buf, nodes, first_changed, last_changed)
+	local nodes = get_hl_nodes(buf, cfg, first_changed, last_changed-1)
+	cfg.lint_req:on_lines(buf, nodes, first_changed, last_changed-1)
 
 	if not check.schedualled then
 		check.schedual()

@@ -26,9 +26,10 @@ end
 local large_numb = 2 ^ 20 -- about 1 million
 function M:marks_sorted_by_row()
 	local unsorted = {}
-	for _, mark in ipairs(self.marks) do
-		local row = api.nvim_buf_get_extmark_by_id(mark.buf, ns, mark.id, {})[1]
-		unsorted[#unsorted + 1] = { buf = mark.buf, row = row, id = mark.id }
+	for mark_id, mark_buf in pairs(self.marks) do
+		-- need to get the row again in case text was inserted above it
+		local row = api.nvim_buf_get_extmark_by_id(mark_buf, ns, mark_id, {})[1]
+		unsorted[#unsorted + 1] = { buf = mark_buf, row = row, id = mark_id }
 	end
 	table.sort(unsorted, function(a, b) -- ascending sort
 		return a.buf * large_numb + a.row < b.buf * large_numb + b.row
@@ -50,7 +51,7 @@ function M:build()
 				req.text[#req.text+1] = line_txt
 				req.areas[#req.areas+1] = {
 					col = col,
-					row_col = 1,
+					row_col = 0,
 					row_id = line.id,
 					buf_id = line.buf,
 				}
@@ -88,39 +89,45 @@ function M:build()
 
 		::continue1::
 	end
-	log.info(vim.inspect(req))
 	self:reset()
+	log.info(vim.inspect(req))
 	return req
 end
 
+function M:add_marks(buf)
+	-- not an array, row can be zero
+	for _, id in pairs(self.marks_by_row) do
+		self.marks[id] = buf
+	end
+end
+
 function M:ensure_placeholders(buf, start_l, end_l)
-	local existing_marks = api.nvim_buf_get_extmarks(buf, ns, { start_l, 0 }, { end_l, 0 }, {})
+	self.marks_by_row = {}
 	local j = 1
-	for row = start_l, end_l-1 do
-		-- check for existing extmark to reuse
-		if existing_marks[j] ~= nil then
-			local marks_row = existing_marks[j][2]
+	local existing_marks = api.nvim_buf_get_extmarks(buf, ns, { start_l, 0 }, { end_l, -1 }, {})
+	for row = start_l, end_l do
+		-- check for existing extmark to reuse TODO FIXME
+		local existing = existing_marks[j]
+		if existing == nil then
+			local id = api.nvim_buf_set_extmark(buf, ns, row, 0, {})
+			self.marks_by_row[row] = id
+		else
+			local id = existing[1]
 			-- existing marks and for loop have same order
-			if marks_row == row then
-				j = j + 1
-				goto continue
-			end
+			self.marks_by_row[row] = id
 		end
-		local id = api.nvim_buf_set_extmark(buf, ns, row, 0, {})
-		self.marks[#self.marks + 1] = { id = id, buf = buf }
-		::continue::
 	end
 end
 
 -- nodes should be arriving in order, therefore line_meta is correctly sorted
 function M:note_hl(buf, row, start_col, end_col)
-	local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
-	local mark_id = marks[1][1]
+	local mark_id = self.marks_by_row[row]
 	local line_meta = self.meta_by_mark[mark_id]
 	local meta = { buf = buf, start_col = start_col, end_col = end_col }
 	if line_meta == nil then
 		self.meta_by_mark[mark_id] = { meta }
 	else
+		-- there can be multiple forbidden (hl) zones per line
 		line_meta[#line_meta + 1] = meta
 	end
 end
@@ -141,6 +148,8 @@ function M:on_lines(buf, nodes, start_l, end_l)
 			self:note_hl(buf, end_row, 0, end_col)
 		end
 	end
+
+	self:add_marks(buf)
 end
 
 function M.setup(shared)
