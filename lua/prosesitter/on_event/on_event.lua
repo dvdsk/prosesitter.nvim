@@ -3,20 +3,19 @@ local marks = require("prosesitter/on_event/marks")
 local check = require("prosesitter/on_event/check/check")
 local query = require("vim.treesitter.query")
 
-local disabled = false -- weather the plugin has been disabled
 local get_parser = vim.treesitter.get_parser
 local api = vim.api
 local M = {}
 
-local function postprocess(results, meta_array)
-	for buf, id, start_c, end_c, hl_group, hover_txt in check.hl_iter(results, meta_array) do
+local function postprocess(results, lintreq)
+	for buf, id, start_c, end_c, hl_group, hover_txt in check.hl_iter(results, lintreq) do
 		marks.underline(buf, id, start_c, end_c, hl_group, hover_txt)
 	end
 end
 
-local cfg = nil
+local cfg_by_buf = nil
 local hl_queries = {}
-local function comments(bufnr, start_l, end_l)
+local function get_hl_nodes(bufnr, cfg, start_l, end_l)
 	local parser = get_parser(bufnr)
 	local lang = parser:lang()
 	local hl_query = hl_queries[lang]
@@ -31,7 +30,7 @@ local function comments(bufnr, start_l, end_l)
 			return
 		end
 		for id, node in hl_query:iter_captures(root_node, bufnr, start_l, end_l) do
-			if vim.tbl_contains(cfg[bufnr].captures, hl_query.captures[id]) then
+			if vim.tbl_contains(cfg.captures, hl_query.captures[id]) then
 				nodes[#nodes + 1] = node
 			end
 		end
@@ -41,7 +40,8 @@ end
 
 function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, _)
 	 -- stop calling on lines if the plugin was just disabled
-	if cfg[buf] == nil then
+	local cfg = cfg_by_buf[buf]
+	if cfg == nil then
 		return true
 	end
 
@@ -51,20 +51,8 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, 
 		return
 	end
 
-	-- TODO some init for lintreq builder using cfg_by_buf
-	for _, comment in pairs(comments(buf, first_changed, last_changed)) do
-		local start_row, start_col, end_row, end_col = comment:range()
-
-		if start_row == end_row then
-			check.lint_req:add(buf, start_row, start_col, end_col)
-		else
-			for row = start_row, end_row - 1 do
-				check.lint_req:add(buf, row, start_col, 0)
-				start_col = 0 -- only relevent for first line of comment
-			end
-			check.lint_req:add(buf, end_row, 0, end_col)
-		end
-	end
+	local nodes = get_hl_nodes(buf, cfg, first_changed, last_changed-1)
+	cfg.lint_req:on_lines(buf, nodes, first_changed, last_changed-1)
 
 	if not check.schedualled then
 		check.schedual()
@@ -101,15 +89,18 @@ end
 function M.setup(shared)
 	check:setup(shared, postprocess)
 	marks.setup(shared)
-	cfg = shared.cfg.by_buf
+	cfg_by_buf = shared.cfg.by_buf
 end
 
-function M.enable()
-	disabled = false
+function M.get_allowlist_req()
+	return check.allowlist_req
+end
+
+function M.get_denylist_req()
+	return check.denylist_req
 end
 
 function M.disable()
-	disabled = true
 	check:disable()
 end
 

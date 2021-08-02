@@ -7,6 +7,8 @@ local buf_cfg = shared.cfg.by_buf
 local M = {}
 M.hover = require("prosesitter/hover") -- exposed for keybindings
 
+local denylist_req = nil  -- get value during setup
+local allowlist_req = nil
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
 	if buf_cfg[bufnr] == nil then
@@ -14,6 +16,14 @@ function M.attach()
 		local cfg = shared.cfg.by_ext[extension]
 		if cfg == nil then
 			cfg = shared.cfg.default
+		end
+
+		if cfg.mode == "allow" then
+			cfg.lint_req = allowlist_req
+		elseif cfg.mode == "deny" then
+			cfg.lint_req = denylist_req
+		else
+			print("need to specify wheather mode is 'allow' or 'deny'")
 		end
 
 		buf_cfg[bufnr] = cfg
@@ -24,6 +34,8 @@ end
 function M:setup()
 	shared:setup()
 	on_event.setup(shared)
+	allowlist_req = on_event.get_allowlist_req()
+	denylist_req = on_event.get_denylist_req()
 	self.hover.setup(shared)
 	vim.cmd("augroup prosesitter")
 	vim.cmd("autocmd prosesitter BufEnter * lua _G.ProseSitter.attach()")
@@ -44,7 +56,6 @@ function M.disable()
 end
 
 function M.enable()
-	on_event.enable()
 	vim.cmd("autocmd prosesitter BufEnter * lua _G.ProseSitter.attach()")
 	M.attach()
 end
