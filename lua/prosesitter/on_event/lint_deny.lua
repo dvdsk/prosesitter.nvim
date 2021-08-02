@@ -90,7 +90,6 @@ function M:build()
 		::continue1::
 	end
 	self:reset()
-	log.info(vim.inspect(req))
 	return req
 end
 
@@ -106,7 +105,7 @@ function M:ensure_placeholders(buf, start_l, end_l)
 	local j = 1
 	local existing_marks = api.nvim_buf_get_extmarks(buf, ns, { start_l, 0 }, { end_l, -1 }, {})
 	for row = start_l, end_l do
-		-- check for existing extmark to reuse TODO FIXME
+		-- check for existing extmark to reuse
 		local existing = existing_marks[j]
 		if existing == nil then
 			local id = api.nvim_buf_set_extmark(buf, ns, row, 0, {})
@@ -137,6 +136,12 @@ function M:on_lines(buf, nodes, start_l, end_l)
 
 	for _, node in pairs(nodes) do
 		local start_row, start_col, end_row, end_col = node:range()
+		if start_row > end_l or end_row < start_l then
+			goto continue
+		end
+
+		start_row = math.max(start_row, start_l)
+		end_row = math.min(end_row, end_l)
 
 		if start_row == end_row then
 			self:note_hl(buf, start_row, start_col, end_col)
@@ -147,6 +152,7 @@ function M:on_lines(buf, nodes, start_l, end_l)
 			end
 			self:note_hl(buf, end_row, 0, end_col)
 		end
+		::continue::
 	end
 
 	self:add_marks(buf)
