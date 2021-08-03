@@ -7,8 +7,8 @@ local buf_cfg = shared.cfg.by_buf
 local M = {}
 M.hover = require("prosesitter/hover") -- exposed for keybindings
 
-local denylist_req = nil  -- get value during setup
-local allowlist_req = nil
+local hl_deny_req = nil  -- get value during setup
+local hl_allow_req = nil
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
 	if buf_cfg[bufnr] == nil then
@@ -18,24 +18,28 @@ function M.attach()
 			cfg = shared.cfg.default
 		end
 
-		if cfg.mode == "allow" then
-			cfg.lint_req = allowlist_req
-		elseif cfg.mode == "deny" then
-			cfg.lint_req = denylist_req
+		if cfg.mode == "hl_allow" then
+			cfg.lint_req = hl_allow_req
+			buf_cfg[bufnr] = cfg
+			on_event.attach_hl(bufnr)
+		elseif cfg.mode == "hl_deny" then
+			cfg.lint_req = hl_deny_req
+			buf_cfg[bufnr] = cfg
+			on_event.attach_hl(bufnr)
+		elseif cfg.mode == "query" then
+			buf_cfg[bufnr] = cfg
+			on_event.attach_query(bufnr)
 		else
-			print("need to specify wheather mode is 'allow' or 'deny'")
+			print("need to specify wheather mode is 'hl_allow' or 'hl_deny' or query")
 		end
-
-		buf_cfg[bufnr] = cfg
-		on_event.on_win(bufnr)
 	end
 end
 
 function M:setup()
 	shared:setup()
 	on_event.setup(shared)
-	allowlist_req = on_event.get_allowlist_req()
-	denylist_req = on_event.get_denylist_req()
+	hl_allow_req = on_event.get_allowlist_req()
+	hl_deny_req = on_event.get_denylist_req()
 	self.hover.setup(shared)
 	vim.cmd("augroup prosesitter")
 	vim.cmd("autocmd prosesitter BufEnter * lua _G.ProseSitter.attach()")

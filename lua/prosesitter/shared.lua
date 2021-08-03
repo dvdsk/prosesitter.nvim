@@ -13,13 +13,13 @@ local latex = {
 		"_name",
 		"parameter",
 	},
-	mode = "deny",
+	mode = "hl_deny",
 }
 
 M.cfg = {
 	by_buf = {},
 	by_ext = { tex = latex },
-	default = { captures = { "comment" }, mode = "allow" },
+	default = { captures = { "comment" }, mode = "hl_allow" },
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 }
 

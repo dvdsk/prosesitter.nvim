@@ -1,19 +1,19 @@
 local async = require("prosesitter/on_event/check/async_cmd")
-local lint_allowlist = require("prosesitter/on_event/lint_allow")
-local lint_denylist = require("prosesitter/on_event/lint_deny")
+local hl_allowlist = require("prosesitter/on_event/hl_linting/hl_allow")
+local hl_denylist = require("prosesitter/on_event/hl_linting/hl_deny")
 local log = require("prosesitter/log")
 local M = {}
 
 M.schedualled = false
-M.allowlist_req = nil
-M.denylist_req = nil
+M.hl_allow_req = nil
+M.hl_deny_req = nil
 local callback = nil
 local job = nil
 
 local function do_check()
 	M.schedualled = false
 	-- local allowlist_req = M.allowlist_req:build()
-	local denylist_req = M.denylist_req:build()
+	local denylist_req = M.hl_deny_req:build()
 	-- local areas = allowlist_req.areas -- TODO merge etc
 	local areas = denylist_req.areas -- TODO merge etc
 	-- local text = allowlist_req.text
@@ -107,17 +107,17 @@ function M.hl_iter(results, areas)
 end
 
 function M:setup(shared, _callback)
-	lint_allowlist.setup(shared)
-	lint_denylist.setup(shared)
-	self.allowlist_req = lint_allowlist.new()
-	self.denylist_req = lint_denylist.new()
+	hl_allowlist.setup(shared)
+	hl_denylist.setup(shared)
+	self.hl_allow_req = hl_allowlist.new()
+	self.hl_deny_req = hl_denylist.new()
 	callback = _callback
 	cfg = shared.cfg
 end
 
 function M:disable()
-	self.allowlist_req = lint_allowlist:new() -- reset lint req
-	self.denylist_req = lint_denylist:new() -- reset lint req
+	self.hl_allow_req = hl_allowlist:new() -- reset lint req
+	self.hl_deny_req = hl_denylist:new() -- reset lint req
 	self.cancelled_schedualled() -- stop any running async jobs
 end
 
