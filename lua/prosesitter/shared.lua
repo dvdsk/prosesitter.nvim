@@ -16,9 +16,13 @@ local latex = {
 	mode = "hl_deny",
 }
 
+local rust = {
+	mode = "query",
+}
+
 M.cfg = {
 	by_buf = {},
-	by_ext = { tex = latex },
+	by_ext = { tex = latex, rs = rust },
 	default = { captures = { "comment" }, mode = "hl_allow" },
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 }
