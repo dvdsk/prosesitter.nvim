@@ -1,29 +1,16 @@
 local M = {}
 
-local latex = {
-	captures = {
-		"type",
-		"include",
-		"punctuation.bracket",
-		"punctuation.delimiter",
-		-- "functions.macro",
-		"function.macro",
-		"text.environment.name",
-		"text.environment",
-		"_name",
-		"parameter",
-	},
-	mode = "hl_deny",
-}
-
-local rust = {
-	mode = "query",
-}
+local default_query = [[
+	[(line_comment)+] @capture
+]]
+local rust_query = [[
+	[(line_comment)+ (block_comment) (string_literal)] @capture
+]]
 
 M.cfg = {
 	by_buf = {},
-	by_ext = { tex = latex, rs = rust },
-	default = { captures = { "comment" }, mode = "hl_allow" },
+	by_ext = { rs = {query = rust_query} },
+	default = { query = default_query },
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 }
 

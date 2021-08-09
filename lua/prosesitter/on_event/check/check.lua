@@ -1,12 +1,10 @@
 local async = require("prosesitter/on_event/check/async_cmd")
-local hl_allowlist = require("prosesitter/on_event/hl_linting/hl_allow")
-local hl_denylist = require("prosesitter/on_event/hl_linting/hl_deny")
+local lintreq = require("prosesitter/on_event/lintreq")
 local log = require("prosesitter/log")
 local M = {}
 
 M.schedualled = false
-M.hl_allow_req = nil
-M.hl_deny_req = nil
+M.lintreq = nil
 local callback = nil
 local job = nil
 
@@ -107,17 +105,14 @@ function M.hl_iter(results, areas)
 end
 
 function M:setup(shared, _callback)
-	hl_allowlist.setup(shared)
-	hl_denylist.setup(shared)
-	self.hl_allow_req = hl_allowlist.new()
-	self.hl_deny_req = hl_denylist.new()
+	lintreq.setup(shared)
+	self.lintreq = lintreq.new()
 	callback = _callback
 	cfg = shared.cfg
 end
 
 function M:disable()
-	self.hl_allow_req = hl_allowlist:new() -- reset lint req
-	self.hl_deny_req = hl_denylist:new() -- reset lint req
+	self.lintreq = lintreq:new() -- reset lint req
 	self.cancelled_schedualled() -- stop any running async jobs
 end
 
