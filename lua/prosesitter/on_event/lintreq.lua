@@ -15,13 +15,13 @@ end
 function M:add_node(buf, node)
 	local start_row, start_col, end_row, end_col = node:range()
 	if start_row == end_row then
-		self:add_line(buf, start_row, start_col, end_col)
+		self:add_line(buf, start_row, start_col+1, end_col)
 	else
-		for row = start_row, end_row - 1 do
-			self:add_line(buf, row, start_col, 0)
-			start_col = 0 -- only relevant for first line of block node
+		for row = start_row, end_row do
+			self:add_line(buf, row, start_col, -1)
+			start_col = 1 -- only relevant for first line of block node
 		end
-		self:add_line(buf, end_row, 0, end_col)
+		self:add_line(buf, end_row, 1, end_col)
 	end
 end
 

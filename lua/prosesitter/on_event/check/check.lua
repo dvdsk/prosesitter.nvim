@@ -16,8 +16,8 @@ local function do_check()
 		callback(results, req.areas)
 	end
 
-	log.info("text: "..req.text)
 	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+	log.info(req.text)
 	async.dispatch_with_stdin(req.text, "vale", args, on_exit)
 end
 
@@ -33,12 +33,12 @@ function M.schedual()
 	job = vim.defer_fn(do_check, timeout_ms)
 end
 
-local function next_problem_match(problems, i)
+local function next_problem_span(problems, i)
 	local next_problem = problems[i+1]
 	if next_problem == nil then
 		return ""
 	else
-		return next_problem.Match
+		return next_problem.Span
 	end
 end
 
@@ -56,6 +56,7 @@ local cfg = nil
 -- iterator that returns a span and highlight group
 -- TODO rewrite to take into account gaps in text that should be highlighted
 function M.hl_iter(results, areas)
+	log.info(results)
 	local problems = vim.fn.json_decode(results)["stdin.md"]
 	if problems == nil then
 		-- TODO cleanup remove placeholders
@@ -73,7 +74,7 @@ function M.hl_iter(results, areas)
 			return nil
 		end
 
-		while problems[i].Match == next_problem_match(problems, i) do
+		while problems[i].Span == next_problem_span(problems, i) do
 			if problems[i]["Message"] ~= problems[i+1]["Message"] then
 				problems[i+1]["Message"] = problems[i+1]["Message"].."\n"..problems[i]["Message"]
 			end
