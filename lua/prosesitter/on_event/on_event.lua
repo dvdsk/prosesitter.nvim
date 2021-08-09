@@ -12,6 +12,21 @@ local function postprocess(results, lintreq)
 	end
 end
 
+local function node_in_range(A, B, node)
+	local a, _, b, _ = node:range()
+	if a <= B and b >= A then -- TODO sharpen bounds
+		return true
+	else
+		return false
+	end
+end
+
+local function key(node)
+	local row_start, col_start, row_end, col_end = node:range()
+	local keystr = {row_start, col_start, row_end, col_end}
+	return table.concat(keystr, '\0')
+end
+
 local prose_queries = {}
 local function get_nodes(bufnr, cfg, start_l, end_l)
 	local parser = get_parser(bufnr)
@@ -21,14 +36,14 @@ local function get_nodes(bufnr, cfg, start_l, end_l)
 
 	parser:for_each_tree(function(tstree, _)
 		local root_node = tstree:root()
-		local root_start_row, _, root_end_row, _ = root_node:range()
-
-		-- Only worry about trees within the line range
-		if root_start_row > end_l or root_end_row < start_l then
-			return
+		if not node_in_range(start_l, end_l, root_node) then
+			return -- return in this callback skips to checking the next tree
 		end
-		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l) do
-			nodes[#nodes + 1] = node
+
+		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l+1) do
+			if node_in_range(start_l, end_l, node) then
+				nodes[key(node)] = node
+			end
 		end
 	end)
 	return nodes
@@ -55,8 +70,11 @@ function M.attach(bufnr)
 	local info = vim.fn.getbufinfo(bufnr)
 	local last_line = info[1].linecount
 	M.on_lines(nil, bufnr, nil, 0, last_line, last_line, 9999, nil, nil)
+	-- log.info("hi tset")
+	-- M.on_lines(nil, bufnr, nil, 3, 4, 4, 9999, nil, nil)
 end
 
+local lintreq = nil
 function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, _)
 	-- stop calling on lines if the plugin was just disabled
 	local cfg = cfg_by_buf[buf]
@@ -71,24 +89,20 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, 
 	end
 
 	local nodes = get_nodes(buf, cfg, first_changed, last_changed - 1)
-	M.process_nodes(buf, nodes)
+	for _, node in pairs(nodes) do
+		lintreq:add_node(buf, node)
+	end
 
-	-- if not check.schedualled then
-	-- 	check.schedual()
-	-- end
-end
-
--- TODO add to lintreq here, take care to allow multi line comments
-function M.process_nodes(buf, nodes)
-	for _, node in ipairs(nodes) do
-		local start_row, start_col, end_row, end_col = node:range()
-		log.info(start_row, start_col, end_row, end_col)
+	if not check.schedualled then
+		check.schedual()
 	end
 end
+
 
 function M.setup(shared)
 	cfg_by_buf = shared.cfg.by_buf
 	check:setup(shared, postprocess)
+	lintreq = check:get_lintreq()
 	marks.setup(shared)
 end
 

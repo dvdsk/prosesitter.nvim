@@ -10,19 +10,14 @@ local job = nil
 
 local function do_check()
 	M.schedualled = false
-	-- local allowlist_req = M.allowlist_req:build()
-	local denylist_req = M.hl_deny_req:build()
-	-- local areas = allowlist_req.areas -- TODO merge etc
-	local areas = denylist_req.areas -- TODO merge etc
-	-- local text = allowlist_req.text
-	local text = table.concat(denylist_req.text, " ")
+	local req = M.lintreq:build()
 
 	local function on_exit(results)
-		callback(results, areas)
+		callback(results, req.areas)
 	end
 
 	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-	async.dispatch_with_stdin(text, "vale", args, on_exit)
+	async.dispatch_with_stdin(req.text, "vale", args, on_exit)
 end
 
 function M.cancelled_schedualled()
@@ -109,6 +104,10 @@ function M:setup(shared, _callback)
 	self.lintreq = lintreq.new()
 	callback = _callback
 	cfg = shared.cfg
+end
+
+function M:get_lintreq()
+	return self.lintreq
 end
 
 function M:disable()

@@ -24,8 +24,21 @@ function M:update(marks, buf, row, start_col, end_col)
 	self.text[idx] = new_line
 end
 
+function M:add_node(buf, node)
+	local start_row, start_col, end_row, end_col = node:range()
+	if start_row == end_row then
+		self:add_line(buf, start_row, start_col, end_col)
+	else
+		for row = start_row, end_row - 1 do
+			self:add_line(buf, row, start_col, 0)
+			start_col = 0 -- only relevant for first line of block node
+		end
+		self:add_line(buf, end_row, 0, end_col)
+	end
+end
+
 -- only single lines are added... issue if line breaks connect scentences
-function M:add(buf, row, start_col, end_col)
+function M:add_line(buf, row, start_col, end_col)
 	-- TODO do we want start_col till end coll?
 	-- what happens if a comment is moved further from the line start?
 	local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
@@ -69,7 +82,7 @@ end
 -- returns a request with members:
 function M:build()
 	local req = {}
-	req.text = to_string(self.text)
+	req.text = table.concat(self.text, " ")
 	req.areas = {}
 
 	local col = 0
