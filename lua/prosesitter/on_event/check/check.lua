@@ -16,6 +16,7 @@ local function do_check()
 		callback(results, req.areas)
 	end
 
+	log.info("text: "..req.text)
 	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
 	async.dispatch_with_stdin(req.text, "vale", args, on_exit)
 end

@@ -23,8 +23,8 @@ end
 
 local function key(node)
 	local row_start, col_start, row_end, col_end = node:range()
-	local keystr = {row_start, col_start, row_end, col_end}
-	return table.concat(keystr, '\0')
+	local keystr = { row_start, col_start, row_end, col_end }
+	return table.concat(keystr, "\0")
 end
 
 local prose_queries = {}
@@ -40,7 +40,7 @@ local function get_nodes(bufnr, cfg, start_l, end_l)
 			return -- return in this callback skips to checking the next tree
 		end
 
-		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l+1) do
+		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
 			if node_in_range(start_l, end_l, node) then
 				nodes[key(node)] = node
 			end
@@ -66,12 +66,12 @@ function M.attach(bufnr)
 		prose_queries[lang] = query.parse_query(lang, cfg_by_buf[bufnr].query)
 	end
 
+	api.nvim_buf_attach(bufnr, false, { on_lines = M.on_lines })
+
 	parser:parse()
 	local info = vim.fn.getbufinfo(bufnr)
 	local last_line = info[1].linecount
 	M.on_lines(nil, bufnr, nil, 0, last_line, last_line, 9999, nil, nil)
-	-- log.info("hi tset")
-	-- M.on_lines(nil, bufnr, nil, 3, 4, 4, 9999, nil, nil)
 end
 
 local lintreq = nil
@@ -97,7 +97,6 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, 
 		check.schedual()
 	end
 end
-
 
 function M.setup(shared)
 	cfg_by_buf = shared.cfg.by_buf
