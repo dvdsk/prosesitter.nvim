@@ -17,7 +17,7 @@ local function do_check()
 	end
 
 	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-	log.info(req.text)
+	-- log.info(req.text)
 	async.dispatch_with_stdin(req.text, "vale", args, on_exit)
 end
 
@@ -56,7 +56,7 @@ local cfg = nil
 -- iterator that returns a span and highlight group
 -- TODO rewrite to take into account gaps in text that should be highlighted
 function M.hl_iter(results, areas)
-	log.info(results)
+	-- log.info(results)
 	local problems = vim.fn.json_decode(results)["stdin.md"]
 	if problems == nil then
 		-- TODO cleanup remove placeholders
