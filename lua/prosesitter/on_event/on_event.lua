@@ -6,11 +6,6 @@ local get_parser = vim.treesitter.get_parser
 local api = vim.api
 local M = {}
 
-local function postprocess(results, lintreq)
-	for buf, id, start_c, end_c, hl_group, hover_txt in check.hl_iter(results, lintreq) do
-		marks.underline(buf, id, start_c, end_c, hl_group, hover_txt)
-	end
-end
 
 local function node_in_range(A, B, node)
 	local a, _, b, _ = node:range()
@@ -100,7 +95,7 @@ end
 
 function M.setup(shared)
 	cfg_by_buf = shared.cfg.by_buf
-	check:setup(shared, postprocess)
+	check:setup(shared, marks.underline)
 	lintreq = check:get_lintreq()
 	marks.setup(shared)
 end

@@ -13,30 +13,30 @@ local function remove_marks(buf, row)
 	end
 end
 
-function M.underline(bufnr, id, start_col, end_col, hl, hover_txt)
-	local mark = api.nvim_buf_get_extmark_by_id(bufnr, ns_placeholders, id, { details = true })
+function M.underline(hl)
+	local mark = api.nvim_buf_get_extmark_by_id(hl.buf_id, ns_placeholders, hl.row_id, { details = true })
 	local row = mark[1]
-	remove_marks(bufnr, row)
+	remove_marks(hl.buf_id, row)
 
 	local col_offset = mark[2]
 	local opt = {
-		end_col = col_offset + end_col - 1,
-		hl_group = hl,
+		end_col = col_offset + hl.end_col - 1,
+		hl_group = hl.group,
 		-- hl_mode = "combine",
 		-- priority = 99, -- higher then treesitter highlighting (100) (DOES NOT WORK RIGHT NOW)
 	}
-	local ok, mark_id = pcall(api.nvim_buf_set_extmark, bufnr, ns_marks, row, col_offset + start_col - 2, opt)
-	mark_to_hover[mark_id] = hover_txt
+	local ok, mark_id = pcall(api.nvim_buf_set_extmark, hl.buf_id, ns_marks, row, col_offset + hl.start_col - 2, opt)
+	mark_to_hover[mark_id] = hl.hover_txt
 	if not ok then
 		log.error(
 			"Failed to add extmark, lnum="
 				.. vim.inspect(row)
 				.. " pos="
-				.. start_col
+				.. hl.start_col
 				.. "-"
-				.. end_col
+				.. hl.end_col
 				.. " text="
-				.. hover_txt
+				.. hl.hover_txt
 		)
 	end
 end

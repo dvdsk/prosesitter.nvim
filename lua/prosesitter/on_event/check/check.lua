@@ -13,11 +13,12 @@ local function do_check()
 	local req = M.lintreq:build()
 
 	local function on_exit(results)
-		callback(results, req.areas)
+		for hl in M.hl_iter(results, req.areas) do
+			callback(hl)
+		end
 	end
 
 	local args = { "--config", ".vale.ini", "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-	-- log.info(req.text)
 	async.dispatch_with_stdin(req.text, "vale", args, on_exit)
 end
 
@@ -34,14 +35,13 @@ function M.schedual()
 end
 
 local function next_problem_span(problems, i)
-	local next_problem = problems[i+1]
+	local next_problem = problems[i + 1]
 	if next_problem == nil then
 		return ""
 	else
 		return next_problem.Span
 	end
 end
-
 
 local function next_col(self, j)
 	local next_area = self[j + 1]
@@ -52,14 +52,28 @@ local function next_col(self, j)
 	end
 end
 
+local function start_col(problem, areas, j)
+		local lint_col, _ = unpack(problem["Span"])
+		while lint_col > areas:next_col(j) do
+			j = j + 1
+		end
+		local hl_start = lint_col - areas[j].col + areas[j].row_col
+		return hl_start, j
+end
+
+local function end_col(problem, areas, k)
+		local _, lint_end_col = unpack(problem["Span"])
+		while lint_end_col > areas:next_col(k) do
+			k = k + 1
+		end
+		local hl_end = lint_end_col - areas[k].col + areas[k].row_col
+		return hl_end
+end
+
 local cfg = nil
--- iterator that returns a span and highlight group
--- TODO rewrite to take into account gaps in text that should be highlighted
 function M.hl_iter(results, areas)
-	-- log.info(results)
 	local problems = vim.fn.json_decode(results)["stdin.md"]
 	if problems == nil then
-		-- TODO cleanup remove placeholders
 		return function()
 			return nil
 		end -- caller needs a function, see lua iterators
@@ -74,30 +88,24 @@ function M.hl_iter(results, areas)
 			return nil
 		end
 
+		local hl = {}
 		while problems[i].Span == next_problem_span(problems, i) do
-			if problems[i]["Message"] ~= problems[i+1]["Message"] then
-				problems[i+1]["Message"] = problems[i+1]["Message"].."\n"..problems[i]["Message"]
+			if problems[i]["Message"] ~= problems[i + 1]["Message"] then
+				problems[i + 1]["Message"] = problems[i + 1]["Message"] .. "\n" .. problems[i]["Message"]
 			end
-			i = i+1
+			i = i + 1
 		end
 
-		local lint_col, lint_end_col = unpack(problems[i]["Span"])
-		while lint_col > areas:next_col(j) do
-			j = j + 1
-		end
-		local hl_start = lint_col - areas[j].col + areas[j].row_col
-
-		local k = j
-		while lint_end_col > areas:next_col(k) do
-			k = k + 1
-		end
-		local hl_end = lint_end_col - areas[k].col + areas[k].row_col
+		hl.start_col, j = start_col(problems[i], areas, j)
+		hl.end_col = end_col(problems[i], areas, j)
+		hl.buf_id = areas[j].buf_id
+		hl.row_id = areas[j].row_id
 
 		local severity = problems[i].Severity
-		local hl_group = cfg.vale_to_hl[severity]
-		local hover_txt = problems[i]["Message"]
+		hl.group = cfg.vale_to_hl[severity]
+		hl.hover_txt = problems[i]["Message"]
 
-		return areas[j].buf_id, areas[j].row_id, hl_start, hl_end, hl_group, hover_txt
+		return hl
 	end
 end
 
