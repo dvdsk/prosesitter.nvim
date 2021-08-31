@@ -1,5 +1,5 @@
 local log = require("prosesitter/log")
-local marks = require("prosesitter/on_event/marks")
+local marks = require("prosesitter/on_event/marks/marks")
 local check = require("prosesitter/on_event/check/check")
 
 local get_parser = vim.treesitter.get_parser
@@ -95,7 +95,7 @@ end
 
 function M.setup(shared)
 	cfg_by_buf = shared.cfg.by_buf
-	check:setup(shared, marks.underline)
+	check:setup(shared, marks.mark_results)
 	lintreq = check:get_lintreq()
 	marks.setup(shared)
 end
