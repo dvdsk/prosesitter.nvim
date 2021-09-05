@@ -6,7 +6,6 @@ local get_parser = vim.treesitter.get_parser
 local api = vim.api
 local M = {}
 
-
 local function node_in_range(A, B, node)
 	local a, _, b, _ = node:range()
 	if a <= B and b >= A then -- TODO sharpen bounds
@@ -37,6 +36,7 @@ local function get_nodes(bufnr, cfg, start_l, end_l)
 
 		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
 			if node_in_range(start_l, end_l, node) then
+				log.info("")
 				nodes[key(node)] = node
 			end
 		end
@@ -80,6 +80,7 @@ function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, 
 	-- do not clean up extmarks, they are still needed in case of undo
 	local lines_removed = first_changed == last_updated
 	if lines_removed then
+		marks.remove_placeholders(buf, first_changed, last_changed)
 		return
 	end
 

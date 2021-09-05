@@ -28,7 +28,7 @@ function M.cancelled_schedualled()
 end
 
 function M.schedual()
-	local timeout_ms = 800
+	local timeout_ms = 500 -- was 800
 	job = vim.defer_fn(do_check, timeout_ms)
 end
 

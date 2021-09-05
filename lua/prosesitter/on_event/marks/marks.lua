@@ -14,10 +14,30 @@ local function remove_marks(buf, row)
 	end
 end
 
+local function nvim_buf_set_extmark_traced(buf_id, ns_marks, row, col, opt)
+	local ok, val = pcall(api.nvim_buf_set_extmark, buf_id, ns_marks, row, col, opt)
+	if not ok then
+		log.fatal(
+			"could not place extmark"
+				.. "\nbuf_id: "
+				.. vim.inspect(buf_id)
+				.. "\nrow: "
+				.. vim.inspect(row)
+				.. "\ncol_start: "
+				.. vim.inspect(col)
+				.. "\ncol_end: "
+				.. vim.inspect(opt.end_col)
+		)
+	end
+	return ok, val
+end
+
 function M.mark_results(results, areas)
 	local last_clear_row = -1
 	for hl in res.hl_iter(results, areas) do
 		local mark = api.nvim_buf_get_extmark_by_id(hl.buf_id, ns_placeholders, hl.row_id, { details = true })
+		if mark[1] == nil then goto continue end
+
 		local row = mark[1]
 		local col_offset = mark[2]
 
@@ -30,8 +50,23 @@ function M.mark_results(results, areas)
 			end_col = col_offset + hl.end_col - 1,
 			hl_group = hl.group,
 		}
-		local mark_id = api.nvim_buf_set_extmark(hl.buf_id, ns_marks, row, col_offset + hl.start_col - 2, opt)
+		local ok, mark_id = nvim_buf_set_extmark_traced(hl.buf_id, ns_marks, row, col_offset + hl.start_col - 2, opt)
+		if not ok then
+			log.fatal("mask_id: "..mark_id)
+			log.fatal("mark: "..vim.inspect(mark))
+			log.fatal("hl: "..vim.inspect(hl))
+		end
 		mark_to_hover[mark_id] = hl.hover_txt
+		::continue::
+	end
+end
+
+function M.remove_placeholders(buf, start_row, up_to_row)
+	local start = {start_row, 0}
+	local up_to = {up_to_row, -1}
+	local marks = api.nvim_buf_get_extmarks(buf, ns_placeholders, start, up_to, {})
+	for _, mark in ipairs(marks) do
+		api.nvim_buf_del_extmark(buf, ns_placeholders, mark[1])
 	end
 end
 

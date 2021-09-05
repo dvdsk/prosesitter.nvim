@@ -1,7 +1,7 @@
 local M = {}
 
 local default_query = [[
-	[(line_comment)+] @capture
+	[(line_comment)+ (block_comment)] @capture
 ]]
 local rust_query = [[
 	[(line_comment)+ (block_comment) (string_literal)] @capture
