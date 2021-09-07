@@ -16,19 +16,19 @@ end
 
 local function nvim_buf_set_extmark_traced(buf_id, ns_marks, row, col, opt)
 	local ok, val = pcall(api.nvim_buf_set_extmark, buf_id, ns_marks, row, col, opt)
-	if not ok then
-		log.fatal(
-			"could not place extmark"
-				.. "\nbuf_id: "
-				.. vim.inspect(buf_id)
-				.. "\nrow: "
-				.. vim.inspect(row)
-				.. "\ncol_start: "
-				.. vim.inspect(col)
-				.. "\ncol_end: "
-				.. vim.inspect(opt.end_col)
-		)
-	end
+	-- if not ok then
+	-- 	log.fatal(
+	-- 		"could not place extmark"
+	-- 			.. "\nbuf_id: "
+	-- 			.. vim.inspect(buf_id)
+	-- 			.. "\nrow: "
+	-- 			.. vim.inspect(row)
+	-- 			.. "\ncol_start: "
+	-- 			.. vim.inspect(col)
+	-- 			.. "\ncol_end: "
+	-- 			.. vim.inspect(opt.end_col)
+	-- 	)
+	-- end
 	return ok, val
 end
 
@@ -51,12 +51,13 @@ function M.mark_results(results, areas)
 			hl_group = hl.group,
 		}
 		local ok, mark_id = nvim_buf_set_extmark_traced(hl.buf_id, ns_marks, row, col_offset + hl.start_col - 2, opt)
-		if not ok then
-			log.fatal("mask_id: "..mark_id)
-			log.fatal("mark: "..vim.inspect(mark))
-			log.fatal("hl: "..vim.inspect(hl))
-		end
+		if not ok then goto continue end
+
 		mark_to_hover[mark_id] = hl.hover_txt
+		if row > last_clear_row then --	FIXME assumes that hl are in row order, are they?
+			remove_marks(hl.buf_id, row)
+			last_clear_row = row
+		end
 		::continue::
 	end
 end

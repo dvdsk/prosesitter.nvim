@@ -37,7 +37,6 @@ local function get_nodes(bufnr, cfg, start_l, end_l)
 
 		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
 			if node_in_range(start_l, end_l, node) then
-				log.info("")
 				nodes[key(node)] = node
 			end
 		end
