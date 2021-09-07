@@ -24,6 +24,7 @@ end
 local prose_queries = {}
 local function get_nodes(bufnr, cfg, start_l, end_l)
 	local parser = get_parser(bufnr)
+	parser:parse() -- needed to prevent parsing lagging behind text thus never seeing end of block-comment or string
 	local lang = parser:lang()
 	local prose_query = prose_queries[lang]
 	local nodes = {}
