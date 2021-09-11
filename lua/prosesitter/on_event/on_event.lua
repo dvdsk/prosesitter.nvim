@@ -43,6 +43,11 @@ local function get_nodes(bufnr, start_l, end_l)
 	return nodes
 end
 
+local function delayed_on_bytes(...)
+	local args = {...}
+	vim.defer_fn(function() M.on_bytes(unpack(args)) end, 25)
+end
+
 local cfg_by_buf = nil
 local query = require("vim.treesitter.query")
 function M.attach(bufnr)
@@ -60,29 +65,26 @@ function M.attach(bufnr)
 		prose_queries[lang] = query.parse_query(lang, cfg_by_buf[bufnr].query)
 	end
 
-	-- local tree = vim.treesitter.languagetree
-	parser:register_cbs({ on_bytes = M.on_bytes })
-	-- api.nvim_buf_attach(bufnr, false, { on_lines = M.on_lines })
+	parser:register_cbs({ on_bytes = delayed_on_bytes })
 
 	local info = vim.fn.getbufinfo(bufnr)
 	local last_line = info[1].linecount
-	-- M.on_bytes(nil, bufnr, nil, 0, last_line, last_line, 9999, nil, nil)
 	M.on_bytes(bufnr, nil, 0, nil, nil, last_line, nil, nil, last_line, nil, nil)
 end
 
 local lintreq = nil
 function M.on_bytes(
 	buf,
-	changed_tick,
+	_, --changed_tick,
 	start_row,
-	start_col,
-	start_byte,
+	_, --start_col,
+	_, --start_byte,
 	old_row,
-	old_col,
-	old_byte,
+	_, --old_col,
+	_, --old_byte,
 	new_row,
-	new_col,
-	new_byte
+	_, --new_col,
+	_ --new_byte
 )
 	log.info(buf, start_row, old_row, new_row)
 	-- log.info(arg6, arg7, arg9, arg10)
@@ -98,15 +100,14 @@ function M.on_bytes(
 	-- local lines_removed = first_changed == last_updated
 	local lines_removed = (new_row == -0 and old_row ~= -0)
 	local change_start = start_row
-	local change_end = start_row+old_row
+	local change_end = start_row + old_row
 	if lines_removed then
-		log.trace("lines removed: "..change_start.." till "..change_end)
+		-- log.trace("lines removed: " .. change_start .. " till " .. change_end)
 		marks.remove_placeholders(buf, change_start, change_end)
-	-- 	marks.remove_placeholders(buf, first_changed, last_changed)
 		return
 	end
 
-	log.trace("lines changed: "..change_start.." till "..change_end)
+	-- log.trace("lines changed: " .. change_start .. " till " .. change_end)
 	local nodes = get_nodes(buf, change_start, change_end)
 	for _, node in pairs(nodes) do
 		lintreq:add_node(buf, node)
