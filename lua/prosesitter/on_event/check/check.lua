@@ -36,7 +36,6 @@ function M:setup(shared, _callback)
 	lintreq.setup(shared)
 	self.lintreq = lintreq.new()
 	callback = _callback
-	cfg = shared.cfg
 end
 
 function M:get_lintreq()

@@ -37,6 +37,7 @@ function M:add_line(buf, row, start_col, end_col)
 
 	local id = nil
 	local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
+	assert(#marks < 2, "there should never be more then one placeholder on a line")
 	if #marks > 0 then
 		id = marks[1][1] -- there can be a max of 1 placeholder per line
 		if self.meta_by_mark[id] ~= nil then

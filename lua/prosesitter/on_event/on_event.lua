@@ -1,8 +1,8 @@
 local log = require("prosesitter/log")
 local marks = require("prosesitter/on_event/marks/marks")
 local check = require("prosesitter/on_event/check/check")
+local parsers = require("nvim-treesitter.parsers")
 
-local get_parser = vim.treesitter.get_parser
 local api = vim.api
 local M = {}
 
@@ -22,9 +22,8 @@ local function key(node)
 end
 
 local prose_queries = {}
-local function get_nodes(bufnr, cfg, start_l, end_l)
-	local parser = get_parser(bufnr)
-	parser:parse() -- needed to prevent parsing lagging behind text thus never seeing end of block-comment or string
+local function get_nodes(bufnr, start_l, end_l)
+	local parser = parsers.get_parser(bufnr)
 	local lang = parser:lang()
 	local prose_query = prose_queries[lang]
 	local nodes = {}
@@ -51,7 +50,7 @@ function M.attach(bufnr)
 		return false
 	end
 
-	local ok, parser = pcall(get_parser, bufnr)
+	local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
 	if not ok then
 		return false
 	end
@@ -61,30 +60,54 @@ function M.attach(bufnr)
 		prose_queries[lang] = query.parse_query(lang, cfg_by_buf[bufnr].query)
 	end
 
-	api.nvim_buf_attach(bufnr, false, { on_lines = M.on_lines })
+	-- local tree = vim.treesitter.languagetree
+	parser:register_cbs({ on_bytes = M.on_bytes })
+	-- api.nvim_buf_attach(bufnr, false, { on_lines = M.on_lines })
 
-	parser:parse()
 	local info = vim.fn.getbufinfo(bufnr)
 	local last_line = info[1].linecount
-	M.on_lines(nil, bufnr, nil, 0, last_line, last_line, 9999, nil, nil)
+	-- M.on_bytes(nil, bufnr, nil, 0, last_line, last_line, 9999, nil, nil)
+	M.on_bytes(bufnr, nil, 0, nil, nil, last_line, nil, nil, last_line, nil, nil)
 end
 
 local lintreq = nil
-function M.on_lines(_, buf, _, first_changed, last_changed, last_updated, _, _, _)
-	-- stop calling on lines if the plugin was just disabled
+function M.on_bytes(
+	buf,
+	changed_tick,
+	start_row,
+	start_col,
+	start_byte,
+	old_row,
+	old_col,
+	old_byte,
+	new_row,
+	new_col,
+	new_byte
+)
+	log.info(buf, start_row, old_row, new_row)
+	-- log.info(arg6, arg7, arg9, arg10)
+	-- -- stop calling on lines if the plugin was just disabled
 	local cfg = cfg_by_buf[buf]
 	if cfg == nil then
 		return true
 	end
 
-	-- do not clean up extmarks, they are still needed in case of undo
-	local lines_removed = first_changed == last_updated
+	-- on deletion it seems like new row is always '-0' while old_row is not '-0' (might be the number of rows deleted)
+	-- TODO check if this condition never happens in any other case
+	-- do not clean up highlighting extmarks, they are still needed in case of undo
+	-- local lines_removed = first_changed == last_updated
+	local lines_removed = (new_row == -0 and old_row ~= -0)
+	local change_start = start_row
+	local change_end = start_row+old_row
 	if lines_removed then
-		marks.remove_placeholders(buf, first_changed, last_changed)
+		log.trace("lines removed: "..change_start.." till "..change_end)
+		marks.remove_placeholders(buf, change_start, change_end)
+	-- 	marks.remove_placeholders(buf, first_changed, last_changed)
 		return
 	end
 
-	local nodes = get_nodes(buf, cfg, first_changed, last_changed - 1)
+	log.trace("lines changed: "..change_start.." till "..change_end)
+	local nodes = get_nodes(buf, change_start, change_end)
 	for _, node in pairs(nodes) do
 		lintreq:add_node(buf, node)
 	end
