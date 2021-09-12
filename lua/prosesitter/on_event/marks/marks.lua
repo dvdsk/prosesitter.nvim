@@ -7,7 +7,7 @@ local ns_marks = nil
 local ns_placeholders = nil
 local mark_to_hover = nil
 
-local function remove_marks(buf, row)
+local function remove_row_marks(buf, row)
 	local marks = api.nvim_buf_get_extmarks(buf, ns_marks, { row, 0 }, { row, -1 }, {})
 	for _, mark in ipairs(marks) do
 		api.nvim_buf_del_extmark(buf, ns_marks, mark[1])
@@ -32,19 +32,25 @@ local function nvim_buf_set_extmark_traced(buf_id, row, col, opt)
 	return ok, val
 end
 
+local function remove_marks(areas)
+	for _, area in ipairs(areas) do
+		local mark = api.nvim_buf_get_extmark_by_id(area.buf_id, ns_placeholders, area.row_id, { details = true })
+		local row = mark[1]
+		if row ~= nil then
+			remove_row_marks(area.buf_id, row)
+		end
+	end
+end
+
 function M.mark_results(results, areas)
-	local last_clear_row = -1
+	remove_marks(areas)
+
 	for hl in res.hl_iter(results, areas) do
 		local mark = api.nvim_buf_get_extmark_by_id(hl.buf_id, ns_placeholders, hl.row_id, { details = true })
 		if mark[1] == nil then goto continue end
 
 		local row = mark[1]
 		local col_offset = mark[2]
-
-		if row > last_clear_row then
-			remove_marks(hl.buf_id, row)
-			last_clear_row = row
-		end
 
 		local opt = {
 			end_col = col_offset + hl.end_col - 1,
@@ -54,10 +60,6 @@ function M.mark_results(results, areas)
 		if not ok then goto continue end
 
 		mark_to_hover[mark_id] = hl.hover_txt
-		if row > last_clear_row then --	FIXME assumes that hl are in row order, are they?
-			remove_marks(hl.buf_id, row)
-			last_clear_row = row
-		end
 		::continue::
 	end
 end
@@ -67,6 +69,7 @@ function M.remove_placeholders(buf, start_row, up_to_row)
 	local up_to = {up_to_row, -1}
 	local marks = api.nvim_buf_get_extmarks(buf, ns_placeholders, start, up_to, {})
 	for _, mark in ipairs(marks) do
+		log.info(vim.inspect(mark))
 		api.nvim_buf_del_extmark(buf, ns_placeholders, mark[1])
 	end
 end

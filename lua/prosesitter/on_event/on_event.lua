@@ -86,8 +86,6 @@ function M.on_bytes(
 	_, --new_col,
 	_ --new_byte
 )
-	log.info(buf, start_row, old_row, new_row)
-	-- log.info(arg6, arg7, arg9, arg10)
 	-- -- stop calling on lines if the plugin was just disabled
 	local cfg = cfg_by_buf[buf]
 	if cfg == nil then
@@ -97,12 +95,10 @@ function M.on_bytes(
 	-- on deletion it seems like new row is always '-0' while old_row is not '-0' (might be the number of rows deleted)
 	-- TODO check if this condition never happens in any other case
 	-- do not clean up highlighting extmarks, they are still needed in case of undo
-	-- local lines_removed = first_changed == last_updated
 	local lines_removed = (new_row == -0 and old_row ~= -0)
 	local change_start = start_row
 	local change_end = start_row + old_row
 	if lines_removed then
-		-- log.trace("lines removed: " .. change_start .. " till " .. change_end)
 		marks.remove_placeholders(buf, change_start, change_end)
 		return
 	end
