@@ -3,13 +3,16 @@ local M = {}
 local default_query = [[
 	[(line_comment)+ (block_comment)] @capture
 ]]
+local python_query = [[
+	[(string) (comment)+ ] @capture
+]]
 local rust_query = [[
 	[(line_comment)+ (block_comment) (string_literal)] @capture
 ]]
 
 M.cfg = {
 	by_buf = {},
-	by_ext = { rs = {query = rust_query} },
+	by_ext = { rs = {query = rust_query}, py = {query = python_query} },
 	default = { query = default_query },
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 }

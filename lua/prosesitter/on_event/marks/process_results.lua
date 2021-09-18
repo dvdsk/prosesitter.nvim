@@ -1,3 +1,4 @@
+local log = require("prosesitter/log")
 local M = {}
 
 local function next_problem_span(problems, i)
@@ -36,11 +37,35 @@ local function end_col(problem, areas, k)
 	return hl_end
 end
 
+local function spans_match(a, b)
+	return a[1] == b[1] and a[2] == b[2]
+end
+
+local severity_as_int = {
+	error = 4,
+	warning = 3,
+}
+
+local function merge_severity(a, b)
+	if severity_as_int[a.Severity] > severity_as_int[b.Severity] then
+		return a.Severity
+	else
+		return b.Severity
+	end
+end
+
+local function merge_message(a, b)
+	if a.Message ~= b.Message then
+		return a.Message .. "\n" .. b.Message
+	else
+		return a.Message
+	end
+end
+
 local function skip_to_next_problem(problems, i)
-	while problems[i].Span == next_problem_span(problems, i) do
-		if problems[i]["Message"] ~= problems[i + 1]["Message"] then
-			problems[i + 1]["Message"] = problems[i + 1]["Message"] .. "\n" .. problems[i]["Message"]
-		end
+	while spans_match(problems[i].Span, next_problem_span(problems, i)) do
+		problems[i + 1].Message = merge_message(problems[i], problems[i + 1])
+		problems[i + 1].Severity = merge_severity(problems[i], problems[i + 1])
 		i = i + 1
 	end
 	return i
