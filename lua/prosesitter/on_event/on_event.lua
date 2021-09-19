@@ -44,8 +44,10 @@ local function get_nodes(bufnr, start_l, end_l)
 end
 
 local function delayed_on_bytes(...)
-	local args = {...}
-	vim.defer_fn(function() M.on_bytes(unpack(args)) end, 25)
+	local args = { ... }
+	vim.defer_fn(function()
+		M.on_bytes(unpack(args))
+	end, 25)
 end
 
 local cfg_by_buf = nil
@@ -65,11 +67,27 @@ function M.attach(bufnr)
 		prose_queries[lang] = query.parse_query(lang, cfg_by_buf[bufnr].query)
 	end
 
+	log.info("registering callback")
 	parser:register_cbs({ on_bytes = delayed_on_bytes })
 
 	local info = vim.fn.getbufinfo(bufnr)
 	local last_line = info[1].linecount
 	M.on_bytes(bufnr, nil, 0, nil, nil, last_line, nil, nil, last_line, nil, nil)
+end
+
+local BufMemory = {}
+function BufMemory:no_change(buf, start_row)
+	local line = api.nvim_buf_get_lines(buf, start_row, start_row + 1, true)[1]
+
+	if self[buf] == nil then
+		self[buf] = line
+		return false
+	elseif self[buf] == line then
+		return true
+	else
+		self[buf] = line
+		return false
+	end
 end
 
 local lintreq = nil
@@ -90,6 +108,10 @@ function M.on_bytes(
 	local cfg = cfg_by_buf[buf]
 	if cfg == nil then
 		return true
+	end
+
+	if BufMemory:no_change(buf, start_row) then
+		return
 	end
 
 	-- on deletion it seems like new row is always '-0' while old_row is not '-0' (might be the number of rows deleted)
