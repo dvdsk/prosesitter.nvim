@@ -67,7 +67,6 @@ function M.attach(bufnr)
 		prose_queries[lang] = query.parse_query(lang, cfg_by_buf[bufnr].query)
 	end
 
-	log.info("registering callback")
 	parser:register_cbs({ on_bytes = delayed_on_bytes })
 
 	local info = vim.fn.getbufinfo(bufnr)
@@ -77,7 +76,7 @@ end
 
 local BufMemory = {}
 function BufMemory:no_change(buf, start_row)
-	local line = api.nvim_buf_get_lines(buf, start_row, start_row + 1, true)[1]
+	local line =api.nvim_buf_get_lines(buf, start_row, start_row + 1, false)[1]
 
 	if self[buf] == nil then
 		self[buf] = line

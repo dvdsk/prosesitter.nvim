@@ -69,7 +69,6 @@ function M.remove_placeholders(buf, start_row, up_to_row)
 	local up_to = {up_to_row, -1}
 	local marks = api.nvim_buf_get_extmarks(buf, ns_placeholders, start, up_to, {})
 	for _, mark in ipairs(marks) do
-		log.info(vim.inspect(mark))
 		api.nvim_buf_del_extmark(buf, ns_placeholders, mark[1])
 	end
 end
