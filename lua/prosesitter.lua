@@ -10,7 +10,7 @@ M.hover = require("prosesitter/hover") -- exposed for keybindings
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
 	if buf_cfg[bufnr] == nil then
-		local extension = vim.fn.expand('%:e')
+		local extension = vim.fn.expand("%:e")
 		local cfg = shared.cfg.by_ext[extension]
 		if cfg == nil then
 			cfg = shared.cfg.default
@@ -21,12 +21,24 @@ function M.attach()
 	end
 end
 
-function M:setup()
-	shared:setup()
+function M:setup(user_cfg)
+	local ok = shared:setup(user_cfg)
+	if not ok then
+		print("setup unsuccesful; exiting")
+		return
+	end
+
 	on_event.setup(shared)
 	self.hover.setup(shared)
 	vim.cmd("augroup prosesitter")
 	vim.cmd("autocmd prosesitter BufEnter * lua _G.ProseSitter.attach()")
+end
+
+function M.switch_vale_cfg(path)
+	shared.cfg.vale_cfg_path = path
+
+	M.disable()
+	M.enable()
 end
 
 function M.disable()
@@ -39,7 +51,7 @@ function M.disable()
 		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
 	end
 
-	vim.cmd('autocmd! prosesitter') -- remove autocmd
+	vim.cmd("autocmd! prosesitter") -- remove autocmd
 	buf_cfg = {}
 end
 

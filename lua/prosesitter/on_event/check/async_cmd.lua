@@ -8,7 +8,7 @@ local handle
 local function on_stderr(err, data)
 	assert(not err, err)
 	if data then
-		vim.schedule_wrap(log.error("stderr chunk", data))
+		print("stderr chunk", data)
 	end
 end
 
