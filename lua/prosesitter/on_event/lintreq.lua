@@ -81,6 +81,12 @@ function M:build()
 	return req
 end
 
+function M:reset()
+	self.text = {}
+	self.meta_by_mark = {}
+	self.meta_by_idx = {}
+end
+
 function M.setup(shared)
 	ns = shared.ns_placeholders
 end

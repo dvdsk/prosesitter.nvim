@@ -75,6 +75,9 @@ function M.attach(bufnr)
 end
 
 local BufMemory = {}
+function BufMemory:reset()
+	for i, _ in ipairs(self) do self[i] = nil end
+end
 function BufMemory:no_change(buf, start_row)
 	local line =api.nvim_buf_get_lines(buf, start_row, start_row + 1, false)[1]
 
@@ -143,6 +146,7 @@ function M.setup(shared)
 end
 
 function M.disable()
+	BufMemory:reset()
 	check:disable()
 end
 
