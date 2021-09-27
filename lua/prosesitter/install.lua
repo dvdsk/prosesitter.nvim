@@ -69,7 +69,6 @@ function M.binairy_and_styles()
 end
 
 function M.default_cfg()
-
 	local exists = 1
 	if vim.fn.filereadable(plugin_path .. "/vale_cfg.ini") ~= exists then
 		local file = io.open(plugin_path .. "/vale_cfg.ini", "w")
@@ -77,7 +76,8 @@ function M.default_cfg()
 			print("fatal error: could not open/create fresh vale config")
 		end
 
-		file:write(defaults.vale_cfg_ini)
+		local cfg = "StylesPath = "..plugin_path.."/styles \n"..defaults.vale_cfg_ini
+		file:write(cfg)
 		file:flush()
 		file:close()
 	end

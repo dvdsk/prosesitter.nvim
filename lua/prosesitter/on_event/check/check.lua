@@ -15,7 +15,6 @@ local function do_check()
 	local req = M.lintreq:build()
 
 	local function on_exit(results)
-		log.info(results)
 		callback(results, req.areas)
 	end
 
