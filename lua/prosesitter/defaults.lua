@@ -12,7 +12,7 @@ M.vale_cfg_ini = [==[
 MinAlertLevel = suggestion
 [*]
 # styles that should have all their rules enabled
-BasedOnStyles = proselint, write-good
+BasedOnStyles = proselint, write-good, Vale
 ]==]
 
 return M
