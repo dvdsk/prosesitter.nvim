@@ -1,5 +1,6 @@
 local log = require("prosesitter/log")
 local defaults = require("prosesitter/defaults")
+local install = require("prosesitter/install")
 local plugin_path = vim.fn.stdpath("data") .. "/prosesitter"
 
 local M = {}
@@ -15,32 +16,6 @@ M.cfg = {
 M.mark_to_hover = {}
 M.ns_placeholders = nil
 M.ns_marks = nil
-
-local function setup_vale_styles()
-	-- TODO create styles folder (just mkdir)
-	-- TODO download all public styles (use bash + posix tools)
-	-- 		microsoft, google write-good, proselint, joblint, alex
-end
-
-local function install_vale_binairy()
-end
-
-local function setup_vale_cfg()
-	local data_path = vim.fn.stdpath("data") .. "/prosesitter"
-	vim.fn.mkdir(data_path, "p")
-
-	local exists = 1
-	if vim.fn.filereadable(plugin_path .. "/vale_cfg.ini") ~= exists then
-		local file = io.open(plugin_path .. "/vale_cfg.ini", "w")
-		if file == nil then
-			print("fatal error: could not open/create fresh vale config")
-		end
-
-		file:write(defaults.vale_cfg_ini)
-		file:flush()
-		file:close()
-	end
-end
 
 function M:adjust_cfg(user_cfg)
 	if user_cfg == nil then
@@ -59,11 +34,10 @@ function M:setup(cfg)
 	self:adjust_cfg(cfg)
 
 	if not self:vale_installed() then
-		local do_setup = vim.fn.input("Vale is not installed, install vale? y/n")
+		local do_setup = vim.fn.input("Vale is not installed, install vale? y/n: ")
 		if do_setup == "y" then
-			install_vale_binairy()
-			setup_vale_cfg()
-			setup_vale_styles()
+			install.binairy_and_styles()
+			install.default_cfg()
 		else
 			print("please setup vale manually and adjust your config")
 			return false
@@ -80,6 +54,7 @@ end
 
 function M:vale_installed()
 	local ok = 1
+	-- check any user set vale bin path
 	if vim.fn.filereadable(self.cfg.vale_bin_path) == ok then
 		return true
 	end

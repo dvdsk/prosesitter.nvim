@@ -34,13 +34,6 @@ function M:setup(user_cfg)
 	vim.cmd("autocmd prosesitter BufEnter * lua _G.ProseSitter.attach()")
 end
 
-function M.switch_vale_cfg(path)
-	shared.cfg.vale_cfg_path = path
-
-	M.disable()
-	M.enable()
-end
-
 function M.disable()
 	-- make future events cause the event handler to stop
 	on_event.disable()
@@ -58,6 +51,13 @@ end
 function M.enable()
 	vim.cmd("autocmd prosesitter BufEnter * lua _G.ProseSitter.attach()")
 	M.attach()
+end
+
+function M.switch_vale_cfg(path)
+	shared.cfg.vale_cfg_path = path
+
+	M.disable()
+	M.enable()
 end
 
 _G.ProseSitter = M

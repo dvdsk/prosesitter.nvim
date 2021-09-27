@@ -6,6 +6,7 @@ local M = {}
 M.schedualled = false
 M.lintreq = nil
 local vale_cfg_path = nil
+local vale_bin_path = nil
 local callback = nil
 local job = nil
 
@@ -14,11 +15,12 @@ local function do_check()
 	local req = M.lintreq:build()
 
 	local function on_exit(results)
+		log.info(results)
 		callback(results, req.areas)
 	end
 
 	local args = { "--config", vale_cfg_path, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-	async.dispatch_with_stdin(req.text, "vale", args, on_exit)
+	async.dispatch_with_stdin(req.text, vale_bin_path, args, on_exit)
 end
 
 function M.cancelled_schedualled()
@@ -35,6 +37,7 @@ end
 
 function M:setup(shared, _callback)
 	vale_cfg_path = shared.cfg.vale_cfg_path
+	vale_bin_path = shared.cfg.vale_bin_path
 	lintreq.setup(shared)
 	self.lintreq = lintreq.new()
 	callback = _callback
