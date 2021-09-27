@@ -54,7 +54,7 @@ function M.enable()
 end
 
 function M.switch_vale_cfg(path)
-	shared.cfg.vale_cfg_path = path
+	shared.cfg.vale_cfg = path
 
 	M.disable()
 	M.enable()

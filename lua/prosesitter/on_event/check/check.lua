@@ -17,8 +17,8 @@ local function do_check()
 		callback(results, req.areas)
 	end
 
-	local args = { "--config", cfg.vale_cfg_path, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-	async.dispatch_with_stdin(req.text, cfg.vale_bin_path, args, on_exit)
+	local args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+	async.dispatch_with_stdin(req.text, cfg.vale_bin, args, on_exit)
 end
 
 function M.cancelled_schedualled()
