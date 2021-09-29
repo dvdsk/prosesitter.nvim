@@ -6,7 +6,7 @@ local rust_query = [[
 ]]
 
 local M = {}
-M.query_by_ext = { rs = {query = rust_query}, py = {query = python_query} }
+M.query_by_ext = { rs = rust_query, py = python_query }
 M.vale_cfg_ini = [==[
 # StylesPath = added by lua code during install
 MinAlertLevel = suggestion

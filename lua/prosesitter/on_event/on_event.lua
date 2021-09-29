@@ -64,7 +64,7 @@ function M.attach(bufnr)
 
 	local lang = parser:lang()
 	if not prose_queries[lang] then
-		prose_queries[lang] = query.parse_query(lang, cfg_by_buf[bufnr].query)
+		prose_queries[lang] = query.parse_query(lang, cfg_by_buf[bufnr])
 	end
 
 	parser:register_cbs({ on_bytes = delayed_on_bytes })

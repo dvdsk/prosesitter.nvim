@@ -13,7 +13,7 @@ function M.attach()
 		local extension = vim.fn.expand("%:e")
 		local cfg = shared.cfg.by_ext[extension]
 		if cfg == nil then
-			cfg = shared.cfg.default
+			return
 		end
 
 		buf_cfg[bufnr] = cfg

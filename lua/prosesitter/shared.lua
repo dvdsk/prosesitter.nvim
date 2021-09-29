@@ -23,11 +23,20 @@ function M:adjust_cfg(user_cfg)
 	end
 
 	for key, value in pairs(user_cfg) do
-		if self.cfg[key] == nil then
-			print("fatal error: unknown key: '" .. key .. "' in user config")
+		if self.cfg[key] ~= nil then
+			self.cfg[key] = value
 		end
+	end
 
-		self.cfg[key] = value
+	if user_cfg.extra_queries ~= nil then
+		self:add_queries(user_cfg.extra_queries)
+	end
+end
+
+function M:add_queries(queries)
+	log.info(vim.inspect(queries))
+	for ext, query in pairs(queries) do
+		self.cfg.by_ext[ext] = query
 	end
 end
 
