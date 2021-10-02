@@ -60,5 +60,9 @@ function M.switch_vale_cfg(path)
 	M.enable()
 end
 
+function M.telescope()
+	require("prosesitter/telescope").find(shared)
+end
+
 _G.ProseSitter = M
 return M
