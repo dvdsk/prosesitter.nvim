@@ -1,15 +1,11 @@
 local log = require("prosesitter/log")
+local shared = require("prosesitter/shared")
 local api = vim.api
 
-local shared = nil
 M = {}
 
 function M.add_meta(id, meta)
 	shared.mark_to_hover[id] = meta
-end
-
-function M.setup(_shared)
-	shared = _shared
 end
 
 -- open hover window if lint error on current pos else return

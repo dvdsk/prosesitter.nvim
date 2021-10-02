@@ -1,17 +1,16 @@
 local log = require("prosesitter/log")
-local shared = require("prosesitter/shared")
 local on_event = require("prosesitter/on_event/on_event")
 local api = vim.api
-local buf_cfg = shared.cfg.by_buf
 
 local M = {}
-M.hover = require("prosesitter/hover") -- exposed for keybindings
+M.shared = require("prosesitter/shared")
 
+local buf_cfg = M.shared.cfg.by_buf
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
 	if buf_cfg[bufnr] == nil then
 		local extension = vim.fn.expand("%:e")
-		local cfg = shared.cfg.by_ext[extension]
+		local cfg = M.shared.cfg.by_ext[extension]
 		if cfg == nil then
 			return
 		end
@@ -22,16 +21,15 @@ function M.attach()
 end
 
 function M:setup(user_cfg)
-	local ok = shared:setup(user_cfg)
+	local ok = self.shared:setup(user_cfg)
 	if not ok then
 		print("setup unsuccesful; exiting")
 		return
 	end
 
-	on_event.setup(shared)
-	self.hover.setup(shared)
+	on_event.setup(self.shared)
 	vim.cmd("augroup prosesitter")
-	vim.cmd("autocmd prosesitter BufEnter * lua _G.ProseSitter.attach()")
+	vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
 end
 
 function M.disable()
@@ -40,8 +38,8 @@ function M.disable()
 
 	-- disable and remove all extmarks
 	for buf, _ in ipairs(buf_cfg) do
-		api.nvim_buf_clear_namespace(buf, shared.ns_placeholders, 0, -1)
-		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
+		api.nvim_buf_clear_namespace(buf, M.shared.ns_placeholders, 0, -1)
+		api.nvim_buf_clear_namespace(buf, M.shared.ns_marks, 0, -1)
 	end
 
 	vim.cmd("autocmd! prosesitter") -- remove autocmd
@@ -54,15 +52,10 @@ function M.enable()
 end
 
 function M.switch_vale_cfg(path)
-	shared.cfg.vale_cfg = path
+	M.shared.cfg.vale_cfg = path
 
 	M.disable()
 	M.enable()
 end
 
-function M.telescope()
-	require("prosesitter/telescope").find(shared)
-end
-
-_G.ProseSitter = M
 return M

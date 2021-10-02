@@ -5,13 +5,12 @@ local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local action_state = require("telescope.actions.state")
 local action_set = require("telescope.actions.set")
-local log = require("prosesitter/log")
-local M = {}
+local shared = require("prosesitter").shared
 
-local function make_entries(shared)
+local function make_entries()
 	local entries = {}
 	local buffer_marks = api.nvim_buf_get_extmarks(0, shared.ns_marks, 0, -1, { details = true })
-	local curr_buf = vim.fn.bufnr("%")
+	local curr_buf = api.nvim_get_current_buf()
 	for _, mark in ipairs(buffer_marks) do
 		local id = mark[1]
 		entries[#entries + 1] = {
@@ -31,9 +30,9 @@ local function buf_path(bufnr)
 	return info[1].name
 end
 
-local function fill_finder(shared)
+local function fill_finder()
 	return finders.new_table({
-		results = make_entries(shared),
+		results = make_entries(),
 		entry_maker = function(entry)
 			return {
 				value = entry,
@@ -48,11 +47,10 @@ local function fill_finder(shared)
 	})
 end
 
-function M.find(shared)
-	local opts = {}
+local function pick_lint(opts)
 	pickers.new(opts, {
 		prompt_title = "ProseSitter Lints",
-		finder = fill_finder(shared),
+		finder = fill_finder(),
 		sorter = conf.generic_sorter(opts),
 		previewer = conf.qflist_previewer(opts),
 		attach_mappings = function()
@@ -71,4 +69,8 @@ function M.find(shared)
 	}):find()
 end
 
-return M
+return require("telescope").register_extension({
+	exports = {
+		prosesitter = pick_lint
+	}
+})
