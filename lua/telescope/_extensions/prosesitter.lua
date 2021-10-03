@@ -12,7 +12,6 @@ local function add_buffer_entries(entries, buf)
 	local buffer_marks = api.nvim_buf_get_extmarks(buf, shared.ns_marks, 0, -1, { details = true })
 	for _, mark in ipairs(buffer_marks) do
 		local id = mark[1]
-		log.info(buf,id)
 		entries[#entries + 1] = {
 			text = shared.mark_to_meta:by_buf_id(buf, id),
 			row = mark[2] + 1,

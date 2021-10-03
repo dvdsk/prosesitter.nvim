@@ -71,12 +71,6 @@ local function skip_to_next_problem(problems, i)
 	return i
 end
 
--- local to_print = nil
--- local function print_res()
--- 	log.info("test")
--- 	log.info(to_print)
--- end
-
 local cfg = nil
 function M.hl_iter(results, areas)
 	-- to_print = results
