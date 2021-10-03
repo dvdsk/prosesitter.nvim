@@ -53,20 +53,20 @@ require("prosesitter"):setup({
 ### Usage
 You can map/use either lua functions or commands, the following functions are availible:
 
- - next/prev: jump to the next/prev linting issue from the current cursor pos and show the error in a popup window
- - popup: show a popup window if there is a linting issue on the current cursor pos
- - disable: disables linting on change removing all added highlights 
- - enable: re-enable linting on change and lint all open (supported) buffers
- - switch\_vale\_cfg: switches to a different vale config, updates all highlights to reflect the change. Not availible as command, takes as argument the path to the vale config to use
+ - `next`/`prev`: jump to the next/prev linting issue from the current cursor pos and show the error in a popup window
+ - `popup`: show a popup window if there is a linting issue on the current cursor pos
+ - `disable`: disables linting on change removing all added highlights 
+ - `enable`: re-enable linting on change and lint all open (supported) buffers
+ - `switch_vale_cfg`: switches to a different vale config, updates all highlights to reflect the change. Not availible as command, takes as argument the path to the vale config to use
 
- The functions next, prev and popup return a bool that is true if they could jump/open a popup window. Use this (for example) to create a single keymap for prosesitters popup and your lsps show documentation function.
+ The functions `next`, `prev` and `popup` return a bool that is true if they could jump/open a popup window. Use this (for example) to create a single keymap for prosesitters popup and your lsps show documentation function.
 
 The commands:
- - PsNext
- - PsPrev
- - PsPopup
- - PsEnable
- - PsDisable
+ - `PsNext`
+ - `PsPrev`
+ - `PsPopup`
+ - `PsEnable`
+ - `PsDisable`
 
 #### example mapping:
 Unfortunatly I have not yet found good keybindings to suggest as I have a rather excentric [config](https://github.com/dvdsk/new-linux-setup/tree/master/vim).
@@ -110,7 +110,7 @@ vim.cmd(':command EmailStyle lua require("prosesitter").switch_vale_cfg("~/Docum
 ### Related work
 If you like this plugin you might also be intrested in:
 
- - language tool
- - ale
- - [spellsitter](), the inspiration for this plugin and a great alternative if you are just looking for spellchecking comments
+ - [spellsitter](https://github.com/lewis6991/spellsitter.nvim), the inspiration for this plugin and a great alternative if you are just looking for spellchecking comments
+ - [ale](https://github.com/dense-analysis/ale) a asynchronous linting plugin that leaves syntax handling to the linters. Supports the default syntax vale supports (Markdown, AsciiDoc, reStructuredText, HTML, XML).
+ - [vim-language](https://github.com/Konfekt/vim-langtool) collects all grammer mistakes into the quickfix list
 
