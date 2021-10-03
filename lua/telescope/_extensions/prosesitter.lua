@@ -5,22 +5,29 @@ local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local action_state = require("telescope.actions.state")
 local action_set = require("telescope.actions.set")
-local shared = require("prosesitter").shared
+local shared = require("prosesitter/shared")
+local log = require("prosesitter/log")
 
-local function make_entries()
-	local entries = {}
-	local buffer_marks = api.nvim_buf_get_extmarks(0, shared.ns_marks, 0, -1, { details = true })
-	local curr_buf = api.nvim_get_current_buf()
+local function add_buffer_entries(entries, buf)
+	local buffer_marks = api.nvim_buf_get_extmarks(buf, shared.ns_marks, 0, -1, { details = true })
 	for _, mark in ipairs(buffer_marks) do
 		local id = mark[1]
+		log.info(buf,id)
 		entries[#entries + 1] = {
-			text = shared.mark_to_hover[id],
+			text = shared.mark_to_meta:by_buf_id(buf, id),
 			row = mark[2] + 1,
 			start_col = mark[3],
 			end_col = mark[4].end_col,
 			id = mark[1],
-			buf = curr_buf,
+			buf = buf,
 		}
+	end
+end
+
+local function make_entries(buffers)
+	local entries = {}
+	for _, buf in ipairs(buffers) do
+		add_buffer_entries(entries, buf)
 	end
 	return entries
 end
@@ -30,9 +37,9 @@ local function buf_path(bufnr)
 	return info[1].name
 end
 
-local function fill_finder()
+local function fill_finder(buffers)
 	return finders.new_table({
-		results = make_entries(),
+		results = make_entries(buffers),
 		entry_maker = function(entry)
 			return {
 				value = entry,
@@ -47,10 +54,10 @@ local function fill_finder()
 	})
 end
 
-local function pick_lint(opts)
+local function pick_lint(opts, buffers)
 	pickers.new(opts, {
 		prompt_title = "ProseSitter Lints",
-		finder = fill_finder(),
+		finder = fill_finder(buffers),
 		sorter = conf.generic_sorter(opts),
 		previewer = conf.qflist_previewer(opts),
 		attach_mappings = function()
@@ -71,6 +78,13 @@ end
 
 return require("telescope").register_extension({
 	exports = {
-		prosesitter = pick_lint
+		buf = function(opts)
+			local curr_buf = api.nvim_get_current_buf()
+			pick_lint(opts, {curr_buf})
+		end,
+		all = function(opts)
+			local buffers = shared.mark_to_meta:buffers()
+			pick_lint(opts, buffers)
+		end,
 	}
 })

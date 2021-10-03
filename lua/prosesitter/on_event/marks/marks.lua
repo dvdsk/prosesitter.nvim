@@ -1,11 +1,11 @@
 local api = vim.api
 local log = require("prosesitter/log")
 local res = require("prosesitter/on_event/marks/process_results")
+local shared = require("prosesitter/shared")
 
 local M = {}
 local ns_marks = nil
 local ns_placeholders = nil
-local mark_to_hover = nil
 
 local function remove_row_marks(buf, row)
 	local marks = api.nvim_buf_get_extmarks(buf, ns_marks, { row, 0 }, { row, -1 }, {})
@@ -59,7 +59,7 @@ function M.mark_results(results, areas)
 		local ok, mark_id = nvim_buf_set_extmark_traced(hl.buf_id, row, col_offset + hl.start_col - 2, opt)
 		if not ok then goto continue end
 
-		mark_to_hover[mark_id] = hl.hover_txt
+		shared.mark_to_meta:add(mark_id, hl.hover_txt)
 		::continue::
 	end
 end
@@ -73,11 +73,10 @@ function M.remove_placeholders(buf, start_row, up_to_row)
 	end
 end
 
-function M.setup(shared)
-	mark_to_hover = shared.mark_to_hover
+function M.setup()
+	res.setup(shared.cfg)
 	ns_marks = shared.ns_marks
 	ns_placeholders = shared.ns_placeholders
-	res.setup(shared.cfg)
 end
 
 return M

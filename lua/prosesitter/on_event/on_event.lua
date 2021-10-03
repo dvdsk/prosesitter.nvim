@@ -1,6 +1,7 @@
 local log = require("prosesitter/log")
 local marks = require("prosesitter/on_event/marks/marks")
 local check = require("prosesitter/on_event/check/check")
+local shared = require("prosesitter/shared")
 local parsers = require("nvim-treesitter.parsers")
 
 local api = vim.api
@@ -50,7 +51,7 @@ local function delayed_on_bytes(...)
 	end, 25)
 end
 
-local cfg_by_buf = nil
+local cfg_by_buf = shared.cfg.by_buf
 local query = require("vim.treesitter.query")
 function M.attach(bufnr)
 	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
@@ -138,8 +139,7 @@ function M.on_bytes(
 	end
 end
 
-function M.setup(shared)
-	cfg_by_buf = shared.cfg.by_buf
+function M.setup()
 	check:setup(shared, marks.mark_results)
 	lintreq = check:get_lintreq()
 	marks.setup(shared)
