@@ -19,4 +19,12 @@ MinAlertLevel = suggestion
 BasedOnStyles = proselint, write-good, Vale
 ]==]
 
+M.cmds = {
+    PsNext = "next",
+    PsPrev = "prev",
+    PsPopup = "popup",
+    PsEnable = "enable",
+    PsDisable = "disable",
+}
+
 return M

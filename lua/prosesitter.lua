@@ -8,9 +8,6 @@ local M = {}
 M.next = require("prosesitter/actions/nav").next
 M.prev = require("prosesitter/actions/nav").prev
 M.popup = require("prosesitter/actions/hover").popup
-M.enable = require("prosesitter/actions/config").enable
-M.disable = require("prosesitter/actions/config").disable
-M.switch_vale_cfg = require("prosesitter/actions/config").switch_vale_cfg
 
 local buf_cfg = shared.cfg.by_buf
 function M.attach()
@@ -27,6 +24,32 @@ function M.attach()
 	end
 end
 
+function M.disable()
+	-- make future events cause the event handler to stop
+	on_event.disable()
+
+	-- disable and remove all extmarks
+	for buf, _ in ipairs(buf_cfg) do
+		api.nvim_buf_clear_namespace(buf, shared.ns_placeholders, 0, -1)
+		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
+	end
+
+	vim.cmd("autocmd! prosesitter") -- remove autocmd
+	buf_cfg = {}
+end
+
+function M.enable()
+	vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
+	M.attach()
+end
+
+function M.switch_vale_cfg(path)
+	shared.cfg.vale_cfg = path
+
+	M.disable()
+	M.enable()
+end
+
 function M:setup(user_cfg)
 	local ok = shared:setup(user_cfg)
 	if not ok then
@@ -34,9 +57,15 @@ function M:setup(user_cfg)
 		return
 	end
 
+	if shared.cfg.default_cmds then
+		shared.add_cmds()
+	end
+
 	on_event.setup(self.shared)
-	vim.cmd("augroup prosesitter")
-	vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
+	if shared.cfg.enabled then
+		vim.cmd("augroup prosesitter")
+		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
+	end
 end
 
 

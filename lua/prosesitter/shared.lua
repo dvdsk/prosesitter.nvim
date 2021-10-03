@@ -11,6 +11,8 @@ M.cfg = {
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 	vale_bin = false,
 	vale_cfg = plugin_path .. "/vale_cfg.ini",
+	enabled = true,
+	default_cmds = true,
 }
 
 MarkToMeta = {m = {}}
@@ -108,6 +110,12 @@ function M:vale_installed()
 	end
 
 	return false
+end
+
+function M.add_cmds()
+	for name, fname in pairs(defaults.cmds) do
+		vim.cmd(':command '..name..' lua require("prosesitter").'..fname..'()<CR>')
+	end
 end
 
 return M

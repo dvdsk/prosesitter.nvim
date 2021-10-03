@@ -12,7 +12,7 @@ GIF
  - Low performance impact; vale is called asynchronously and only when needed
  - Portable; written in lua and depends only on the vale binary. offers to install vale if not found
  - Configurable; switch between prose style without reloading, add your own queries specifying what to lint
- - Supports any language with a treesitter parser; though you might need to add your own query if I have not yet added one [adding queries](adding_queries.md). Out of the box support for: python rust latex c c++
+ - Supports any language with a treesitter parser; though you might need to add your own query if I have not yet added one [adding queries](adding_queries.md). Out of the box support for: python, rust, latex, c, c++
  - Telescope integration
 
 ### Requirements
@@ -45,8 +45,8 @@ require("prosesitter"):setup({
 	vale_bin = vim.fn.stdpath("data") .. "/prosesitter/vale",
 	vale_cfg = vim.fn.stdpath("data") .. "/prosesitter/vale_cfg.ini",
 	extra_queries = { py = "[(string)] @capture" },
-	add_cmds = false,  -- do not add commands (default = true)
-	start_enabled = false, -- do not start linting files on open (default = true)
+	default_cmds = false,  -- do not add commands (default = true)
+	enabled = false, -- do not start linting files on open (default = true)
 })
 ```
 
@@ -69,7 +69,7 @@ The commands:
  - PsDisable
 
 #### example mapping:
-Unfortunatly I have not yet found good keybindings to suggest as I have a rather excentric [config](config link).
+Unfortunatly I have not yet found good keybindings to suggest as I have a rather excentric [config](https://github.com/dvdsk/new-linux-setup/tree/master/vim).
 
 Setting up a simple keybinding
 ```lua
@@ -101,6 +101,8 @@ vim.cmd(':command EmailStyle lua require("prosesitter").switch_vale_cfg("~/Docum
 
 ### Future work
  - support for more queries (PR's are welcome!)
+ - allow easy switching between linting comments, strings and comments and strings
+ - making linting strings more practical by filtering out urls and paths
  - languagetool support for grammer checking
  - ability to hide a specific error
  - function to try and automatically fix an issue

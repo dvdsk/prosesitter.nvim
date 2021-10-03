@@ -15,7 +15,7 @@ function M.popup()
 	end
 
 	local id = es[1][1]
-	local text = shared.mark_to_hover:by_id(id)
+	local text = shared.mark_to_meta:by_id(id)
 
 	vim.lsp.util.open_floating_preview({text}, "markdown", {})
 end
