@@ -61,7 +61,7 @@ function M:setup(user_cfg)
 		shared.add_cmds()
 	end
 
-	on_event.setup(self.shared)
+	on_event.setup(shared)
 	if shared.cfg.enabled then
 		vim.cmd("augroup prosesitter")
 		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
