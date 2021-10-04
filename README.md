@@ -5,7 +5,7 @@ Prosesitter uses treesitter and vale to bring true syntax aware prose linting to
 ## What is Prosesitter?
 prosesitter.nvim is a text linting tool that adds spell and style checking to your comments and strings. It uses vale to check what you write for style problems. That could vary from not using the passive voice and weasle words ('very' unique) to outdated or noninclusive terms. You can set up your own style or copy an existing one. If you let prosesitter set up vale for you it will also setup some styles for you from the vales [style libary](https://github.com/errata-ai/styles). 
 
-[![asciicast](https://asciinema.org/a/2AEBoLsLD2W6mNYjh0mMXUVWG.svg)](https://asciinema.org/a/2AEBoLsLD2W6mNYjh0mMXUVWG)
+[![asciicast](https://asciinema.org/a/2AEBoLsLD2W6mNYjh0mMXUVWG.svg)](https://asciinema.org/a/2AEBoLsLD2W6mNYjh0mMXUVWG?speed=2)
 
 ### Features
  - Low performance impact; vale is called asynchronously and only when needed
