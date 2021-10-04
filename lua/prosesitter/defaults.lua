@@ -1,15 +1,49 @@
 local M = {}
 
-M.query_by_ext = {
-	rs = "[(line_comment)+ (block_comment) (string_literal)] @capture",
-	py = "[(string) (comment)+ ] @capture",
-	lua = "[(comment)+ ] @capture",
-	c = "[(string_literal) (comment) ] @capture",
-	h = "[(string_literal) (comment) ] @capture",
-	cpp = "[(string_literal) (comment) ] @capture",
-	hpp = "[(string_literal) (comment) ] @capture",
-	tex = "[(text)+] @capture"
+M.queries = {
+	rs = {
+		strings = "[(string_literal)] @capture",
+		comments = "[(line_comment)+ (block_comment)] @capture",
+	},
+	-- py = "[(string) (comment)+ ] @capture",
+	-- lua = "[(comment)+ ] @capture",
+	-- c = "[(string_literal) (comment) ] @capture",
+	-- h = "[(string_literal) (comment) ] @capture",
+	-- cpp = "[(string_literal) (comment) ] @capture",
+	-- hpp = "[(string_literal) (comment) ] @capture",
+	tex = {
+		strings = "[(text)+] @capture",
+		comments = "[(comment)] @capture",
+	},
 }
+
+function M.merge_queries(queries)
+	local q1 = string.match(queries.strings, "%[(.-)%]")
+	local q2 = string.match(queries.comments, "%[(.-)%]")
+	return "["..q1.." "..q2.."] @capture"
+end
+
+for _, queries in pairs(M.queries) do
+	if queries["both"] == nil then
+		queries["both"] = M.merge_queries(queries)
+	end
+end
+
+M.lint_target = {}
+for key, _ in pairs(M.queries) do
+	M.lint_target[key] = "both"
+end
+
+-- override some options to not have both enabled
+M.lint_target.sh = "comments" -- doesnt really make sens to check bash strings (mostly paths/cmds)
+
+function M.all_disabled(queries, disabled)
+	local table = {}
+	for key, _ in pairs(queries) do
+		table[key] = disabled
+	end
+	return table
+end
 
 M.vale_cfg_ini = [==[
 # StylesPath = added by lua code during install

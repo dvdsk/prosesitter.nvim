@@ -9,17 +9,30 @@ M.next = require("prosesitter/actions/nav").next
 M.prev = require("prosesitter/actions/nav").prev
 M.popup = require("prosesitter/actions/hover").popup
 
-local buf_cfg = shared.cfg.by_buf
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
-	if buf_cfg[bufnr] == nil then
+	if shared.buf_query[bufnr] == nil then
 		local extension = vim.fn.expand("%:e")
-		local cfg = shared.cfg.by_ext[extension]
-		if cfg == nil then
+
+		log.info("hi")
+		log.info(vim.inspect(shared.cfg.disabled))
+		if shared.cfg.disabled[extension] then
 			return
 		end
 
-		buf_cfg[bufnr] = cfg
+		log.info("hi")
+		log.info(vim.inspect(shared.cfg.queries))
+		local queries = shared.cfg.queries[extension]
+		if queries == nil then
+			return
+		end
+
+		log.info("hi")
+		local lint_target = shared.cfg.lint_target[extension]
+		local query = queries[lint_target]
+
+		log.info("hi")
+		shared.buf_query[bufnr] = query
 		on_event.attach(bufnr)
 	end
 end
@@ -29,13 +42,13 @@ function M.disable()
 	on_event.disable()
 
 	-- disable and remove all extmarks
-	for buf, _ in ipairs(buf_cfg) do
+	for buf, _ in ipairs(shared.buf_query) do
 		api.nvim_buf_clear_namespace(buf, shared.ns_placeholders, 0, -1)
 		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
 	end
 
 	vim.cmd("autocmd! prosesitter") -- remove autocmd
-	buf_cfg = {}
+	shared.buf_query = {}
 end
 
 function M.enable()

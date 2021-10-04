@@ -51,8 +51,7 @@ local function delayed_on_bytes(...)
 	end, 25)
 end
 
-local cfg_by_buf = shared.cfg.by_buf
-local query = require("vim.treesitter.query")
+local q = require("vim.treesitter.query")
 function M.attach(bufnr)
 	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
 		return false
@@ -65,7 +64,7 @@ function M.attach(bufnr)
 
 	local lang = parser:lang()
 	if not prose_queries[lang] then
-		prose_queries[lang] = query.parse_query(lang, cfg_by_buf[bufnr])
+		prose_queries[lang] = q.parse_query(lang, shared.buf_query[bufnr])
 	end
 
 	parser:register_cbs({ on_bytes = delayed_on_bytes })
@@ -108,8 +107,8 @@ function M.on_bytes(
 	_ --new_byte
 )
 	-- -- stop calling on lines if the plugin was just disabled
-	local cfg = cfg_by_buf[buf]
-	if cfg == nil then
+	local query = shared.buf_query[buf]
+	if query == nil then
 		return true
 	end
 

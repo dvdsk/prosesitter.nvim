@@ -5,21 +5,22 @@ local plugin_path = vim.fn.stdpath("data") .. "/prosesitter"
 
 local M = {}
 
+M.buf_query = {}
 M.cfg = {
-	by_buf = {},
-	by_ext = defaults.query_by_ext,
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 	vale_bin = false,
 	vale_cfg = plugin_path .. "/vale_cfg.ini",
-	enabled = true,
 	default_cmds = true,
+	disabled = false,
+	queries = defaults.queries,
+	lint_target = defaults.lint_target,
 }
 
-MarkToMeta = {m = {}}
+MarkToMeta = { m = {} }
 function MarkToMeta:add(id, meta)
 	local buf = vim.api.nvim_get_current_buf()
 	if self.m[buf] == nil then
-		self.m[buf] =	{}
+		self.m[buf] = {}
 	end
 	self.m[buf][id] = meta
 end
@@ -36,7 +37,7 @@ end
 function MarkToMeta:buffers()
 	local list = {}
 	for buf, _ in pairs(self.m) do
-		list[#list+1] = buf
+		list[#list + 1] = buf
 	end
 	return list
 end
@@ -45,26 +46,49 @@ M.mark_to_meta = MarkToMeta
 M.ns_placeholders = nil
 M.ns_marks = nil
 
+local function overlay_table(overlay, default)
+	for ext, _ in pairs(overlay) do
+		default[ext] = overlay[ext]
+	end
+	return default
+end
+
+local function add_merged_queries(queries)
+	for _, q in pairs(queries) do
+		if q.strings ~= nil and q.comments ~= nil then
+			q.both = defaults.merge_queries(q)
+		end
+	end
+end
+
 function M:adjust_cfg(user_cfg)
 	if user_cfg == nil then
 		return
 	end
 
-	for key, value in pairs(user_cfg) do
-		if self.cfg[key] ~= nil then
-			self.cfg[key] = value
+	for key, _ in pairs(user_cfg) do
+		self.cfg[key] = user_cfg[key]
+	end
+
+	if user_cfg.queries ~= nil then
+		add_merged_queries(user_cfg.queries)
+		self.queries = overlay_table(user_cfg.queries, defaults.queries)
+	end
+
+	if user_cfg.lint_target ~= nil then
+		self.lint_target = overlay_table(user_cfg.lint_target, defaults.lint_target)
+	end
+
+	if user_cfg.disabled ~= nil then
+		if user_cfg.disabled == true then
+			user_cfg.disabled = defaults.all_disabled(self.queries, true)
 		end
+		self.disabled = overlay_table(user_cfg.disabled, defaults.all_disabled(self.queries, false))
+	else
+		--	have to set everything to enabled in case new queries where added
+		self.disabled = defaults.all_disabled(self.queries, false)
 	end
-
-	if user_cfg.extra_queries ~= nil then
-		self:add_queries(user_cfg.extra_queries)
-	end
-end
-
-function M:add_queries(queries)
-	for ext, query in pairs(queries) do
-		self.cfg.by_ext[ext] = query
-	end
+	log.info(vim.inspect(self.disabled))
 end
 
 function M:setup(cfg)
@@ -114,7 +138,7 @@ end
 
 function M.add_cmds()
 	for name, fname in pairs(defaults.cmds) do
-		vim.cmd(':command '..name..' lua require("prosesitter").'..fname..'()<CR>')
+		vim.cmd(":command " .. name .. ' lua require("prosesitter").' .. fname .. "()<CR>")
 	end
 end
 
