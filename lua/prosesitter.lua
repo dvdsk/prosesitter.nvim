@@ -14,24 +14,18 @@ function M.attach()
 	if shared.buf_query[bufnr] == nil then
 		local extension = vim.fn.expand("%:e")
 
-		log.info("hi")
-		log.info(vim.inspect(shared.cfg.disabled))
-		if shared.cfg.disabled[extension] then
+		if shared.cfg.disabled_ext[extension] ~= nil then
 			return
 		end
 
-		log.info("hi")
-		log.info(vim.inspect(shared.cfg.queries))
 		local queries = shared.cfg.queries[extension]
 		if queries == nil then
 			return
 		end
 
-		log.info("hi")
 		local lint_target = shared.cfg.lint_target[extension]
 		local query = queries[lint_target]
 
-		log.info("hi")
 		shared.buf_query[bufnr] = query
 		on_event.attach(bufnr)
 	end
@@ -75,7 +69,7 @@ function M:setup(user_cfg)
 	end
 
 	on_event.setup(shared)
-	if shared.cfg.enabled then
+	if shared.cfg.auto_enable then
 		vim.cmd("augroup prosesitter")
 		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
 	end

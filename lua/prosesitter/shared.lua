@@ -6,15 +6,17 @@ local plugin_path = vim.fn.stdpath("data") .. "/prosesitter"
 local M = {}
 
 M.buf_query = {}
-M.cfg = {
+local Cfg = {
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 	vale_bin = false,
 	vale_cfg = plugin_path .. "/vale_cfg.ini",
 	default_cmds = true,
-	disabled = false,
+	auto_enable = true,
+	disabled_ext = {}, -- empty so nothing disabled
 	queries = defaults.queries,
 	lint_target = defaults.lint_target,
 }
+M.cfg = Cfg
 
 MarkToMeta = { m = {} }
 function MarkToMeta:add(id, meta)
@@ -61,13 +63,13 @@ local function add_merged_queries(queries)
 	end
 end
 
-function M:adjust_cfg(user_cfg)
+function Cfg:adjust_cfg(user_cfg)
 	if user_cfg == nil then
 		return
 	end
 
 	for key, _ in pairs(user_cfg) do
-		self.cfg[key] = user_cfg[key]
+		self[key] = user_cfg[key]
 	end
 
 	if user_cfg.queries ~= nil then
@@ -80,19 +82,16 @@ function M:adjust_cfg(user_cfg)
 	end
 
 	if user_cfg.disabled ~= nil then
-		if user_cfg.disabled == true then
-			user_cfg.disabled = defaults.all_disabled(self.queries, true)
-		end
-		self.disabled = overlay_table(user_cfg.disabled, defaults.all_disabled(self.queries, false))
-	else
-		--	have to set everything to enabled in case new queries where added
-		self.disabled = defaults.all_disabled(self.queries, false)
+		self.disabled = overlay_table(user_cfg.disabled, self.disabled)
 	end
-	log.info(vim.inspect(self.disabled))
+
+	for _, lang in ipairs(user_cfg.disabled_ext) do
+		self.disabled_ext[lang] = true
+	end
 end
 
-function M:setup(cfg)
-	self:adjust_cfg(cfg)
+function M:setup(user_cfg)
+	self.cfg:adjust_cfg(user_cfg)
 
 	if not self:vale_installed() then
 		local do_setup = vim.fn.input("Vale is not installed, install vale? y/n: ")
