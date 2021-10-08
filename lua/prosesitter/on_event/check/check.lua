@@ -1,24 +1,32 @@
 local async = require("prosesitter/on_event/check/async_cmd")
 local lintreq = require("prosesitter/on_event/lintreq")
+local marks = require("prosesitter/on_event/marks/marks")
 local log = require("prosesitter/log")
 local M = {}
 
 M.schedualled = false
 M.lintreq = nil
 local cfg = nil
-local callback = nil
 local job = nil
 
 local function do_check()
 	M.schedualled = false
 	local req = M.lintreq:build()
 
-	local function on_exit(results)
-		callback(results, req.areas)
+	local function post_langtool(results)
+		log.info("output?")
+		log.info(vim.inspect(results))
 	end
 
-	local args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-	async.dispatch_with_stdin(req.text, cfg.vale_bin, args, on_exit)
+	local function post_vale(results)
+		marks.mark_results(results, req.areas)
+	end
+
+	local curl_args = {"--data", "@-", "http://localhost:8081/v2/check"}
+	local langtool_query = "language=en-US&text=a simple test"
+	async.dispatch_with_stdin(langtool_query, "curl", curl_args, post_langtool)
+	local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+	async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
 end
 
 function M.cancelled_schedualled()
@@ -33,11 +41,10 @@ function M.schedual()
 	job = vim.defer_fn(do_check, timeout_ms)
 end
 
-function M:setup(shared, _callback)
+function M:setup(shared)
 	cfg = shared.cfg
 	lintreq.setup(shared)
 	self.lintreq = lintreq.new()
-	callback = _callback
 end
 
 function M:get_lintreq()
