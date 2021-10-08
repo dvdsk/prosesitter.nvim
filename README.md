@@ -43,9 +43,18 @@ require("telescope").load_extension("prosesitter") -- Optionally, depends on tel
 require("prosesitter"):setup({
 	vale_bin = vim.fn.stdpath("data") .. "/prosesitter/vale",
 	vale_cfg = vim.fn.stdpath("data") .. "/prosesitter/vale_cfg.ini",
-	extra_queries = { py = "[(string)] @capture" },
+	--optional extra queries overrides existing queries
+	queries = { 
+		py = { -- one of the queries here may be the empty string
+			strings = "[(string) ] @capture",
+			comments = "[(comment)+ ] @capture",
+		},
+	}, 
+	-- weather to lint strings, comments or both for a language
+	lint_targets = { py = "both", tex = "strings", sh = "comments" }, 
+	disabled_ext = { "tex" }, -- do not ever lint tex files
+	auto_enable = false, -- do not start linting files on open (default = true)
 	default_cmds = false,  -- do not add commands (default = true)
-	enabled = false, -- do not start linting files on open (default = true)
 })
 ```
 
