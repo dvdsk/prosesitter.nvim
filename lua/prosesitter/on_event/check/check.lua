@@ -9,22 +9,39 @@ M.lintreq = nil
 local cfg = nil
 local job = nil
 
+local function to_vale_format(json)
+	local result = vim.fn.json_decode(json)["matches"]
+	local vale_dict = {}
+	for _, res in ipairs(result) do
+		local item = {}
+		item.Span = { res.offset + 1, res.offset + res.length }
+		item.Severity = "warning"
+		item.Message = res.message
+		vale_dict[#vale_dict + 1] = item
+	end
+	return vale_dict
+end
+
+local function langtool_query(text)
+	return "language=en-US&text=" .. text
+end
 local function do_check()
 	M.schedualled = false
 	local req = M.lintreq:build()
 
-	local function post_langtool(results)
-		log.info("output?")
-		log.info(vim.inspect(results))
-	end
-
-	local function post_vale(results)
+	local function post_langtool(json)
+		local results = to_vale_format(json)
 		marks.mark_results(results, req.areas)
 	end
 
-	local curl_args = {"--data", "@-", "http://localhost:8081/v2/check"}
-	local langtool_query = "language=en-US&text=a simple test"
-	async.dispatch_with_stdin(langtool_query, "curl", curl_args, post_langtool)
+	local function post_vale(json)
+		-- local results = vim.fn.json_decode(json)["stdin.md"]
+		-- log.info(vim.inspect(results))
+		-- marks.mark_results(results, req.areas)
+	end
+
+	local curl_args = { "--no-progress-meter", "--data", "@-", "http://localhost:8081/v2/check" }
+	async.dispatch_with_stdin(langtool_query(req.text), "curl", curl_args, post_langtool)
 	local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
 	async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
 end

@@ -72,10 +72,7 @@ local function skip_to_next_problem(problems, i)
 end
 
 local cfg = nil
-function M.hl_iter(results, areas)
-	-- to_print = results
-	-- vim.defer_fn(print_res, 100)
-	local problems = vim.fn.json_decode(results)["stdin.md"]
+function M.hl_iter(problems, areas)
 	if problems == nil then
 		return function()
 			return nil
