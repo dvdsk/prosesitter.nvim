@@ -9,13 +9,34 @@ M.lintreq = nil
 local cfg = nil
 local job = nil
 
+local id_to_severity = {
+	CAPITALIZATION = "error",
+	COLLOCATIONS = "warning",
+	CONFUSED_WORDS = "warning",
+	COMPOUNDING = "warning",
+	CREATIVE_WRITING = "suggestion", -- not active by default
+	GRAMMAR = "error",
+	MISC = "warning",
+	NONSTANDARD_PHRASES = "warning",
+	PLAIN_ENGLISH = "suggestion", -- not active by default
+	TYPOS = "error",
+	PUNCTUATION = "warning",
+	REDUNDANCY = "suggestion",
+	SEMANTICS = "warning",
+	STYLE = "suggestion", -- disabled by us
+	TEXT_ANALYSIS = "suggestion", -- not active by default
+	TYPOGRAPHY = "warning",
+	CASING = "error",
+	WIKIPEDIA = "suggestion", --not active by default
+}
+
 local function to_vale_format(json)
 	local result = vim.fn.json_decode(json)["matches"]
 	local vale_dict = {}
 	for _, res in ipairs(result) do
 		local item = {}
 		item.Span = { res.offset + 1, res.offset + res.length }
-		item.Severity = "warning"
+		item.Severity = id_to_severity[res.rule.category.id]
 		item.Message = res.message
 		vale_dict[#vale_dict + 1] = item
 	end
@@ -23,7 +44,9 @@ local function to_vale_format(json)
 end
 
 local function langtool_query(text)
-	return "language=en-US&text=" .. text
+	-- Disable whitespace rule (whitespace repetition checking) as comments are often formatted
+	-- using whitespace. Disable style checking as we use vale for that.
+	return "language=en-US&disabledCategories=STYLE&disabledRules=WHITESPACE_RULE&text=" .. text
 end
 local function do_check()
 	M.schedualled = false
