@@ -6,10 +6,11 @@ local conf = require("telescope.config").values
 local action_state = require("telescope.actions.state")
 local action_set = require("telescope.actions.set")
 local shared = require("prosesitter/shared")
+local marks = require("prosesitter/on_event/marks/marks")
 local log = require("prosesitter/log")
 
 local function add_buffer_entries(entries, buf)
-	local buffer_marks = api.nvim_buf_get_extmarks(buf, shared.ns_marks, 0, -1, { details = true })
+	local buffer_marks = marks.get_marks(buf)
 	for _, mark in ipairs(buffer_marks) do
 		local id = mark[1]
 		entries[#entries + 1] = {

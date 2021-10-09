@@ -38,7 +38,8 @@ function M.disable()
 	-- disable and remove all extmarks
 	for buf, _ in ipairs(shared.buf_query) do
 		api.nvim_buf_clear_namespace(buf, shared.ns_placeholders, 0, -1)
-		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
+		api.nvim_buf_clear_namespace(buf, shared.ns_vale, 0, -1)
+		api.nvim_buf_clear_namespace(buf, shared.ns_langtool, 0, -1)
 	end
 
 	vim.cmd("autocmd! prosesitter") -- remove autocmd

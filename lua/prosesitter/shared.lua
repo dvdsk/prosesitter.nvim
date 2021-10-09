@@ -46,7 +46,6 @@ end
 
 M.mark_to_meta = MarkToMeta
 M.ns_placeholders = nil
-M.ns_marks = nil
 
 local function overlay_table(overlay, default)
 	for ext, _ in pairs(overlay) do
@@ -104,7 +103,8 @@ function M:setup(user_cfg)
 		end
 	end
 
-	M.ns_marks = vim.api.nvim_create_namespace("prosesitter_marks")
+	M.ns_vale = vim.api.nvim_create_namespace("prosesitter_vale")
+	M.ns_langtool = vim.api.nvim_create_namespace("prosesitter_langtool")
 	M.ns_placeholders = vim.api.nvim_create_namespace("prosesitter_placeholders")
 	for _, hl in pairs(self.cfg.vale_to_hl) do
 		hl = vim.api.nvim_get_hl_id_by_name(hl)

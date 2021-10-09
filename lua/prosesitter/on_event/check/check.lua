@@ -54,13 +54,12 @@ local function do_check()
 
 	local function post_langtool(json)
 		local results = to_vale_format(json)
-		marks.mark_results(results, req.areas)
+		marks.mark_langtool_results(results, req.areas)
 	end
 
 	local function post_vale(json)
-		-- local results = vim.fn.json_decode(json)["stdin.md"]
-		-- log.info(vim.inspect(results))
-		-- marks.mark_results(results, req.areas)
+		local results = vim.fn.json_decode(json)["stdin.md"]
+		marks.mark_vale_results(results, req.areas)
 	end
 
 	local curl_args = { "--no-progress-meter", "--data", "@-", "http://localhost:8081/v2/check" }
