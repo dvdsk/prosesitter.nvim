@@ -2,6 +2,7 @@ local async = require("prosesitter/on_event/check/async_cmd")
 local lintreq = require("prosesitter/on_event/lintreq")
 local marks = require("prosesitter/on_event/marks/marks")
 local log = require("prosesitter/log")
+local shared = require("prosesitter/shared")
 local M = {}
 
 M.schedualled = false
@@ -52,20 +53,23 @@ local function do_check()
 	M.schedualled = false
 	local req = M.lintreq:build()
 
-	local function post_langtool(json)
-		local results = to_vale_format(json)
-		marks.mark_langtool_results(results, req.areas)
+	if shared.langtool_started then
+		local function post_langtool(json)
+			local results = to_vale_format(json)
+			marks.mark_langtool_results(results, req.areas)
+		end
+		local curl_args = { "--no-progress-meter", "--data", "@-", "http://localhost:8081/v2/check" }
+		async.dispatch_with_stdin(langtool_query(req.text), "curl", curl_args, post_langtool)
 	end
 
-	local function post_vale(json)
-		local results = vim.fn.json_decode(json)["stdin.md"]
-		marks.mark_vale_results(results, req.areas)
+	if cfg.vale_bin ~= nil then
+		local function post_vale(json)
+			local results = vim.fn.json_decode(json)["stdin.md"]
+			marks.mark_vale_results(results, req.areas)
+		end
+		local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+		async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
 	end
-
-	-- local curl_args = { "--no-progress-meter", "--data", "@-", "http://localhost:8081/v2/check" }
-	-- async.dispatch_with_stdin(langtool_query(req.text), "curl", curl_args, post_langtool)
-	local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-	async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
 end
 
 function M.cancelled_schedualled()

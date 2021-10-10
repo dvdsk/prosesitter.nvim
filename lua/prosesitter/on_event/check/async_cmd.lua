@@ -18,6 +18,7 @@ function M.dispatch_with_stdin(input, cmd, args, user_callback)
 	local stdout = uv.new_pipe(false)
 	local stderr = uv.new_pipe(false)
 
+	log.info(vim.inspect(cmd))
 	local output
 	handle, _ = uv.spawn(cmd, {
 		args = args,

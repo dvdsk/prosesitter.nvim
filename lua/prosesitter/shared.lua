@@ -7,11 +7,13 @@ local plugin_path = vim.fn.stdpath("data") .. "/prosesitter"
 
 local M = {}
 
+M.langtool_started = false
 M.buf_query = {}
 local Cfg = {
 	vale_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
-	vale_bin = false,
 	vale_cfg = plugin_path .. "/vale_cfg.ini",
+	vale_bin = false,
+	langtool_bin = false,
 	default_cmds = true,
 	auto_enable = true,
 	disabled_ext = {}, -- empty so nothing disabled
@@ -94,8 +96,10 @@ end
 function M:setup(user_cfg)
 	self.cfg:adjust_cfg(user_cfg)
 
-	if not util:installed(self.cfg.vale, "vale") then
-		local do_setup = vim.fn.input("Vale is not installed, install vale? y/n: ")
+	-- for now vale is not optional
+	self.cfg.vale_bin = util:resolve_path(self.cfg.vale_bin, "vale")
+	if self.cfg.vale_bin == nil then
+		local do_setup = vim.fn.input("vale is not installed, install vale? y/n: ")
 		if do_setup == "y" then
 			vale_setup.binairy_and_styles()
 			vale_setup.default_cfg()
@@ -106,15 +110,16 @@ function M:setup(user_cfg)
 	end
 
 	-- for now langtool is not optional
-	-- if not util:installed(self.cfg.langtool, "languagetool-server.jar") then
-	-- 	local do_setup = vim.fn.input("Language tool not installed, install language tool? y/n: ")
-	-- 	if do_setup == "y" then
-	-- 		langtool_setup.binairy()
-	-- 	else
-	-- 		print("please set up language tool manually and adjust your config")
-	-- 		return false
-	-- 	end
-	-- end
+	self.cfg.langtool_bin = util:resolve_path(self.cfg.langtool_bin, "languagetool/languagetool-server.jar")
+	if self.cfg.langtool_bin == nil then
+		local do_setup = vim.fn.input("Language tool not installed, install language tool? y/n: ")
+		if do_setup == "y" then
+			langtool_setup.binairy()
+		else
+			print("please set up language tool manually and adjust your config")
+			return false
+		end
+	end
 
 	M.ns_vale = vim.api.nvim_create_namespace("prosesitter_vale")
 	M.ns_langtool = vim.api.nvim_create_namespace("prosesitter_langtool")
