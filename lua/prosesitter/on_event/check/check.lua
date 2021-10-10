@@ -62,8 +62,8 @@ local function do_check()
 		marks.mark_vale_results(results, req.areas)
 	end
 
-	local curl_args = { "--no-progress-meter", "--data", "@-", "http://localhost:8081/v2/check" }
-	async.dispatch_with_stdin(langtool_query(req.text), "curl", curl_args, post_langtool)
+	-- local curl_args = { "--no-progress-meter", "--data", "@-", "http://localhost:8081/v2/check" }
+	-- async.dispatch_with_stdin(langtool_query(req.text), "curl", curl_args, post_langtool)
 	local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
 	async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
 end

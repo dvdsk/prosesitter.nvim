@@ -1,6 +1,8 @@
 local log = require("prosesitter/log")
 local defaults = require("prosesitter/defaults")
-local install = require("prosesitter/install")
+local vale_setup = require("prosesitter/setup/vale")
+local langtool_setup = require("prosesitter/setup/langtool")
+local util = require("prosesitter/util")
 local plugin_path = vim.fn.stdpath("data") .. "/prosesitter"
 
 local M = {}
@@ -92,16 +94,27 @@ end
 function M:setup(user_cfg)
 	self.cfg:adjust_cfg(user_cfg)
 
-	if not self:vale_installed() then
+	if not util:installed(self.cfg.vale, "vale") then
 		local do_setup = vim.fn.input("Vale is not installed, install vale? y/n: ")
 		if do_setup == "y" then
-			install.binairy_and_styles()
-			install.default_cfg()
+			vale_setup.binairy_and_styles()
+			vale_setup.default_cfg()
 		else
 			print("please setup vale manually and adjust your config")
 			return false
 		end
 	end
+
+	-- for now langtool is not optional
+	-- if not util:installed(self.cfg.langtool, "languagetool-server.jar") then
+	-- 	local do_setup = vim.fn.input("Language tool not installed, install language tool? y/n: ")
+	-- 	if do_setup == "y" then
+	-- 		langtool_setup.binairy()
+	-- 	else
+	-- 		print("please set up language tool manually and adjust your config")
+	-- 		return false
+	-- 	end
+	-- end
 
 	M.ns_vale = vim.api.nvim_create_namespace("prosesitter_vale")
 	M.ns_langtool = vim.api.nvim_create_namespace("prosesitter_langtool")
@@ -110,29 +123,6 @@ function M:setup(user_cfg)
 		hl = vim.api.nvim_get_hl_id_by_name(hl)
 	end
 	return true
-end
-
-function M:vale_installed()
-	local ok = 1
-	-- check any user set vale bin path
-	if self.cfg.vale_bin ~= false then
-		if vim.fn.filereadable(self.cfg.vale_bin) == ok then
-			return true
-		end
-	end
-
-	if vim.fn.exepath("vale") ~= "" then
-		self.cfg.vale_bin = "vale"
-		return true
-	end
-
-	local plugin_installed_vale_path = plugin_path .. "/vale"
-	if vim.fn.filereadable(plugin_installed_vale_path) == ok then
-		self.cfg.vale_bin = plugin_installed_vale_path
-		return true
-	end
-
-	return false
 end
 
 function M.add_cmds()
