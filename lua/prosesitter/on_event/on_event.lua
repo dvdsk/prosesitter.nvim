@@ -22,6 +22,24 @@ local function key(node)
 	return table.concat(keystr, "\0")
 end
 
+local BufMemory = {}
+function BufMemory:reset()
+	for i, _ in ipairs(self) do self[i] = nil end
+end
+function BufMemory:no_change(buf, start_row)
+	local line =api.nvim_buf_get_lines(buf, start_row, start_row + 1, false)[1]
+
+	if self[buf] == nil then
+		self[buf] = line
+		return false
+	elseif self[buf] == line then
+		return true
+	else
+		self[buf] = line
+		return false
+	end
+end
+
 local prose_queries = {}
 local function get_nodes(bufnr, start_l, end_l)
 	local parser = parsers.get_parser(bufnr)
@@ -51,6 +69,14 @@ local function delayed_on_bytes(...)
 	end, 25)
 end
 
+function M:lint_everything(bufnr)
+	BufMemory:reset()
+	log.info("hi: "..bufnr)
+	local info = vim.fn.getbufinfo(bufnr)
+	local last_line = info[1].linecount
+	self.on_bytes(bufnr, nil, 0, nil, nil, last_line, nil, nil, last_line, nil, nil)
+end
+
 local q = require("vim.treesitter.query")
 function M.attach(bufnr)
 	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
@@ -68,29 +94,9 @@ function M.attach(bufnr)
 	end
 
 	parser:register_cbs({ on_bytes = delayed_on_bytes })
-
-	local info = vim.fn.getbufinfo(bufnr)
-	local last_line = info[1].linecount
-	M.on_bytes(bufnr, nil, 0, nil, nil, last_line, nil, nil, last_line, nil, nil)
+	M:lint_everything(bufnr)
 end
 
-local BufMemory = {}
-function BufMemory:reset()
-	for i, _ in ipairs(self) do self[i] = nil end
-end
-function BufMemory:no_change(buf, start_row)
-	local line =api.nvim_buf_get_lines(buf, start_row, start_row + 1, false)[1]
-
-	if self[buf] == nil then
-		self[buf] = line
-		return false
-	elseif self[buf] == line then
-		return true
-	else
-		self[buf] = line
-		return false
-	end
-end
 
 local lintreq = nil
 function M.on_bytes(

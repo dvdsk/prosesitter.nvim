@@ -1,6 +1,7 @@
 local log = require("prosesitter/log")
 local on_event = require("prosesitter/on_event/on_event")
 local shared = require("prosesitter/shared")
+local langtool = require("prosesitter/setup/langtool")
 
 local api = vim.api
 local M = {}
@@ -65,6 +66,10 @@ function M:setup(user_cfg)
 		return
 	end
 
+	if shared.cfg.langtool_bin ~= nil then
+		shared.start_server(on_event)
+	end
+
 	if shared.cfg.default_cmds then
 		shared.add_cmds()
 	end
@@ -75,6 +80,5 @@ function M:setup(user_cfg)
 		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
 	end
 end
-
 
 return M

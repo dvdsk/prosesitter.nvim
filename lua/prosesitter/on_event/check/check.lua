@@ -53,7 +53,7 @@ local function do_check()
 	M.schedualled = false
 	local req = M.lintreq:build()
 
-	if shared.langtool_started then
+	if shared.langtool_running then
 		local function post_langtool(json)
 			local results = to_vale_format(json)
 			marks.mark_langtool_results(results, req.areas)

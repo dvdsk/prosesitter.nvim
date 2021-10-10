@@ -22,9 +22,8 @@ function M:shell_in_new_window(bash_script, ok_msg, err_msg)
 end
 
 function M:resolve_path(cfg_bin, exe_name)
-	log.info(cfg_bin, exe_name)
 	local ok = 1
-	-- check any user set vale bin path
+	-- check any user set bin path
 	if cfg_bin ~= false then
 		if vim.fn.filereadable(cfg_bin) == ok then
 			return cfg_bin
@@ -36,9 +35,7 @@ function M:resolve_path(cfg_bin, exe_name)
 	end
 
 	local plugin_installed_path = self.plugin_path .. "/"..exe_name
-	log.info(plugin_installed_path)
 	if vim.fn.filereadable(plugin_installed_path) == ok then
-		log.info("yo")
 		return plugin_installed_path
 	end
 
