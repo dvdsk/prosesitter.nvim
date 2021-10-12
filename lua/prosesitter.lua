@@ -1,7 +1,6 @@
 local log = require("prosesitter/log")
 local on_event = require("prosesitter/on_event/on_event")
 local shared = require("prosesitter/shared")
-local langtool = require("prosesitter/setup/langtool")
 
 local api = vim.api
 local M = {}

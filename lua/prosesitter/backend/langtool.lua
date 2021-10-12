@@ -1,7 +1,9 @@
 local util = require("prosesitter/util")
 local M = {}
 
-function M.binairy()
+
+
+function M.setup_binairy()
 	vim.fn.mkdir(util.plugin_path, "p")
 	local install_script = [=====[
 		set -e 

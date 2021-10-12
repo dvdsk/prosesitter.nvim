@@ -2,7 +2,7 @@ local defaults = require("prosesitter/defaults")
 local util = require("prosesitter/util")
 local M = {}
 
-function M.binairy_and_styles()
+function M.setup_binairy_and_styles()
 	vim.fn.mkdir(util.plugin_path, "p")
 	local install_script = [=====[
 		set -e 
@@ -47,7 +47,7 @@ function M.binairy_and_styles()
 	util:shell_in_new_window(install_script, ok_msg, err_msg)
 end
 
-function M.default_cfg()
+function M.setup_default_cfg()
 	local exists = 1
 	if vim.fn.filereadable(util.plugin_path .. "/vale_cfg.ini") ~= exists then
 		local file = io.open(util.plugin_path .. "/vale_cfg.ini", "w")

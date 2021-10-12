@@ -1,7 +1,7 @@
 local log = require("prosesitter/log")
 local defaults = require("prosesitter/defaults")
-local vale_setup = require("prosesitter/setup/vale")
-local langtool_setup = require("prosesitter/setup/langtool")
+local vale = require("prosesitter/backend/vale")
+local langtool = require("prosesitter/backend/langtool")
 local util = require("prosesitter/util")
 
 local M = {}
@@ -100,8 +100,8 @@ function M:setup(user_cfg)
 	if self.cfg.vale_bin == nil then
 		local do_setup = vim.fn.input("vale is not installed, install vale? y/n: ")
 		if do_setup == "y" then
-			vale_setup.binairy_and_styles()
-			vale_setup.default_cfg()
+			vale.setup_binairy_and_styles()
+			vale.setup_default_cfg()
 		else
 			print("please setup vale manually and adjust your config")
 			return false
