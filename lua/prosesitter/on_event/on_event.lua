@@ -71,7 +71,6 @@ end
 
 function M:lint_everything(bufnr)
 	BufMemory:reset()
-	log.info("hi: "..bufnr)
 	local info = vim.fn.getbufinfo(bufnr)
 	local last_line = info[1].linecount
 	self.on_bytes(bufnr, nil, 0, nil, nil, last_line, nil, nil, last_line, nil, nil)

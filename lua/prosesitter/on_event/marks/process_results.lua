@@ -1,4 +1,5 @@
 local log = require("prosesitter/log")
+local shared = require("prosesitter/shared")
 local M = {}
 
 local function next_problem_span(problems, i)
@@ -71,7 +72,6 @@ local function skip_to_next_problem(problems, i)
 	return i
 end
 
-local cfg = nil
 function M.hl_iter(problems, areas)
 	if problems == nil then
 		return function()
@@ -97,15 +97,11 @@ function M.hl_iter(problems, areas)
 		hl.row_id = areas[j].row_id
 
 		local severity = problems[i].Severity
-		hl.group = cfg.vale_to_hl[severity]
+		hl.group = shared.cfg.vale_to_hl[severity]
 		hl.hover_txt = problems[i]["Message"]
 
 		return hl
 	end
-end
-
-function M.setup(_cfg)
-	cfg = _cfg
 end
 
 return M

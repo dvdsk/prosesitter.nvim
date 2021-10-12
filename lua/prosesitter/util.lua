@@ -42,4 +42,8 @@ function M:resolve_path(cfg_bin, exe_name)
 	return nil
 end
 
+function string.starts(hay, needle)
+	return string.sub(hay, 1, string.len(needle)) == needle
+end
+
 return M

@@ -6,9 +6,8 @@ local shared = require("prosesitter/shared")
 local M = {}
 
 M.schedualled = false
-M.lintreq = nil
-local cfg = nil
-local job = nil
+M.lintreq = "should be set in check.setup"
+local job = "should be set in check.setup"
 
 local id_to_severity = {
 	CAPITALIZATION = "error",
@@ -49,6 +48,8 @@ local function langtool_query(text)
 	-- using whitespace. Disable style checking as we use vale for that.
 	return "language=en-US&disabledCategories=STYLE&disabledRules=WHITESPACE_RULE&text=" .. text
 end
+
+local cfg = "should be set in check.setup"
 local function do_check()
 	M.schedualled = false
 	local req = M.lintreq:build()
@@ -84,7 +85,7 @@ function M.schedual()
 	job = vim.defer_fn(do_check, timeout_ms)
 end
 
-function M:setup(shared)
+function M:setup()
 	cfg = shared.cfg
 	lintreq.setup(shared)
 	self.lintreq = lintreq.new()

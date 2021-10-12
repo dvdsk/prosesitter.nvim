@@ -82,7 +82,6 @@ function M.remove_placeholders(buf, start_row, up_to_row)
 end
 
 function M.setup()
-	res.setup(shared.cfg)
 	ns_vale = shared.ns_vale
 	ns_langtool = shared.ns_langtool
 	ns_placeholders = shared.ns_placeholders
