@@ -88,7 +88,7 @@ return require("telescope").register_extension({
 			pick_lint(opts, {curr_buf})
 		end,
 		all = function(opts)
-			local buffers = shared.mark_to_meta:buffers()
+			local buffers = shared:attached_buffers()
 			pick_lint(opts, buffers)
 		end,
 	}

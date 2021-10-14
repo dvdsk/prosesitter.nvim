@@ -20,7 +20,7 @@ function M.popup()
 		return false
 	end
 
-	local id = mark[1][1]
+	local id = mark[1]
 	local issues = shared.issues:for_id(id)
 
 	vim.lsp.util.open_floating_preview(format(issues), "markdown", {})

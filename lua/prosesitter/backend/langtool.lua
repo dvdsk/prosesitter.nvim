@@ -32,7 +32,6 @@ local function mark_rdy_if_responding(on_event)
 			if text ~= nil then
 				if string.starts(text, '{"software":{"name":"LanguageTool"') then
 					shared.langtool_running = true
-					log.info("Language tool started")
 					for buf, _ in pairs(shared.buf_query) do
 						on_event:lint_everything(buf)
 					end

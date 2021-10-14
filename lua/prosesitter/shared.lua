@@ -5,6 +5,14 @@ local M = {}
 M.langtool_running = false
 M.buf_query = {}
 
+function M:attached_buffers()
+	local list = {}
+	for bufnr, _ in pairs(self.buf_query) do
+		list[#list+1] = bufnr
+	end
+	return list
+end
+
 M.cfg = "should be set in prosesitter.setup"
 M.issues = "should be set in prosesitter.setup"
 
