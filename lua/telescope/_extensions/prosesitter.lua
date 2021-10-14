@@ -9,12 +9,17 @@ local shared = require("prosesitter/shared")
 local marks = require("prosesitter/on_event/marks/marks")
 local log = require("prosesitter/log")
 
+local function format(issue)
+	return "todo"
+end
+
 local function add_buffer_entries(entries, buf)
 	local buffer_marks = marks.get_marks(buf)
 	for _, mark in ipairs(buffer_marks) do
 		local id = mark[1]
+		local issue = shared.issues:for_buf_id(buf, id)
 		entries[#entries + 1] = {
-			text = shared.mark_to_meta:by_buf_id(buf, id),
+			text = format(issue),
 			row = mark[2] + 1,
 			start_col = mark[3],
 			end_col = mark[4].end_col,

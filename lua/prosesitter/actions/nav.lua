@@ -5,6 +5,10 @@ local marks = require("prosesitter/on_event/marks/marks")
 local api = vim.api
 M = {}
 
+local function format(issues)
+	return { "todo" }
+end
+
 local function goto_mark(start, stop)
 	local mark = marks.get_closest_mark(start, stop)
 	if mark == nil then
@@ -18,9 +22,9 @@ local function goto_mark(start, stop)
 
 	vim.api.nvim_win_set_cursor(0, { row+1, col })
 
-	local text = shared.mark_to_meta:by_id(id)
+	local issues = shared.issues:by_id(id)
 	local cb = function()
-		vim.lsp.util.open_floating_preview({ text }, "markdown", {})
+		vim.lsp.util.open_floating_preview(format(issues), "markdown", {})
 	end
 	vim.schedule(cb)
 end

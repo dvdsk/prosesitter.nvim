@@ -78,4 +78,42 @@ function M.start_server(on_event, path)
 	end
 end
 
+local id_to_severity = {
+	CAPITALIZATION = "error",
+	COLLOCATIONS = "warning",
+	CONFUSED_WORDS = "warning",
+	COMPOUNDING = "warning",
+	CREATIVE_WRITING = "suggestion", -- not active by default
+	GRAMMAR = "error",
+	MISC = "warning",
+	NONSTANDARD_PHRASES = "warning",
+	PLAIN_ENGLISH = "suggestion", -- not active by default
+	TYPOS = "error",
+	PUNCTUATION = "warning",
+	REDUNDANCY = "suggestion",
+	SEMANTICS = "warning",
+	STYLE = "suggestion", -- disabled by us
+	TEXT_ANALYSIS = "suggestion", -- not active by default
+	TYPOGRAPHY = "warning",
+	CASING = "error",
+	WIKIPEDIA = "suggestion", --not active by default
+}
+
+function M.to_meta(problem)
+	local issue = {}
+	issue.msg = problem.message
+	issue.severity = id_to_severity[problem.rule.category.id]
+	issue.full_source = "TODO"
+	issue.action = "TODO"
+	return issue
+end
+
+function M.add_spans(json)
+	local problems = vim.fn.json_decode(json)["matches"]
+	for _, res in ipairs(problems) do
+		res.Span = { res.offset + 1, res.offset + res.length }
+	end
+	return problems
+end
+
 return M

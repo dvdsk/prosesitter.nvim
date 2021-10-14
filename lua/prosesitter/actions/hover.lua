@@ -5,6 +5,10 @@ local api = vim.api
 
 M = {}
 
+local function format(issues)
+	return { "todo" }
+end
+
 -- open hover window if lint error on current pos else return
 function M.popup()
 	local row, col = unpack(api.nvim_win_get_cursor(0))
@@ -17,9 +21,9 @@ function M.popup()
 	end
 
 	local id = mark[1][1]
-	local text = shared.mark_to_meta:by_id(id)
+	local issues = shared.issues:for_id(id)
 
-	vim.lsp.util.open_floating_preview({ text }, "markdown", {})
+	vim.lsp.util.open_floating_preview(format(issues), "markdown", {})
 end
 
 return M

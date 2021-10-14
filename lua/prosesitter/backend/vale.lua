@@ -62,4 +62,13 @@ function M.setup_default_cfg()
 	end
 end
 
+function M.to_meta(problem)
+	local issue = {}
+	issue.msg = problem.Message
+	issue.severity = problem.Severity
+	issue.full_source = "TODO"
+	issue.action = "TODO"
+	return issue
+end
+
 return M

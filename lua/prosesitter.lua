@@ -3,6 +3,7 @@ local on_event = require("prosesitter/on_event/on_event")
 local shared = require("prosesitter/shared")
 local config = require("prosesitter/config/mod")
 local langtool = require("prosesitter/backend/langtool")
+local issues = require("prosesitter/on_event/issues")
 
 local api = vim.api
 local M = {}
@@ -31,6 +32,7 @@ function M.attach()
 	local query = queries[lint_target]
 
 	shared.buf_query[bufnr] = query
+	shared.issues:attach(bufnr)
 	on_event.attach(bufnr)
 end
 
@@ -41,8 +43,7 @@ function M.disable()
 	-- disable and remove all extmarks
 	for buf, _ in ipairs(shared.buf_query) do
 		api.nvim_buf_clear_namespace(buf, shared.ns_placeholders, 0, -1)
-		api.nvim_buf_clear_namespace(buf, shared.ns_vale, 0, -1)
-		api.nvim_buf_clear_namespace(buf, shared.ns_langtool, 0, -1)
+		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
 	end
 
 	vim.cmd("autocmd! prosesitter") -- remove autocmd
@@ -68,15 +69,16 @@ function M:setup(user_cfg)
 		return
 	end
 
-	if cfg.langtool_bin ~= nil then
-		langtool.start_server(on_event, cfg.langtool_bin)
-	end
+	-- if cfg.langtool_bin ~= nil then
+	-- 	langtool.start_server(on_event, cfg.langtool_bin)
+	-- end
 
 	if cfg.default_cmds then
 		config.add_cmds()
 	end
 
 	shared.cfg = cfg
+	shared.issues = issues.Issues
 	on_event.setup(shared)
 	if cfg.auto_enable then
 		vim.cmd("augroup prosesitter")
