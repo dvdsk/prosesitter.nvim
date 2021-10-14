@@ -27,7 +27,8 @@ local function do_check()
 			local results = langtool.add_spans(json)
 			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
 		end
-		local curl_args = { "--no-progress-meter", "--data", "@-", "http://localhost:8081/v2/check" }
+
+		local curl_args = { "--no-progress-meter", "--data", "@-", langtool.url}
 		async.dispatch_with_stdin(langtool_query(req.text), "curl", curl_args, post_langtool)
 	end
 

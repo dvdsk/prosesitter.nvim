@@ -47,7 +47,7 @@ function M.setup_binairy_and_styles()
 	util:shell_in_new_window(install_script, ok_msg, err_msg)
 end
 
-function M.setup_default_cfg()
+function M.setup_cfg()
 	local exists = 1
 	if vim.fn.filereadable(util.plugin_path .. "/vale_cfg.ini") ~= exists then
 		local file = io.open(util.plugin_path .. "/vale_cfg.ini", "w")

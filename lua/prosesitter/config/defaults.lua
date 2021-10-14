@@ -68,6 +68,10 @@ MinAlertLevel = suggestion
 BasedOnStyles = proselint, write-good, Vale
 ]==]
 
+M.langtool_cfg = [==[
+maxCheckThreads=2
+]==]
+
 M.cmds = {
 	PsNext = "next",
 	PsPrev = "prev",

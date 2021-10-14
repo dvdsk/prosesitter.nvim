@@ -8,7 +8,7 @@ local handle
 local function on_stderr(err, data)
 	assert(not err, err)
 	if data then
-		print("stderr chunk", data)
+		log.error(data)
 	end
 end
 

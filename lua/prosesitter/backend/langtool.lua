@@ -1,7 +1,10 @@
 local util = require("prosesitter/util")
 local log = require("prosesitter/log")
 local shared = require("prosesitter/shared")
+local defaults = require("prosesitter/config/defaults")
 local M = {}
+
+M.url = "set in start_server function"
 
 function M.setup_binairy()
 	vim.fn.mkdir(util.plugin_path, "p")
@@ -20,11 +23,24 @@ function M.setup_binairy()
 		mv languagetool/*/* languagetool 
 	]=====]
 
-	local ok_msg = "[prosesitter] installed vale with default styles"
-	local err_msg= "[prosesitter] could not setup vale styles"
+	local ok_msg = "[prosesitter] installed language tool"
+	local err_msg = "[prosesitter] could not setup language tool"
 	util:shell_in_new_window(install_script, ok_msg, err_msg)
 end
 
+function M.setup_cfg()
+	local exists = 1
+	if vim.fn.filereadable(util.plugin_path .. "/langtool.cfg") ~= exists then
+		local file = io.open(util.plugin_path .. "/langtool.cfg", "w")
+		if file == nil then
+			print("fatal error: could not open/create fresh LanguageTool config")
+		end
+
+		file:write(defaults.langtool_cfg)
+		file:flush()
+		file:close()
+	end
+end
 
 local function mark_rdy_if_responding(on_event)
 	local on_exit = function(text)
@@ -44,28 +60,33 @@ local function mark_rdy_if_responding(on_event)
 	local async = require("prosesitter/on_event/check/async_cmd")
 	local do_check = function()
 		if not M.langtool_running then
-			local curl_args = { "--no-progress-meter", "--data", "@-", "http://localhost:8081/v2/check" }
+			local curl_args = { "--no-progress-meter", "--data", "@-", M.url }
 			async.dispatch_with_stdin("language=en-US&text=hi", "curl", curl_args, on_exit)
 		end
 	end
 
 	for timeout = 0, 15, 1 do
-		vim.defer_fn(do_check, timeout*1000)
+		vim.defer_fn(do_check, timeout * 1000)
 	end
 end
 
-function M.start_server(on_event, path)
+-- using depedency injection here (on_event) to break
+-- dependency loop
+function M.start_server(on_event, cfg)
 	local on_exit = function()
 		M.langtool_running = false
 	end
 
+	M.url = "http://localhost:" .. cfg.langtool_port .. "/v2/check"
 	local res = vim.fn.jobstart({
 		"java",
 		"-cp",
-		path,
+		cfg.langtool_bin,
 		"org.languagetool.server.HTTPServer",
+		"--config",
+		cfg.langtool_cfg,
 		"--port",
-		"8081",
+		cfg.langtool_port,
 	}, {
 		on_exit = on_exit,
 	})
@@ -73,7 +94,9 @@ function M.start_server(on_event, path)
 	if res > 0 then
 		mark_rdy_if_responding(on_event)
 	else
-		error("could not start language server using path: " .. path)
+		error("could not start language server using path: " .. cfg.langtool_bin)
+		log.error("could not start language server using path: " .. cfg.langtool_bin)
+
 	end
 end
 

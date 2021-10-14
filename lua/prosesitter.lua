@@ -70,7 +70,7 @@ function M:setup(user_cfg)
 	end
 
 	if cfg.langtool_bin ~= nil then
-		langtool.start_server(on_event, cfg.langtool_bin)
+		langtool.start_server(on_event, cfg)
 	end
 
 	if cfg.default_cmds then

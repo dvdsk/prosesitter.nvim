@@ -24,6 +24,8 @@ local Cfg = {
 	vale_cfg = util.plugin_path .. "/vale_cfg.ini",
 	vale_bin = false,
 	langtool_bin = false,
+	langtool_port = 34287, -- just a random port thats probably free
+	langtool_cfg = util.plugin_path .. "/langtool.cfg",
 	default_cmds = true,
 	auto_enable = true,
 	disabled_ext = {}, -- empty so nothing disabled
@@ -67,7 +69,7 @@ function M:setup(user_cfg)
 		local do_setup = vim.fn.input("vale is not installed, install vale? y/n: ")
 		if do_setup == "y" then
 			vale.setup_binairy_and_styles()
-			vale.setup_default_cfg()
+			vale.setup_cfg()
 		else
 			print("please setup vale manually and adjust your config")
 			return nil
@@ -80,6 +82,7 @@ function M:setup(user_cfg)
 		local do_setup = vim.fn.input("Language tool not installed, install language tool? y/n: ")
 		if do_setup == "y" then
 			langtool.setup_binairy()
+			langtool.setup_cfg()
 		else
 			print("please set up language tool manually and adjust your config")
 			return nil
