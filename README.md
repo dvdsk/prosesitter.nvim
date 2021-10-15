@@ -43,9 +43,18 @@ require("telescope").load_extension("prosesitter") -- Optionally, depends on tel
 require("prosesitter"):setup({
 	vale_bin = vim.fn.stdpath("data") .. "/prosesitter/vale",
 	vale_cfg = vim.fn.stdpath("data") .. "/prosesitter/vale_cfg.ini",
-	extra_queries = { py = "[(string)] @capture" },
+	--optional extra queries overrides existing queries
+	queries = { 
+		py = { -- one of the queries here may be the empty string
+			strings = "[(string) ] @capture",
+			comments = "[(comment)+ ] @capture",
+		},
+	}, 
+	-- weather to lint strings, comments or both for a language
+	lint_targets = { py = "both", tex = "strings", sh = "comments" }, 
+	disabled_ext = { "tex" }, -- do not ever lint tex files
+	auto_enable = false, -- do not start linting files on open (default = true)
 	default_cmds = false,  -- do not add commands (default = true)
-	enabled = false, -- do not start linting files on open (default = true)
 })
 ```
 
@@ -112,4 +121,4 @@ If you like this plugin you might also be intrested in:
  - [spellsitter](https://github.com/lewis6991/spellsitter.nvim), the inspiration for this plugin and a great alternative if you are just looking for spellchecking comments
  - [ale](https://github.com/dense-analysis/ale) a asynchronous linting plugin that leaves syntax handling to the linters. Supports the default syntax vale supports (Markdown, AsciiDoc, reStructuredText, HTML, XML).
  - [vim-language](https://github.com/Konfekt/vim-langtool) collects all grammer mistakes into the quickfix list
-
+ - [vim-grammarous](https://github.com/rhysd/vim-grammarous) grammar checker automatically downloads and sets up LanguageTool.

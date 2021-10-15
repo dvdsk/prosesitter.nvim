@@ -41,41 +41,18 @@ local function spans_match(a, b)
 	return a[1] == b[1] and a[2] == b[2]
 end
 
-local severity_as_int = {
-	error = 4,
-	warning = 3,
-}
-
-local function merge_severity(a, b)
-	if severity_as_int[a.Severity] > severity_as_int[b.Severity] then
-		return a.Severity
-	else
-		return b.Severity
-	end
-end
-
-local function merge_message(a, b)
-	if a.Message ~= b.Message then
-		return a.Message .. "\n" .. b.Message
-	else
-		return a.Message
-	end
-end
-
-local function skip_to_next_problem(problems, i)
+local function collect_current_span(problems, to_meta, issues, i)
+	issues[1] = to_meta(problems[i])
 	while spans_match(problems[i].Span, next_problem_span(problems, i)) do
-		problems[i + 1].Message = merge_message(problems[i], problems[i + 1])
-		problems[i + 1].Severity = merge_severity(problems[i], problems[i + 1])
+		issues[#issues+1] = to_meta(problems[i])
 		i = i + 1
 	end
 	return i
 end
 
-local cfg = nil
-function M.hl_iter(results, areas)
-	-- to_print = results
-	-- vim.defer_fn(print_res, 100)
-	local problems = vim.fn.json_decode(results)["stdin.md"]
+-- returns hl: start_col, end_col, buf_id, row_id, meta
+-- from meta the hl group can be deduced
+function M.mark_iter(problems, areas, to_meta)
 	if problems == nil then
 		return function()
 			return nil
@@ -91,24 +68,16 @@ function M.hl_iter(results, areas)
 			return nil
 		end
 
-		i = skip_to_next_problem(problems, i)
+		local issues = {}
+		i = collect_current_span(problems, to_meta, issues, i)
 
 		local hl = {}
 		hl.start_col, j = start_col(problems[i], areas, j)
 		hl.end_col = end_col(problems[i], areas, j)
 		hl.buf_id = areas[j].buf_id
 		hl.row_id = areas[j].row_id
-
-		local severity = problems[i].Severity
-		hl.group = cfg.vale_to_hl[severity]
-		hl.hover_txt = problems[i]["Message"]
-
-		return hl
+		return hl, issues
 	end
-end
-
-function M.setup(_cfg)
-	cfg = _cfg
 end
 
 return M

@@ -3,13 +3,12 @@ local log = require("prosesitter/log")
 local loop = vim.loop
 
 local uv = loop
-local handle
 
 local function on_stderr(err, data)
 	assert(not err, err)
-	if data then
-		print("stderr chunk", data)
-	end
+	-- if data then
+	-- 	log.error(data)
+	-- end
 end
 
 -- right now specialized for bufferd output
@@ -19,7 +18,7 @@ function M.dispatch_with_stdin(input, cmd, args, user_callback)
 	local stderr = uv.new_pipe(false)
 
 	local output
-	handle, _ = uv.spawn(cmd, {
+	local handle, _ = uv.spawn(cmd, {
 		args = args,
 		stdio = { stdin, stdout, stderr },
 	}, vim.schedule_wrap(function(_, _) -- on exit

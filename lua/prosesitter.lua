@@ -1,6 +1,9 @@
 local log = require("prosesitter/log")
 local on_event = require("prosesitter/on_event/on_event")
 local shared = require("prosesitter/shared")
+local config = require("prosesitter/config/mod")
+local langtool = require("prosesitter/backend/langtool")
+local issues = require("prosesitter/on_event/issues")
 
 local api = vim.api
 local M = {}
@@ -11,24 +14,26 @@ M.popup = require("prosesitter/actions/hover").popup
 
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
-	if shared.buf_query[bufnr] == nil then
-		local extension = vim.fn.expand("%:e")
-
-		if shared.cfg.disabled_ext[extension] ~= nil then
-			return
-		end
-
-		local queries = shared.cfg.queries[extension]
-		if queries == nil then
-			return
-		end
-
-		local lint_target = shared.cfg.lint_target[extension]
-		local query = queries[lint_target]
-
-		shared.buf_query[bufnr] = query
-		on_event.attach(bufnr)
+	if shared.buf_query[bufnr] ~= nil then
+		return
 	end
+
+	local extension = vim.fn.expand("%:e")
+	if shared.cfg.disabled_ext[extension] ~= nil then
+		return
+	end
+
+	local queries = shared.cfg.queries[extension]
+	if queries == nil then
+		return
+	end
+
+	local lint_target = shared.cfg.lint_target[extension]
+	local query = queries[lint_target]
+
+	shared.buf_query[bufnr] = query
+	shared.issues:attach(bufnr)
+	on_event.attach(bufnr)
 end
 
 function M.disable()
@@ -58,22 +63,27 @@ function M.switch_vale_cfg(path)
 end
 
 function M:setup(user_cfg)
-	local ok = shared:setup(user_cfg)
-	if not ok then
+	local cfg = config:setup(user_cfg)
+	if cfg == nil then
 		print("setup unsuccesful; exiting")
 		return
 	end
 
-	if shared.cfg.default_cmds then
-		shared.add_cmds()
+	if cfg.langtool_bin ~= nil then
+		langtool.start_server(on_event, cfg)
 	end
 
+	if cfg.default_cmds then
+		config.add_cmds()
+	end
+
+	shared.cfg = cfg
+	shared.issues = issues.Issues
 	on_event.setup(shared)
-	if shared.cfg.auto_enable then
+	if cfg.auto_enable then
 		vim.cmd("augroup prosesitter")
 		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
 	end
 end
-
 
 return M
