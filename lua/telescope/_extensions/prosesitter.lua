@@ -10,7 +10,6 @@ local marks = require("prosesitter/on_event/marks/marks")
 local log = require("prosesitter/log")
 
 local function format(issue)
-	log.info(vim.inspect(issue))
 	return "["..issue.severity.."] "..issue.msg
 end
 
