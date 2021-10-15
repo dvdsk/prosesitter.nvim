@@ -1,4 +1,4 @@
-local defaults = require("prosesitter/defaults")
+local defaults = require("prosesitter/config/defaults")
 local util = require("prosesitter/util")
 local M = {}
 
