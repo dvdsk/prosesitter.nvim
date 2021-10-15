@@ -15,7 +15,7 @@ M.queries = {
 		comments = "[(comment)+ ] @capture",
 	},
 	lua = {
-		strings = "[string ] @capture",
+		strings = "[(string) ] @capture",
 		comments = "[(comment)+ ] @capture",
 	},
 	c = c_and_cpp_query,
