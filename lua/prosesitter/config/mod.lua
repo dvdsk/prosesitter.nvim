@@ -55,8 +55,10 @@ function Cfg:adjust_cfg(user_cfg)
 		self.disabled = overlay_table(user_cfg.disabled, self.disabled)
 	end
 
-	for _, lang in ipairs(user_cfg.disabled_ext) do
-		self.disabled_ext[lang] = true
+	if user_cfg.disabled_ext ~= nil then
+		for _, lang in ipairs(user_cfg.disabled_ext) do
+			self.disabled_ext[lang] = true
+		end
 	end
 end
 
