@@ -6,8 +6,15 @@ local api = vim.api
 M = {}
 
 local function format(issues)
-	return { "todo" }
+	local lines = {}
+	for _, issue in ipairs(issues) do
+		lines[#lines+1] = issue.msg
+		lines[#lines+1] = "["..issue.severity.."]".." "..issue.full_source
+	end
+	return lines
 end
+
+M.format = format
 
 -- open hover window if lint error on current pos else return
 function M.popup()
@@ -23,7 +30,8 @@ function M.popup()
 	local id = mark[1]
 	local issues = shared.issues:for_id(id)
 
-	vim.lsp.util.open_floating_preview(format(issues), "markdown", {})
+	local text = format(issues)
+	vim.lsp.util.open_floating_preview(text, "markdown", {})
 end
 
 return M

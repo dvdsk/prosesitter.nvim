@@ -10,22 +10,25 @@ local marks = require("prosesitter/on_event/marks/marks")
 local log = require("prosesitter/log")
 
 local function format(issue)
-	return "todo"
+	log.info(vim.inspect(issue))
+	return "["..issue.severity.."] "..issue.msg
 end
 
 local function add_buffer_entries(entries, buf)
 	local buffer_marks = marks.get_marks(buf)
 	for _, mark in ipairs(buffer_marks) do
 		local id = mark[1]
-		local issue = shared.issues:for_buf_id(buf, id)
-		entries[#entries + 1] = {
-			text = format(issue),
-			row = mark[2] + 1,
-			start_col = mark[3],
-			end_col = mark[4].end_col,
-			id = mark[1],
-			buf = buf,
-		}
+		local issues = shared.issues:for_buf_id(buf, id)
+		for _, issue in ipairs(issues) do
+			entries[#entries + 1] = {
+				text = format(issue),
+				row = mark[2] + 1,
+				start_col = mark[3],
+				end_col = mark[4].end_col,
+				id = mark[1],
+				buf = buf,
+			}
+		end
 	end
 end
 

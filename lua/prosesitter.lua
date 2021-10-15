@@ -84,7 +84,6 @@ function M:setup(user_cfg)
 		vim.cmd("augroup prosesitter")
 		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
 	end
-
 end
 
 return M

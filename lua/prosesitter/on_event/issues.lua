@@ -71,8 +71,13 @@ end
 -- returns a list of issues given a mark id
 function Issues:for_buf_id(buf, id)
 	local issues = {}
-	for _, meta_for_linter in pairs(self.m[buf]) do
-		issues[#issues + 1] = meta_for_linter[id]
+	for _, issues_by_linter in pairs(self.m[buf]) do
+		local issues_list = issues_by_linter[id]
+		if issues_list ~= nil then
+			for _, issue in pairs(issues_list) do
+				issues[#issues + 1] = issue
+			end
+		end
 	end
 	return issues
 end
@@ -87,15 +92,15 @@ end
 
 -- returns a list of individual issues, can return multiple
 -- items for a single word
-function Issues:all_issues_for_buf(buf)
-	local issues = {}
-	for source in { "vale", "langtool" } do
-		for meta in self.m[buf][source] do
-			issues[#issues + 1] = meta
-		end
-	end
-	return issues
-end
+-- function Issues:all_issues_for_buf(buf)
+-- 	local issues = {}
+-- 	for source in { "vale", "langtool" } do
+-- 		for meta in self.m[buf][source] do
+-- 			issues[#issues + 1] = meta
+-- 		end
+-- 	end
+-- 	return issues
+-- end
 
 M.Issues = Issues
 return M
