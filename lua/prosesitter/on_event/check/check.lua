@@ -11,12 +11,6 @@ M.schedualled = false
 M.lintreq = "should be set in check.setup"
 local job = "should be set in check.setup"
 
-local function langtool_query(text)
-	-- Disable whitespace rule (whitespace repetition checking) as comments are often formatted
-	-- using whitespace. Disable style checking as we use vale for that.
-	return "language=en-US&disabledCategories=STYLE&disabledRules=WHITESPACE_RULE&text=" .. text
-end
-
 local cfg = "should be set in check.setup"
 local function do_check()
 	M.schedualled = false
@@ -24,22 +18,35 @@ local function do_check()
 
 	if shared.langtool_running then
 		local function post_langtool(json)
-			local results = langtool.add_spans(json)
-			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
+			log.info(json)
+			-- local results = langtool.add_spans(json)
+			-- marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
 		end
 
-		local curl_args = { "--no-progress-meter", "--data", "@-", langtool.url}
-		async.dispatch_with_stdin(langtool_query(req.text), "curl", curl_args, post_langtool)
+		log.info("starting check on: ", req.text)
+		local curl_args = {
+			"--no-progress-meter",
+			"--data-urlencode",
+			"language=en-US",
+			"--data-urlencode",
+			"disabledCategories=STYLE",
+			"--data-urlencode",
+			"disabledRules=WHITESPACE_RULE",
+			"--data-urlencode",
+			"text@-",
+			langtool.url,
+		}
+		async.dispatch_with_stdin(langtool.query(req.text), "curl", curl_args, post_langtool)
 	end
 
-	if cfg.vale_bin ~= nil then
-		local function post_vale(json)
-			local results = vim.fn.json_decode(json)["stdin.md"]
-			marks.mark_results(results, req.areas, "vale", vale.to_meta)
-		end
-		local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-		async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
-	end
+	-- if cfg.vale_bin ~= nil then
+	-- 	local function post_vale(json)
+	-- 		local results = vim.fn.json_decode(json)["stdin.md"]
+	-- 		marks.mark_results(results, req.areas, "vale", vale.to_meta)
+	-- 	end
+	-- 	local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+	-- 	async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
+	-- end
 end
 
 function M.cancelled_schedualled()

@@ -130,6 +130,12 @@ function M.to_meta(problem)
 	return issue
 end
 
+function M.query(text)
+	-- Disable whitespace rule (whitespace repetition checking) as comments are often formatted
+	-- using whitespace. Disable style checking as we use vale for that.
+	return "language=en-US&disabledCategories=STYLE&disabledRules=WHITESPACE_RULE&text=" .. text
+end
+
 function M.add_spans(json)
 	local problems = vim.fn.json_decode(json)["matches"]
 	for _, res in ipairs(problems) do
