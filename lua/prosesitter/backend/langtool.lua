@@ -1,6 +1,6 @@
 local util = require("prosesitter/util")
 local log = require("prosesitter/log")
-local shared = require("prosesitter/shared")
+local state = require("prosesitter/shared")
 local defaults = require("prosesitter/config/defaults")
 local M = {}
 
@@ -44,11 +44,11 @@ end
 
 local function mark_rdy_if_responding(on_event)
 	local on_exit = function(text)
-		if not shared.langtool_running then
+		if not state.langtool_running then
 			if text ~= nil then
 				if string.starts(text, '{"software":{"name":"LanguageTool"') then
-					shared.langtool_running = true
-					for buf, _ in pairs(shared.buf_query) do
+					state.langtool_running = true
+					for buf, _ in pairs(state.buf_query) do
 						on_event:lint_everything(buf)
 					end
 					-- TODO check all attached buffers
@@ -57,7 +57,7 @@ local function mark_rdy_if_responding(on_event)
 		end
 	end
 
-	local async = require("prosesitter/on_event/check/async_cmd")
+	local async = require("prosesitter/linter/check/async_cmd")
 	local do_check = function()
 		if not M.langtool_running then
 			local curl_args = { "--no-progress-meter", "--data", "@-", M.url }

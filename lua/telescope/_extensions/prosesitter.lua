@@ -5,8 +5,8 @@ local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local action_state = require("telescope.actions.state")
 local action_set = require("telescope.actions.set")
-local shared = require("prosesitter/shared")
-local marks = require("prosesitter/on_event/marks/marks")
+local state = require("prosesitter/shared")
+local marks = require("prosesitter/linter/marks/marks")
 local log = require("prosesitter/log")
 
 local function format(issue)
@@ -17,7 +17,7 @@ local function add_buffer_entries(entries, buf)
 	local buffer_marks = marks.get_marks(buf)
 	for _, mark in ipairs(buffer_marks) do
 		local id = mark[1]
-		local issues = shared.issues:for_buf_id(buf, id)
+		local issues = state.issues:for_buf_id(buf, id)
 		for _, issue in ipairs(issues) do
 			entries[#entries + 1] = {
 				text = format(issue),
@@ -90,7 +90,7 @@ return require("telescope").register_extension({
 			pick_lint(opts, {curr_buf})
 		end,
 		all = function(opts)
-			local buffers = shared:attached_buffers()
+			local buffers = state:attached_buffers()
 			pick_lint(opts, buffers)
 		end,
 	}

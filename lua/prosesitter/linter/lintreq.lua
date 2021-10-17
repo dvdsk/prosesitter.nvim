@@ -87,8 +87,8 @@ function M:reset()
 	self.meta_by_idx = {}
 end
 
-function M.setup(shared)
-	ns = shared.ns_placeholders
+function M.setup(state)
+	ns = state.ns_placeholders
 end
 
 return M

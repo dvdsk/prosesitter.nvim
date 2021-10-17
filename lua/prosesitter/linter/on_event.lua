@@ -1,7 +1,7 @@
 local log = require("prosesitter/log")
-local marks = require("prosesitter/on_event/marks/marks")
-local check = require("prosesitter/on_event/check/check")
-local shared = require("prosesitter/shared")
+local marks = require("prosesitter/linter/marks/marks")
+local check = require("prosesitter/linter/check/check")
+local state = require("prosesitter/shared")
 local parsers = require("nvim-treesitter.parsers")
 
 local api = vim.api
@@ -89,7 +89,7 @@ function M.attach(bufnr)
 
 	local lang = parser:lang()
 	if not prose_queries[lang] then
-		prose_queries[lang] = q.parse_query(lang, shared.buf_query[bufnr])
+		prose_queries[lang] = q.parse_query(lang, state.buf_query[bufnr])
 	end
 
 	parser:register_cbs({ on_bytes = delayed_on_bytes })
@@ -112,7 +112,7 @@ function M.on_bytes(
 	_ --new_byte
 )
 	-- -- stop calling on lines if the plugin was just disabled
-	local query = shared.buf_query[buf]
+	local query = state.buf_query[buf]
 	if query == nil then
 		return true
 	end
@@ -144,9 +144,9 @@ function M.on_bytes(
 end
 
 function M.setup()
-	check:setup(shared, marks.mark_results)
+	check:setup(state, marks.mark_results)
 	lintreq = check:get_lintreq()
-	marks.setup(shared)
+	marks.setup(state)
 end
 
 function M.disable()

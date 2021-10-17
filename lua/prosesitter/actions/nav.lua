@@ -1,6 +1,6 @@
 local log = require("prosesitter/log")
-local shared = require("prosesitter/shared")
-local marks = require("prosesitter/on_event/marks/marks")
+local state = require("prosesitter/shared")
+local marks = require("prosesitter/linter/marks/marks")
 local hover = require("prosesitter/actions/hover")
 
 local api = vim.api
@@ -18,7 +18,7 @@ local function goto_mark(start, stop)
 
 	vim.api.nvim_win_set_cursor(0, { row+1, col })
 
-	local issues = shared.issues:for_id(id)
+	local issues = state.issues:for_id(id)
 	local cb = function()
 		local text = hover.format(issues)
 		vim.lsp.util.open_floating_preview(text, "markdown", {})

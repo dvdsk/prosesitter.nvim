@@ -1,7 +1,7 @@
-local async = require("prosesitter/on_event/check/async_cmd")
-local lintreq = require("prosesitter/on_event/lintreq")
-local marks = require("prosesitter/on_event/marks/marks")
-local shared = require("prosesitter/shared")
+local async = require("prosesitter/linter/check/async_cmd")
+local lintreq = require("prosesitter/linter/lintreq")
+local marks = require("prosesitter/linter/marks/marks")
+local state = require("prosesitter/shared")
 local vale = require("prosesitter/backend/vale")
 local langtool = require("prosesitter/backend/langtool")
 local log = require("prosesitter/log")
@@ -16,7 +16,7 @@ local function do_check()
 	M.schedualled = false
 	local req = M.lintreq:build()
 
-	if shared.langtool_running then
+	if state.langtool_running then
 		local function post_langtool(json)
 			local results = langtool.add_spans(json)
 			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
@@ -49,8 +49,8 @@ function M.schedual()
 end
 
 function M:setup()
-	cfg = shared.cfg
-	lintreq.setup(shared)
+	cfg = state.cfg
+	lintreq.setup(state)
 	self.lintreq = lintreq.new()
 end
 

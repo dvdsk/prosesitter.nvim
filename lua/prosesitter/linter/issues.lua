@@ -1,4 +1,4 @@
-local shared = require("prosesitter/shared")
+local state = require("prosesitter/shared")
 local log = require("prosesitter/log")
 local M = {}
 
@@ -23,7 +23,7 @@ end
 
 function M.hl_group(issues)
 	local sev = max_severity(issues)
-	return shared.cfg.severity_to_hl[sev]
+	return state.cfg.severity_to_hl[sev]
 end
 
 local function other(linter)

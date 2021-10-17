@@ -1,8 +1,8 @@
 local api = vim.api
 local log = require("prosesitter/log")
-local res = require("prosesitter/on_event/marks/process_results")
-local shared = require("prosesitter/shared")
-local issues = require("prosesitter/on_event/issues")
+local res = require("prosesitter/linter/marks/process_results")
+local state = require("prosesitter/shared")
+local issues = require("prosesitter/linter/issues")
 
 local M = {}
 local ns_placeholders = "will be set in setup"
@@ -12,7 +12,7 @@ local function remove_row_marks(buf, row, linter)
 	local marks = api.nvim_buf_get_extmarks(buf, ns_marks, { row, 0 }, { row, -1 }, {})
 	for _, mark in ipairs(marks) do
 		local id = mark[1]
-		if shared.issues:clear_meta_for(linter, buf, id) then
+		if state.issues:clear_meta_for(linter, buf, id) then
 			api.nvim_buf_del_extmark(buf, ns_marks, mark[1])
 		end
 	end
@@ -62,7 +62,7 @@ function M.mark_results(results, areas, linter, to_meta)
 		local ok, id = set_extmark(hl.buf_id, row, col_offset + hl.start_col - 2, opt)
 		if not ok then goto continue end
 
-		shared.issues:set(linter, id, lints)
+		state.issues:set(linter, id, lints)
 		::continue::
 	end
 end
@@ -77,8 +77,8 @@ function M.remove_placeholders(buf, start_row, up_to_row)
 end
 
 function M.setup()
-	ns_marks = shared.ns_marks
-	ns_placeholders = shared.ns_placeholders
+	ns_marks = state.ns_marks
+	ns_placeholders = state.ns_placeholders
 end
 
 -- works unless lines > 999999 chars

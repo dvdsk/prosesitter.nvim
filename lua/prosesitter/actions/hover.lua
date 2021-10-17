@@ -1,6 +1,6 @@
 local log = require("prosesitter/log")
-local shared = require("prosesitter/shared")
-local marks = require("prosesitter/on_event/marks/marks")
+local state = require("prosesitter/shared")
+local marks = require("prosesitter/linter/marks/marks")
 local api = vim.api
 
 M = {}
@@ -28,7 +28,7 @@ function M.popup()
 	end
 
 	local id = mark[1]
-	local issues = shared.issues:for_id(id)
+	local issues = state.issues:for_id(id)
 
 	local text = format(issues)
 	vim.lsp.util.open_floating_preview(text, "markdown", {})

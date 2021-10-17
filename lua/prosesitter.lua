@@ -1,9 +1,9 @@
 local log = require("prosesitter/log")
-local on_event = require("prosesitter/on_event/on_event")
-local shared = require("prosesitter/shared")
+local on_event = require("prosesitter/linter/on_event")
+local state = require("prosesitter/shared")
 local config = require("prosesitter/config/mod")
 local langtool = require("prosesitter/backend/langtool")
-local issues = require("prosesitter/on_event/issues")
+local issues = require("prosesitter/linter/issues")
 
 local api = vim.api
 local M = {}
@@ -14,25 +14,25 @@ M.popup = require("prosesitter/actions/hover").popup
 
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
-	if shared.buf_query[bufnr] ~= nil then
+	if state.buf_query[bufnr] ~= nil then
 		return
 	end
 
 	local extension = vim.fn.expand("%:e")
-	if shared.cfg.disabled_ext[extension] ~= nil then
+	if state.cfg.disabled_ext[extension] ~= nil then
 		return
 	end
 
-	local queries = shared.cfg.queries[extension]
+	local queries = state.cfg.queries[extension]
 	if queries == nil then
 		return
 	end
 
-	local lint_target = shared.cfg.lint_target[extension]
+	local lint_target = state.cfg.lint_target[extension]
 	local query = queries[lint_target]
 
-	shared.buf_query[bufnr] = query
-	shared.issues:attach(bufnr)
+	state.buf_query[bufnr] = query
+	state.issues:attach(bufnr)
 	on_event.attach(bufnr)
 end
 
@@ -41,13 +41,13 @@ function M.disable()
 	on_event.disable()
 
 	-- disable and remove all extmarks
-	for buf, _ in ipairs(shared.buf_query) do
-		api.nvim_buf_clear_namespace(buf, shared.ns_placeholders, 0, -1)
-		api.nvim_buf_clear_namespace(buf, shared.ns_marks, 0, -1)
+	for buf, _ in ipairs(state.buf_query) do
+		api.nvim_buf_clear_namespace(buf, state.ns_placeholders, 0, -1)
+		api.nvim_buf_clear_namespace(buf, state.ns_marks, 0, -1)
 	end
 
 	vim.cmd("autocmd! prosesitter") -- remove autocmd
-	shared.buf_query = {}
+	state.buf_query = {}
 end
 
 function M.enable()
@@ -56,7 +56,7 @@ function M.enable()
 end
 
 function M.switch_vale_cfg(path)
-	shared.cfg.vale_cfg = path
+	state.cfg.vale_cfg = path
 
 	M.disable()
 	M.enable()
@@ -77,9 +77,9 @@ function M:setup(user_cfg)
 		config.add_cmds()
 	end
 
-	shared.cfg = cfg
-	shared.issues = issues.Issues
-	on_event.setup(shared)
+	state.cfg = cfg
+	state.issues = issues.Issues
+	on_event.setup(state)
 	if cfg.auto_enable then
 		vim.cmd("augroup prosesitter")
 		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
