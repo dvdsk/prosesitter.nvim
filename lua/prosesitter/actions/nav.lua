@@ -12,7 +12,6 @@ local function goto_mark(start, stop)
 		return false
 	end
 
-	log.info(vim.inspect(mark))
 	local id = mark[1]
 	local row = mark[2]
 	local col = mark[3]

@@ -96,7 +96,6 @@ function M.start_server(on_event, cfg)
 	else
 		error("could not start language server using path: " .. cfg.langtool_bin)
 		log.error("could not start language server using path: " .. cfg.langtool_bin)
-
 	end
 end
 
@@ -130,10 +129,19 @@ function M.to_meta(problem)
 	return issue
 end
 
-function M.query(text)
-	-- Disable whitespace rule (whitespace repetition checking) as comments are often formatted
-	-- using whitespace. Disable style checking as we use vale for that.
-	return "language=en-US&disabledCategories=STYLE&disabledRules=WHITESPACE_RULE&text=" .. text
+function M:curl_args()
+	return {
+		"--no-progress-meter",
+		"--data-urlencode",
+		"language=en-US",
+		"--data-urlencode",
+		"disabledCategories=STYLE",
+		"--data-urlencode",
+		"disabledRules=WHITESPACE_RULE",
+		"--data-urlencode",
+		"text@-",
+		self.url,
+	}
 end
 
 function M.add_spans(json)

@@ -18,7 +18,7 @@ function M.dispatch_with_stdin(input, cmd, args, user_callback)
 	local stderr = uv.new_pipe(false)
 
 	local output
-	local handle, _ = uv.spawn(cmd, {
+	local _, _ = uv.spawn(cmd, {
 		args = args,
 		stdio = { stdin, stdout, stderr },
 	}, vim.schedule_wrap(function(_, _) -- on exit

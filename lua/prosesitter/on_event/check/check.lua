@@ -19,24 +19,12 @@ local function do_check()
 	if shared.langtool_running then
 		local function post_langtool(json)
 			log.info(json)
-			-- local results = langtool.add_spans(json)
-			-- marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
+			local results = langtool.add_spans(json)
+			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
 		end
 
-		log.info("starting check on: ", req.text)
-		local curl_args = {
-			"--no-progress-meter",
-			"--data-urlencode",
-			"language=en-US",
-			"--data-urlencode",
-			"disabledCategories=STYLE",
-			"--data-urlencode",
-			"disabledRules=WHITESPACE_RULE",
-			"--data-urlencode",
-			"text@-",
-			langtool.url,
-		}
-		async.dispatch_with_stdin(langtool.query(req.text), "curl", curl_args, post_langtool)
+		local args = langtool:curl_args()
+		async.dispatch_with_stdin(req.text, "curl", args, post_langtool)
 	end
 
 	-- if cfg.vale_bin ~= nil then
