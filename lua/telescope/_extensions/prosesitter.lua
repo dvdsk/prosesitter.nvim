@@ -5,7 +5,7 @@ local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local action_state = require("telescope.actions.state")
 local action_set = require("telescope.actions.set")
-local state = require("prosesitter/shared")
+local state = require("prosesitter/state")
 local marks = require("prosesitter/linter/marks/marks")
 local log = require("prosesitter/log")
 
