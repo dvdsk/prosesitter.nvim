@@ -1,7 +1,7 @@
 local log = require("prosesitter/log")
 local marks = require("prosesitter/linter/marks/marks")
 local check = require("prosesitter/linter/check/check")
-local state = require("prosesitter/shared")
+local state = require("prosesitter/state")
 local parsers = require("nvim-treesitter.parsers")
 
 local api = vim.api

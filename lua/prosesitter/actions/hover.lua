@@ -1,5 +1,5 @@
 local log = require("prosesitter/log")
-local state = require("prosesitter/shared")
+local state = require("prosesitter/state")
 local marks = require("prosesitter/linter/marks/marks")
 local api = vim.api
 

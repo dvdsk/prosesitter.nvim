@@ -1,6 +1,6 @@
 local log = require("prosesitter/log")
 local on_event = require("prosesitter/linter/on_event")
-local state = require("prosesitter/shared")
+local state = require("prosesitter/state")
 local config = require("prosesitter/config/mod")
 local langtool = require("prosesitter/backend/langtool")
 local issues = require("prosesitter/linter/issues")

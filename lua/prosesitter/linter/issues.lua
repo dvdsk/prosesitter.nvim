@@ -1,4 +1,4 @@
-local state = require("prosesitter/shared")
+local state = require("prosesitter/state")
 local log = require("prosesitter/log")
 local M = {}
 

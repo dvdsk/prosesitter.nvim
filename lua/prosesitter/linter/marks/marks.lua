@@ -1,7 +1,7 @@
 local api = vim.api
 local log = require("prosesitter/log")
 local res = require("prosesitter/linter/marks/process_results")
-local state = require("prosesitter/shared")
+local state = require("prosesitter/state")
 local issues = require("prosesitter/linter/issues")
 
 local M = {}

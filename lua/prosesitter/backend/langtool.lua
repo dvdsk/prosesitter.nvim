@@ -1,6 +1,6 @@
 local util = require("prosesitter/util")
 local log = require("prosesitter/log")
-local state = require("prosesitter/shared")
+local state = require("prosesitter/state")
 local defaults = require("prosesitter/config/defaults")
 local M = {}
 
