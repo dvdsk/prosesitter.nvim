@@ -18,7 +18,6 @@ local function do_check()
 
 	if shared.langtool_running then
 		local function post_langtool(json)
-			log.info(json)
 			local results = langtool.add_spans(json)
 			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
 		end
@@ -27,14 +26,14 @@ local function do_check()
 		async.dispatch_with_stdin(req.text, "curl", args, post_langtool)
 	end
 
-	-- if cfg.vale_bin ~= nil then
-	-- 	local function post_vale(json)
-	-- 		local results = vim.fn.json_decode(json)["stdin.md"]
-	-- 		marks.mark_results(results, req.areas, "vale", vale.to_meta)
-	-- 	end
-	-- 	local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-	-- 	async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
-	-- end
+	if cfg.vale_bin ~= nil then
+		local function post_vale(json)
+			local results = vim.fn.json_decode(json)["stdin.md"]
+			marks.mark_results(results, req.areas, "vale", vale.to_meta)
+		end
+		local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+		async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
+	end
 end
 
 function M.cancelled_schedualled()
