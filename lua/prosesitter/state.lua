@@ -6,17 +6,18 @@ M.langtool_running = false
 M.buf_query = {}
 M.parsers = {} -- table of parsers keyed by bufnr
 
-function M:attached_bufs()
-	local function attached_it(t, buf)
-		buf = buf+1
-		local v = self.parsers[buf]
-		if v ~= nil then
+
+function M:attached()
+	local buf = nil
+	local iter = function()
+		buf = next(self.parsers, buf)
+		if buf ~= nil then
 			return buf
 		else 
 			return nil
 		end
 	end
-	return attached_it
+	return iter, buf
 end
 
 M.cfg = "should be set in prosesitter.setup"

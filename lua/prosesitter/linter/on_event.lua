@@ -35,7 +35,7 @@ end
 
 local prose_queries = {}
 local function get_nodes(bufnr, start_l, end_l)
-	local parser = state.parsers(bufnr)
+	local parser = state.parsers[bufnr]
 	local lang = parser:lang()
 	local prose_query = prose_queries[lang]
 	local nodes = {}
