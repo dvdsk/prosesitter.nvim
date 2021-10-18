@@ -5,21 +5,29 @@ local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local action_state = require("telescope.actions.state")
 local action_set = require("telescope.actions.set")
-local shared = require("prosesitter/shared")
+local state = require("prosesitter/state")
+local marks = require("prosesitter/linter/marks/marks")
 local log = require("prosesitter/log")
 
+local function format(issue)
+	return "["..issue.severity.."] "..issue.msg
+end
+
 local function add_buffer_entries(entries, buf)
-	local buffer_marks = api.nvim_buf_get_extmarks(buf, shared.ns_marks, 0, -1, { details = true })
+	local buffer_marks = marks.get_marks(buf)
 	for _, mark in ipairs(buffer_marks) do
 		local id = mark[1]
-		entries[#entries + 1] = {
-			text = shared.mark_to_meta:by_buf_id(buf, id),
-			row = mark[2] + 1,
-			start_col = mark[3],
-			end_col = mark[4].end_col,
-			id = mark[1],
-			buf = buf,
-		}
+		local issues = state.issues:for_buf_id(buf, id)
+		for _, issue in ipairs(issues) do
+			entries[#entries + 1] = {
+				text = format(issue),
+				row = mark[2] + 1,
+				start_col = mark[3],
+				end_col = mark[4].end_col,
+				id = mark[1],
+				buf = buf,
+			}
+		end
 	end
 end
 
@@ -82,7 +90,7 @@ return require("telescope").register_extension({
 			pick_lint(opts, {curr_buf})
 		end,
 		all = function(opts)
-			local buffers = shared.mark_to_meta:buffers()
+			local buffers = state:attached_buffers()
 			pick_lint(opts, buffers)
 		end,
 	}

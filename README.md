@@ -3,16 +3,16 @@
 Prosesitter uses treesitter and vale to bring true syntax aware prose linting to neovim
 
 ## What is Prosesitter?
-prosesitter.nvim is a text linting tool that adds spell and style checking to your comments and strings. It uses vale to check what you write for style problems. That could vary from not using the passive voice and weasle words ('very' unique) to outdated or noninclusive terms. You can set up your own style or copy an existing one. If you let prosesitter set up vale for you it will also setup some styles for you from the vales [style libary](https://github.com/errata-ai/styles). 
+prosesitter.nvim is a text linting tool that adds grammar, spell and style checking to your comments and strings. It uses [language tool](https://github.com/languagetool-org/languagetool) and [vale](https://github.com/errata-ai/vale) as backends to check what you write for problems. Style issues can vary using the passive voice, weasle words ('very' unique) to using noninclusive terms. You  set your own style or use an existing one. Prosesitter will offer to setup a self contained install of language tool and vale including some defaults styles from the vales [style libary](https://github.com/errata-ai/styles). 
 
 [![asciicast](https://asciinema.org/a/2AEBoLsLD2W6mNYjh0mMXUVWG.svg)](https://asciinema.org/a/2AEBoLsLD2W6mNYjh0mMXUVWG?speed=2)
 
 ### Features
- - Low performance impact; vale is called asynchronously and only when needed
- - Portable; written in lua and depends only on the vale binary. offers to install vale if not found
- - Configurable; switch between prose style without reloading, add your own queries specifying what to lint
- - Supports any language with a treesitter parser; though you might need to add your own query if I have not yet added one [adding queries](adding_queries.md). Out of the box support for: python, rust, latex, c, c++
- - Telescope integration
+ - Low performance impact; backends are called asynchronously and only when needed with only the text that changed.
+ - Portable; written in lua and depends only on the backends, offers to install them if not found.
+ - Configurable; specify exactly what you want to lint for which language, switch between prose style without reloading.
+ - Can supports any language with a treesitter parser; (you might need to add your own query if I have not yet added one [adding queries](adding_queries.md)). Out of the box support for: latex, bash, lua, python, rust, c, and c++.
+ - Telescope integration.
 
 ### Requirements
  - neovim > 0.5
@@ -45,11 +45,15 @@ require("prosesitter"):setup({
 	vale_cfg = vim.fn.stdpath("data") .. "/prosesitter/vale_cfg.ini",
 	--optional extra queries overrides existing queries
 	queries = { 
-		py = { -- one of the queries here may be the empty string
+		-- see the piece on adding queries on how to use this 
+		-- (not needed if using an out of the box supported language
+		py = { 
 			strings = "[(string) ] @capture",
 			comments = "[(comment)+ ] @capture",
 		},
 	}, 
+	-- highlight groups to use for lint errors, warnings and suggestions
+	severity_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion: "SpellCap" },
 	-- weather to lint strings, comments or both for a language
 	lint_targets = { py = "both", tex = "strings", sh = "comments" }, 
 	disabled_ext = { "tex" }, -- do not ever lint tex files
@@ -108,11 +112,12 @@ vim.cmd(':command EmailStyle lua require("prosesitter").switch_vale_cfg("~/Docum
 ```
 
 ### Future work
+In no paticular order I would like to add the following features:
+
+ - ability to hide a specific error
  - support for more queries (PR's are welcome!)
  - allow easy switching between linting comments, strings and comments and strings
  - making linting strings more practical by filtering out urls and paths
- - languagetool support for grammer checking
- - ability to hide a specific error
  - function to try and automatically fix an issue
 
 ### Related work

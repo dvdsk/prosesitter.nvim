@@ -1,4 +1,5 @@
 local log = require("prosesitter/log")
+local util = require("prosesitter/util")
 local api = vim.api
 local ns = nil
 
@@ -6,8 +7,13 @@ local M = {}
 M.__index = M -- failed table lookups on the instances should fallback to the class table, to get methods
 function M.new()
 	local self = setmetatable({}, M)
+	-- an array
 	self.text = {}
+	-- key: placeholder_id,
+	-- value: arrays of tables of buf, id(same as key), row_col, idx
 	self.meta_by_mark = {}
+	-- key: index of corrosponding text in self.text (idx)
+	-- value: table of buf, id, row_col, idx(same as key)
 	self.meta_by_idx = {}
 	return self
 end
@@ -15,23 +21,31 @@ end
 function M:add_node(buf, node)
 	local start_row, start_col, end_row, end_col = node:range()
 	if start_row == end_row then
-		self:add_line(buf, start_row, start_col+1, end_col)
+		self:add(buf, start_row, start_col + 1, end_col)
 	else
 		for row = start_row, end_row do
-			self:add_line(buf, row, start_col, -1)
-			start_col = 1 -- only relevant for first line of block node
+			self:add(buf, row, start_col, -1)
+			start_col = 1 -- can only be non one for first row
 		end
-		self:add_line(buf, end_row, 1, end_col)
+		self:add(buf, end_row, 1, end_col)
 	end
 end
 
-function M:update(id, new_line, start_col)
-	local meta = self.meta_by_mark[id]
-	meta.row_col = start_col
-	self.text[meta.idx] = new_line
+function M:append(buf, id, text, start_col)
+	-- if start col matches meta_list[1] then clear?
+	local meta_list = self.meta_by_mark[id]
+	local meta = {
+		buf = buf,
+		id = id,
+		row_col = start_col,
+		idx = #self.text + 1,
+	}
+	meta_list[#meta_list + 1] = meta
+	self.meta_by_idx[#self.text + 1] = meta
+	self.text[#self.text + 1] = text
 end
 
-function M:add_line(buf, row, start_col, end_col)
+function M:add(buf, row, start_col, end_col)
 	local full_line = api.nvim_buf_get_lines(buf, row, row + 1, true)
 	local line = string.sub(full_line[1], start_col, end_col)
 
@@ -41,7 +55,7 @@ function M:add_line(buf, row, start_col, end_col)
 	if #marks > 0 then
 		id = marks[1][1] -- there can be a max of 1 placeholder per line
 		if self.meta_by_mark[id] ~= nil then
-			self:update(id, line, start_col)
+			self:append(buf, id, line, start_col)
 			return
 		end
 	else
@@ -49,9 +63,29 @@ function M:add_line(buf, row, start_col, end_col)
 	end
 
 	local meta = { buf = buf, id = id, row_col = start_col, idx = #self.text + 1 }
-	self.meta_by_mark[id] = meta
+	self.meta_by_mark[id] = { meta }
 	self.meta_by_idx[#self.text + 1] = meta
 	self.text[#self.text + 1] = line
+end
+
+local function delete_by_idx(deleted_meta, array, map)
+	for i = #deleted_meta, 1, -1 do
+		local idx = deleted_meta[i].idx
+		table.remove(array, idx)
+		map[idx] = nil
+	end
+end
+
+function M:clear_lines(buf, start, stop)
+	local marks = api.nvim_buf_get_extmarks(buf, ns, { start, 0 }, { stop, 0 }, {})
+	for _, mark in ipairs(marks) do
+		local id = mark[1]
+		local deleted = self.meta_by_mark[id]
+		if deleted ~= nil then
+			self.meta_by_mark[id] = {}
+			delete_by_idx(deleted, self.text, self.meta_by_idx)
+		end
+	end
 end
 
 function M:is_empty()
@@ -78,6 +112,8 @@ function M:build()
 		col = col + #self.text[i] + 1 -- plus one for the line end
 	end
 
+	self:reset()
+	-- log.info(vim.inspect(self.text))
 	return req
 end
 
@@ -87,8 +123,8 @@ function M:reset()
 	self.meta_by_idx = {}
 end
 
-function M.setup(shared)
-	ns = shared.ns_placeholders
+function M.setup(state)
+	ns = state.ns_placeholders
 end
 
 return M

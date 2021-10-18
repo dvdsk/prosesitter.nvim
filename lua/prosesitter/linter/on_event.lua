@@ -1,7 +1,7 @@
 local log = require("prosesitter/log")
-local marks = require("prosesitter/on_event/marks/marks")
-local check = require("prosesitter/on_event/check/check")
-local shared = require("prosesitter/shared")
+local marks = require("prosesitter/linter/marks/marks")
+local check = require("prosesitter/linter/check/check")
+local state = require("prosesitter/state")
 local parsers = require("nvim-treesitter.parsers")
 
 local api = vim.api
@@ -14,64 +14,6 @@ local function node_in_range(A, B, node)
 	else
 		return false
 	end
-end
-
-local function key(node)
-	local row_start, col_start, row_end, col_end = node:range()
-	local keystr = { row_start, col_start, row_end, col_end }
-	return table.concat(keystr, "\0")
-end
-
-local prose_queries = {}
-local function get_nodes(bufnr, start_l, end_l)
-	local parser = parsers.get_parser(bufnr)
-	local lang = parser:lang()
-	local prose_query = prose_queries[lang]
-	local nodes = {}
-
-	parser:for_each_tree(function(tstree, _)
-		local root_node = tstree:root()
-		if not node_in_range(start_l, end_l, root_node) then
-			return -- return in this callback skips to checking the next tree
-		end
-
-		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
-			if node_in_range(start_l, end_l, node) then
-				nodes[key(node)] = node
-			end
-		end
-	end)
-	return nodes
-end
-
-local function delayed_on_bytes(...)
-	local args = { ... }
-	vim.defer_fn(function()
-		M.on_bytes(unpack(args))
-	end, 25)
-end
-
-local q = require("vim.treesitter.query")
-function M.attach(bufnr)
-	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
-		return false
-	end
-
-	local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
-	if not ok then
-		return false
-	end
-
-	local lang = parser:lang()
-	if not prose_queries[lang] then
-		prose_queries[lang] = q.parse_query(lang, shared.buf_query[bufnr])
-	end
-
-	parser:register_cbs({ on_bytes = delayed_on_bytes })
-
-	local info = vim.fn.getbufinfo(bufnr)
-	local last_line = info[1].linecount
-	M.on_bytes(bufnr, nil, 0, nil, nil, last_line, nil, nil, last_line, nil, nil)
 end
 
 local BufMemory = {}
@@ -92,6 +34,63 @@ function BufMemory:no_change(buf, start_row)
 	end
 end
 
+local prose_queries = {}
+local function get_nodes(bufnr, start_l, end_l)
+	local parser = parsers.get_parser(bufnr)
+	local lang = parser:lang()
+	local prose_query = prose_queries[lang]
+	local nodes = {}
+
+	parser:for_each_tree(function(tstree, _)
+		local root_node = tstree:root()
+		if not node_in_range(start_l, end_l, root_node) then
+			return -- return in this callback skips to checking the next tree
+		end
+
+		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
+			if node_in_range(start_l, end_l, node) then
+				nodes[#nodes+1] = node
+			end
+		end
+	end)
+	return nodes
+end
+
+local function delayed_on_bytes(...)
+	local args = { ... }
+	vim.defer_fn(function()
+		M.on_bytes(unpack(args))
+	end, 25)
+end
+
+function M:lint_everything(bufnr)
+	BufMemory:reset()
+	local info = vim.fn.getbufinfo(bufnr)
+	local last_line = info[1].linecount
+	self.on_bytes(bufnr, nil, 0, nil, nil, last_line, nil, nil, last_line, nil, nil)
+end
+
+local q = require("vim.treesitter.query")
+function M.attach(bufnr)
+	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
+		return false
+	end
+
+	local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
+	if not ok then
+		return false
+	end
+
+	local lang = parser:lang()
+	if not prose_queries[lang] then
+		prose_queries[lang] = q.parse_query(lang, state.buf_query[bufnr])
+	end
+
+	parser:register_cbs({ on_bytes = delayed_on_bytes })
+	M:lint_everything(bufnr)
+end
+
+
 local lintreq = nil
 function M.on_bytes(
 	buf,
@@ -107,7 +106,7 @@ function M.on_bytes(
 	_ --new_byte
 )
 	-- -- stop calling on lines if the plugin was just disabled
-	local query = shared.buf_query[buf]
+	local query = state.buf_query[buf]
 	if query == nil then
 		return true
 	end
@@ -128,8 +127,9 @@ function M.on_bytes(
 	end
 
 	-- log.trace("lines changed: " .. change_start .. " till " .. change_end)
+	lintreq:clear_lines(buf, change_start, change_end)
 	local nodes = get_nodes(buf, change_start, change_end)
-	for _, node in pairs(nodes) do
+	for _, node in ipairs(nodes) do
 		lintreq:add_node(buf, node)
 	end
 
@@ -139,9 +139,9 @@ function M.on_bytes(
 end
 
 function M.setup()
-	check:setup(shared, marks.mark_results)
+	check:setup(state, marks.mark_results)
 	lintreq = check:get_lintreq()
-	marks.setup(shared)
+	marks.setup(state)
 end
 
 function M.disable()

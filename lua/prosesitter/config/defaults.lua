@@ -15,7 +15,7 @@ M.queries = {
 		comments = "[(comment)+ ] @capture",
 	},
 	lua = {
-		strings = "[string ] @capture",
+		strings = "[(string) ] @capture",
 		comments = "[(comment)+ ] @capture",
 	},
 	c = c_and_cpp_query,
@@ -23,7 +23,7 @@ M.queries = {
 	cpp = c_and_cpp_query,
 	hpp = c_and_cpp_query,
 	tex = {
-		strings = "[(text)+] @capture",
+		strings = "[(text)] @capture",
 		comments = "[(comment)] @capture",
 	},
 	sh = {
@@ -66,6 +66,10 @@ MinAlertLevel = suggestion
 [*]
 # styles that should have all their rules enabled
 BasedOnStyles = proselint, write-good, Vale
+]==]
+
+M.langtool_cfg = [==[
+maxCheckThreads=2
 ]==]
 
 M.cmds = {
