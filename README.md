@@ -1,3 +1,5 @@
+# RIGHT NOW THIS IS BROKEN sorry :( fixing it asap
+
 # prosesitter
 
 Prosesitter uses treesitter and vale to bring true syntax aware prose linting to neovim
