@@ -90,7 +90,10 @@ return require("telescope").register_extension({
 			pick_lint(opts, {curr_buf})
 		end,
 		all = function(opts)
-			local buffers = state:attached_buffers()
+			local buffers = {}
+			for buf in state:attached_bufs() do
+				buffers[#buffers+1] = buf
+			end
 			pick_lint(opts, buffers)
 		end,
 	}

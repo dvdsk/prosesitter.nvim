@@ -84,7 +84,7 @@ end
 
 function Issues:all_issues()
 	local issues = {}
-	for buf, _ in pairs(M.buf_query) do
+	for buf in state:attached() do
 		issues[#issues + 1] = self:for_buf(buf)
 	end
 	return issues

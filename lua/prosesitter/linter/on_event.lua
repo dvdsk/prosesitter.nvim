@@ -2,7 +2,6 @@ local log = require("prosesitter/log")
 local marks = require("prosesitter/linter/marks/marks")
 local check = require("prosesitter/linter/check/check")
 local state = require("prosesitter/state")
-local parsers = require("nvim-treesitter.parsers")
 
 local api = vim.api
 local M = {}
@@ -36,7 +35,7 @@ end
 
 local prose_queries = {}
 local function get_nodes(bufnr, start_l, end_l)
-	local parser = parsers.get_parser(bufnr)
+	local parser = state.parsers(bufnr)
 	local lang = parser:lang()
 	local prose_query = prose_queries[lang]
 	local nodes = {}
@@ -86,6 +85,8 @@ function M.attach(bufnr)
 		prose_queries[lang] = q.parse_query(lang, state.buf_query[bufnr])
 	end
 
+	-- keep the parser to let vim know we need it
+	state.parsers[bufnr] = parser
 	parser:register_cbs({ on_bytes = delayed_on_bytes })
 	M:lint_everything(bufnr)
 end

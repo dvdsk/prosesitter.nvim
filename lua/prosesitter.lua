@@ -41,7 +41,7 @@ function M.disable()
 	on_event.disable()
 
 	-- disable and remove all extmarks
-	for buf, _ in ipairs(state.buf_query) do
+	for buf in state:attached() do
 		api.nvim_buf_clear_namespace(buf, state.ns_placeholders, 0, -1)
 		api.nvim_buf_clear_namespace(buf, state.ns_marks, 0, -1)
 	end

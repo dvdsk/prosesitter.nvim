@@ -48,10 +48,9 @@ local function mark_rdy_if_responding(on_event)
 			if text ~= nil then
 				if string.starts(text, '{"software":{"name":"LanguageTool"') then
 					state.langtool_running = true
-					for buf, _ in pairs(state.buf_query) do
+					for buf in state:attached() do
 						on_event:lint_everything(buf)
 					end
-					-- TODO check all attached buffers
 				end
 			end
 		end

@@ -4,13 +4,19 @@ local log = require("prosesitter/log")
 local M = {}
 M.langtool_running = false
 M.buf_query = {}
+M.parsers = {} -- table of parsers keyed by bufnr
 
-function M:attached_buffers()
-	local list = {}
-	for bufnr, _ in pairs(self.buf_query) do
-		list[#list+1] = bufnr
+function M:attached_bufs()
+	local function attached_it(t, buf)
+		buf = buf+1
+		local v = self.parsers[buf]
+		if v ~= nil then
+			return buf
+		else 
+			return nil
+		end
 	end
-	return list
+	return attached_it
 end
 
 M.cfg = "should be set in prosesitter.setup"
