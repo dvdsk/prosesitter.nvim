@@ -17,7 +17,6 @@ local function do_check()
 	local req = M.lintreq:build()
 
 	if state.langtool_running then
-		log.info(req.text)
 		local function post_langtool(json)
 			local results = langtool.add_spans(json)
 			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
