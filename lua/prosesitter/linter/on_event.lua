@@ -16,12 +16,6 @@ local function node_in_range(A, B, node)
 	end
 end
 
-local function key(node)
-	local row_start, col_start, row_end, col_end = node:range()
-	local keystr = { row_start, col_start, row_end, col_end }
-	return table.concat(keystr, "\0")
-end
-
 local BufMemory = {}
 function BufMemory:reset()
 	for i, _ in ipairs(self) do self[i] = nil end
@@ -55,7 +49,7 @@ local function get_nodes(bufnr, start_l, end_l)
 
 		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
 			if node_in_range(start_l, end_l, node) then
-				nodes[key(node)] = node
+				nodes[#nodes+1] = node
 			end
 		end
 	end)
@@ -133,8 +127,9 @@ function M.on_bytes(
 	end
 
 	-- log.trace("lines changed: " .. change_start .. " till " .. change_end)
+	lintreq:clear_lines(buf, change_start, change_end)
 	local nodes = get_nodes(buf, change_start, change_end)
-	for _, node in pairs(nodes) do
+	for _, node in ipairs(nodes) do
 		lintreq:add_node(buf, node)
 	end
 

@@ -23,7 +23,7 @@ M.queries = {
 	cpp = c_and_cpp_query,
 	hpp = c_and_cpp_query,
 	tex = {
-		strings = "[(text)+] @capture",
+		strings = "[(text)] @capture",
 		comments = "[(comment)] @capture",
 	},
 	sh = {

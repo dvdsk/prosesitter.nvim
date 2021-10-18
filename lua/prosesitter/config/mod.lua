@@ -20,6 +20,7 @@ local function add_merged_queries(queries)
 end
 
 local Cfg = {
+	timeout = 500,
 	severity_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
 	vale_cfg = util.plugin_path .. "/vale_cfg.ini",
 	vale_bin = false,

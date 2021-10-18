@@ -17,6 +17,7 @@ local function do_check()
 	local req = M.lintreq:build()
 
 	if state.langtool_running then
+		log.info(req.text)
 		local function post_langtool(json)
 			local results = langtool.add_spans(json)
 			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
@@ -44,8 +45,7 @@ function M.cancelled_schedualled()
 end
 
 function M.schedual()
-	local timeout_ms = 500 -- was 800
-	job = vim.defer_fn(do_check, timeout_ms)
+	job = vim.defer_fn(do_check, state.cfg.timeout)
 end
 
 function M:setup()
