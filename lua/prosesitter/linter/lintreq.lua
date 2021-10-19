@@ -72,7 +72,7 @@ local function delete_by_idx(deleted_meta, array, map)
 	for i = #deleted_meta, 1, -1 do
 		local idx = deleted_meta[i].idx
 		table.remove(array, idx)
-		map[idx] = nil
+		table.remove(map, idx)
 	end
 end
 
