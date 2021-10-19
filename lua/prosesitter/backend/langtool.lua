@@ -59,8 +59,8 @@ local function mark_rdy_if_responding(on_event)
 	local async = require("prosesitter/linter/check/async_cmd")
 	local do_check = function()
 		if not M.langtool_running then
-			local curl_args = { "--no-progress-meter", "--data", "@-", M.url }
-			async.dispatch_with_stdin("language=en-US&text=hi", "curl", curl_args, on_exit)
+			local args = M:curl_args()
+			async.dispatch_with_stdin("hi", "curl", args, on_exit)
 		end
 	end
 

@@ -14,6 +14,10 @@ local job = "should be set in check.setup"
 local cfg = "should be set in check.setup"
 local function do_check()
 	M.schedualled = false
+	if M.lintreq:is_empty() then
+		return
+	end
+
 	local req = M.lintreq:build()
 
 	if state.langtool_running then
