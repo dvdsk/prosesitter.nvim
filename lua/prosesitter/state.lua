@@ -13,11 +13,19 @@ function M:attached()
 		buf = next(self.parsers, buf)
 		if buf ~= nil then
 			return buf
-		else 
+		else
 			return nil
 		end
 	end
 	return iter, buf
+end
+
+function M:list_attached()
+	local list = {}
+	for buf, _ in pairs(self.parsers) do
+		list[#list+1] = buf
+	end
+	return list
 end
 
 M.cfg = "should be set in prosesitter.setup"
