@@ -62,7 +62,7 @@ function M.mark_results(results, areas, linter, to_meta)
 		local ok, id = set_extmark(hl.buf_id, row, col_offset + hl.start_col - 2, opt)
 		if not ok then goto continue end
 
-		state.issues:set(linter, id, lints)
+		state.issues:set(hl.buf_id, linter, id, lints)
 		::continue::
 	end
 end

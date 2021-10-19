@@ -58,8 +58,7 @@ function Issues:clear_meta_for(linter, buf, id)
 	end
 end
 
-function Issues:set(linter, id, meta)
-	local buf = vim.api.nvim_get_current_buf()
+function Issues:set(buf, linter, id, meta)
 	self.m[buf][linter][id] = meta
 end
 
