@@ -123,7 +123,7 @@ function M.to_meta(problem)
 	local issue = {}
 	issue.msg = problem.message
 	issue.severity = id_to_severity[problem.rule.category.id]
-	issue.full_source = "TODO"
+	issue.full_source = problem.rule.category.name..": "..problem.rule.id
 	issue.action = "TODO"
 	return issue
 end

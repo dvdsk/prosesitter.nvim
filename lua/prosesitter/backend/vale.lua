@@ -1,4 +1,5 @@
 local defaults = require("prosesitter/config/defaults")
+local log = require("prosesitter/log")
 local util = require("prosesitter/util")
 local M = {}
 
@@ -66,7 +67,7 @@ function M.to_meta(problem)
 	local issue = {}
 	issue.msg = problem.Message
 	issue.severity = problem.Severity
-	issue.full_source = "TODO"
+	issue.full_source = problem.Check
 	issue.action = "TODO"
 	return issue
 end

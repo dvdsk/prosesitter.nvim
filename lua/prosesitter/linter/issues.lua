@@ -89,17 +89,5 @@ function Issues:all_issues()
 	return issues
 end
 
--- returns a list of individual issues, can return multiple
--- items for a single word
--- function Issues:all_issues_for_buf(buf)
--- 	local issues = {}
--- 	for source in { "vale", "langtool" } do
--- 		for meta in self.m[buf][source] do
--- 			issues[#issues + 1] = meta
--- 		end
--- 	end
--- 	return issues
--- end
-
 M.Issues = Issues
 return M
