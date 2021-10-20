@@ -5,7 +5,7 @@ local M = {}
 M.langtool_running = false
 M.buf_query = {}
 M.parsers = {} -- table of parsers keyed by bufnr
-
+M.preprosessing = {}
 
 function M:attached()
 	local buf = nil

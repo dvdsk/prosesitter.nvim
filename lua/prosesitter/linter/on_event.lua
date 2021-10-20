@@ -36,9 +36,10 @@ end
 local prose_queries = {}
 local function get_nodes(bufnr, start_l, end_l)
 	local parser = state.parsers[bufnr]
+	local add_node = state.preprosessing[bufnr]
 	local lang = parser:lang()
 	local prose_query = prose_queries[lang]
-	local nodes = {}
+	local ranges = {}
 
 	parser:for_each_tree(function(tstree, _)
 		local root_node = tstree:root()
@@ -48,11 +49,11 @@ local function get_nodes(bufnr, start_l, end_l)
 
 		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
 			if node_in_range(start_l, end_l, node) then
-				nodes[#nodes+1] = node
+				add_node(ranges, node)
 			end
 		end
 	end)
-	return nodes
+	return ranges
 end
 
 local function delayed_on_bytes(...)
@@ -129,9 +130,9 @@ function M.on_bytes(
 
 	-- log.trace("lines changed: " .. change_start .. " till " .. change_end)
 	lintreq:clear_lines(buf, change_start, change_end)
-	local nodes = get_nodes(buf, change_start, change_end)
-	for _, node in ipairs(nodes) do
-		lintreq:add_node(buf, node)
+	local ranges = get_nodes(buf, change_start, change_end)
+	for _, range in ipairs(ranges) do
+		lintreq:add_range(buf, range)
 	end
 
 	if not check.schedualled then

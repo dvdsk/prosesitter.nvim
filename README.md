@@ -37,7 +37,7 @@ require("telescope").load_extension("prosesitter") -- Optionally, depends on tel
 require("prosesitter"):setup()
 ```
 
-or pass a (partial)configuration; setting up your own vale binary, vale config and or adding extra treesitter queries (see [adding queries](adding_queries.md)
+or pass a (partial)configuration; setting up your own vale binary, vale config and or adding extra treesitter queries (see [adding queries](adding_queries.md))
 ```lua
 require("telescope").load_extension("prosesitter") -- Optionally, depends on telescope.nvim
 require("prosesitter"):setup({

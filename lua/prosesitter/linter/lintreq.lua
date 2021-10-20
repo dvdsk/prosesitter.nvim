@@ -18,8 +18,8 @@ function M.new()
 	return self
 end
 
-function M:add_node(buf, node)
-	local start_row, start_col, end_row, end_col = node:range()
+function M:add_range(buf, range)
+	local start_row, start_col, end_row, end_col = unpack(range)
 	if start_row == end_row then
 		self:add(buf, start_row, start_col + 1, end_col)
 	else

@@ -4,6 +4,7 @@ local state = require("prosesitter/state")
 local config = require("prosesitter/config/mod")
 local langtool = require("prosesitter/backend/langtool")
 local issues = require("prosesitter/linter/issues")
+local prep = require("prosesitter/preprocessing")
 
 local api = vim.api
 local M = {}
@@ -31,6 +32,8 @@ function M.attach()
 	local lint_target = state.cfg.lint_target[extension]
 	local query = queries[lint_target]
 
+	local prepfunc = prep.get_fn(extension)
+	state.preprosessing[bufnr] = prepfunc
 	state.buf_query[bufnr] = query
 	state.issues:attach(bufnr)
 	on_event.attach(bufnr)
