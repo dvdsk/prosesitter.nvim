@@ -4,19 +4,15 @@ local defaults = require("prosesitter/config/defaults")
 local util = require("prosesitter/util")
 local log = require("prosesitter/log")
 
-local function overlay_table(overlay, default)
-	for ext, _ in pairs(overlay) do
-		default[ext] = overlay[ext]
+local function layer_on_top(foreground, background)
+	if background == nil then
+		return foreground
 	end
-	return default
-end
 
-local function add_merged_queries(queries)
-	for _, q in pairs(queries) do
-		if q.strings ~= nil and q.comments ~= nil then
-			q.both = defaults.merge_queries(q)
-		end
+	for key, _ in pairs(foreground) do
+		background[key] = foreground[key]
 	end
+	return background
 end
 
 local Cfg = {
@@ -29,9 +25,9 @@ local Cfg = {
 	langtool_cfg = util.plugin_path .. "/langtool.cfg",
 	default_cmds = true,
 	auto_enable = true,
-	disabled_ext = {}, -- empty so nothing disabled
-	queries = defaults.queries,
-	lint_target = defaults.lint_target,
+	-- keyed by file_extention a subtable of queries,
+	-- disabled and of lint target
+	ext = nil,
 }
 
 function Cfg:adjust_cfg(user_cfg)
@@ -43,22 +39,13 @@ function Cfg:adjust_cfg(user_cfg)
 		self[key] = user_cfg[key]
 	end
 
-	if user_cfg.queries ~= nil then
-		add_merged_queries(user_cfg.queries)
-		self.queries = overlay_table(user_cfg.queries, defaults.queries)
-	end
-
-	if user_cfg.lint_target ~= nil then
-		self.lint_target = overlay_table(user_cfg.lint_target, defaults.lint_target)
-	end
-
-	if user_cfg.disabled ~= nil then
-		self.disabled = overlay_table(user_cfg.disabled, self.disabled)
-	end
-
-	if user_cfg.disabled_ext ~= nil then
-		for _, lang in ipairs(user_cfg.disabled_ext) do
-			self.disabled_ext[lang] = true
+	self.ext = defaults:ext()
+	if user_cfg.ext ~= nil then
+		for ext, conf in pairs(user_cfg.ext) do
+			if conf.queries ~= nil then
+				conf.queries.both = defaults.merge_queries(conf.queries)
+			end
+			layer_on_top(conf, self.ext[ext])
 		end
 	end
 end

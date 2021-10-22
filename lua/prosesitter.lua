@@ -21,17 +21,18 @@ function M.attach()
 	end
 
 	local extension = vim.fn.expand("%:e")
-	if state.cfg.disabled_ext[extension] ~= nil then
+	local ext_cfg = state.cfg.ext[extension]
+	if ext_cfg == nil then
 		return
 	end
 
-	local queries = state.cfg.queries[extension]
-	if queries == nil then
+	if ext_cfg.disabled ~= nil and ext_cfg.disabled == true then
 		return
 	end
 
-	local lint_target = state.cfg.lint_target[extension]
-	local query = queries[lint_target]
+	local lint_target = ext_cfg.lint_target
+	log.info(vim.inspect(ext_cfg.queries))
+	local query = ext_cfg.queries[lint_target]
 
 	local prepfunc = prep.get_fn(extension)
 	state.buf[bufnr] = {
@@ -71,6 +72,7 @@ end
 
 function M:setup(user_cfg)
 	local cfg = config:setup(user_cfg)
+
 	if cfg == nil then
 		print("setup unsuccesful; exiting")
 		return

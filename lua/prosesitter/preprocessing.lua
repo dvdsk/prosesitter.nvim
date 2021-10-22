@@ -6,7 +6,6 @@ local M = {}
 -- must be able to handle multi line node text
 -- want to preserve native line ends
 local function default_fn(buf, node, req)
-	log.info(vim.inspect({node:range()}))
 	local start_row, start_col, end_row, end_col = node:range()
 	local text = api.nvim_buf_get_lines(buf, start_row, end_row+1, true)
 	text[#text] = string.sub(text[#text], 1, end_col)

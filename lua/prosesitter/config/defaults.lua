@@ -1,3 +1,4 @@
+local log = require("prosesitter/log")
 local M = {}
 
 local c_and_cpp_query = {
@@ -5,60 +6,54 @@ local c_and_cpp_query = {
 	comments = "[(comment) ] @capture",
 }
 
-M.queries = {
-	rs = {
-		strings = "[(string_literal)] @capture",
-		comments = "[(line_comment)+ (block_comment)] @capture",
-	},
-	py = {
-		strings = "[(string) ] @capture",
-		comments = "[(comment)+ ] @capture",
-	},
-	lua = {
-		strings = "[(string) ] @capture",
-		comments = "[(comment)+ ] @capture",
-	},
-	c = c_and_cpp_query,
-	h = c_and_cpp_query,
-	cpp = c_and_cpp_query,
-	hpp = c_and_cpp_query,
+local default_queries = {
+	-- rs = {
+	-- 	strings = "[(string_literal)] @capture",
+	-- 	comments = "[(line_comment)+ (block_comment)] @capture",
+	-- },
+	-- py = {
+	-- 	strings = "[(string) ] @capture",
+	-- 	comments = "[(comment)+ ] @capture",
+	-- },
+	-- lua = {
+	-- 	strings = "[(string) ] @capture",
+	-- 	comments = "[(comment)+ ] @capture",
+	-- },
+	-- c = c_and_cpp_query,
+	-- h = c_and_cpp_query,
+	-- cpp = c_and_cpp_query,
+	-- hpp = c_and_cpp_query,
 	tex = {
 		strings = "[(text)] @capture",
 		comments = "[(comment)] @capture",
 	},
-	sh = {
-		strings = "[(string)] @capture",
-		comments = "[(comment)] @capture",
-	},
+	-- sh = {
+	-- 	strings = "[(string)] @capture",
+	-- 	comments = "[(comment)] @capture",
+	-- },
 }
 
-function M.merge_queries(queries)
-	local q1 = string.match(queries.strings, "%[(.-)%]")
-	local q2 = string.match(queries.comments, "%[(.-)%]")
+function M.merge_queries(to_merge)
+	local q1 = string.match(to_merge.strings, "%[(.-)%]")
+	local q2 = string.match(to_merge.comments, "%[(.-)%]")
 	return "[" .. q1 .. " " .. q2 .. "] @capture"
 end
 
-for _, queries in pairs(M.queries) do
-	if queries["both"] == nil then
-		queries["both"] = M.merge_queries(queries)
+function M:ext()
+	local ext = {}
+	for extension, queries in pairs(default_queries) do
+		if queries["both"] == nil then
+			queries.both = self.merge_queries(queries)
+		end
+		ext[extension] = { queries = queries, lint_target = "both" }
 	end
+
+	-- override some options to not have both enabled
+	-- ext.sh.lint_target = "comments" -- doesnt really make sens to check bash strings (mostly paths/cmds)
+	log.info(vim.inspect(ext))
+	return ext
 end
 
-M.lint_target = {}
-for key, _ in pairs(M.queries) do
-	M.lint_target[key] = "both"
-end
-
--- override some options to not have both enabled
-M.lint_target.sh = "comments" -- doesnt really make sens to check bash strings (mostly paths/cmds)
-
-function M.all_disabled(queries, disabled)
-	local table = {}
-	for key, _ in pairs(queries) do
-		table[key] = disabled
-	end
-	return table
-end
 
 M.vale_cfg_ini = [==[
 # StylesPath = added by lua code during install
