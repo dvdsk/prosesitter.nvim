@@ -4,6 +4,7 @@ local state = require("prosesitter/state")
 local config = require("prosesitter/config/mod")
 local langtool = require("prosesitter/backend/langtool")
 local issues = require("prosesitter/linter/issues")
+local lintreq = require("prosesitter/linter/lintreq")
 local prep = require("prosesitter/preprocessing")
 
 local api = vim.api
@@ -33,6 +34,7 @@ function M.attach()
 	local query = queries[lint_target]
 
 	local prepfunc = prep.get_fn(extension)
+	state.lintreq[bufnr] = lintreq.new()
 	state.preprosessing[bufnr] = prepfunc
 	state.buf_query[bufnr] = query
 	state.issues:attach(bufnr)
@@ -50,6 +52,9 @@ function M.disable()
 	end
 
 	vim.cmd("autocmd! prosesitter") -- remove autocmd
+	for buf in pairs(state.lintreq) do
+		state.lintreq[buf]:reset()
+	end
 	state.buf_query = {}
 end
 

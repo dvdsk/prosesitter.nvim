@@ -1,7 +1,8 @@
 local log = require("prosesitter/log")
 local util = require("prosesitter/util")
+local state = require("prosesitter/state")
 local api = vim.api
-local ns = nil
+local ns = state.ns_placeholders
 
 local M = {}
 M.__index = M -- failed table lookups on the instances should fallback to the class table, to get methods
@@ -18,16 +19,12 @@ function M.new()
 	return self
 end
 
-function M:add_range(buf, range)
-	local start_row, start_col, end_row, end_col = unpack(range)
-	if start_row == end_row then
-		self:add(buf, start_row, start_col + 1, end_col)
-	else
-		for row = start_row, end_row do
-			self:add(buf, row, start_col, -1)
-			start_col = 1 -- can only be non one for first row
-		end
-		self:add(buf, end_row, 1, end_col)
+-- text can be empty list
+function M:add_range(buf, lines, start_row, start_col)
+	for i, text in ipairs(lines) do
+		local row = start_row - 1 + i
+		self:add(buf, text, row, start_col)
+		start_col = 1
 	end
 end
 
@@ -45,17 +42,14 @@ function M:append(buf, id, text, start_col)
 	self.text[#self.text + 1] = text
 end
 
-function M:add(buf, row, start_col, end_col)
-	local full_line = api.nvim_buf_get_lines(buf, row, row + 1, true)
-	local line = string.sub(full_line[1], start_col, end_col)
-
+function M:add(buf, text, row, start_col)
 	local id = nil
 	local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
 	assert(#marks < 2, "there should never be more then one placeholder on a line")
 	if #marks > 0 then
 		id = marks[1][1] -- there can be a max of 1 placeholder per line
 		if self.meta_by_mark[id] ~= nil then
-			self:append(buf, id, line, start_col)
+			self:append(buf, id, text, start_col)
 			return
 		end
 	else
@@ -65,7 +59,7 @@ function M:add(buf, row, start_col, end_col)
 	local meta = { buf = buf, id = id, row_col = start_col, idx = #self.text + 1 }
 	self.meta_by_mark[id] = { meta }
 	self.meta_by_idx[#self.text + 1] = meta
-	self.text[#self.text + 1] = line
+	self.text[#self.text + 1] = text
 end
 
 local function delete_by_idx(deleted_meta, array, map)
@@ -121,10 +115,6 @@ function M:reset()
 	self.text = {}
 	self.meta_by_mark = {}
 	self.meta_by_idx = {}
-end
-
-function M.setup(state)
-	ns = state.ns_placeholders
 end
 
 return M

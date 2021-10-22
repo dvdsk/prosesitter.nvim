@@ -34,12 +34,11 @@ function BufMemory:no_change(buf, start_row)
 end
 
 local prose_queries = {}
-local function get_nodes(bufnr, start_l, end_l)
-	local parser = state.parsers[bufnr]
+local function add_nodes(bufnr, lintreq, start_l, end_l)
 	local add_node = state.preprosessing[bufnr]
+	local parser = state.parsers[bufnr]
 	local lang = parser:lang()
 	local prose_query = prose_queries[lang]
-	local ranges = {}
 
 	parser:for_each_tree(function(tstree, _)
 		local root_node = tstree:root()
@@ -49,11 +48,10 @@ local function get_nodes(bufnr, start_l, end_l)
 
 		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
 			if node_in_range(start_l, end_l, node) then
-				add_node(ranges, node)
+				add_node(bufnr, node, lintreq)
 			end
 		end
 	end)
-	return ranges
 end
 
 local function delayed_on_bytes(...)
@@ -93,7 +91,6 @@ function M.attach(bufnr)
 end
 
 
-local lintreq = nil
 function M.on_bytes(
 	buf,
 	_, --changed_tick,
@@ -129,20 +126,16 @@ function M.on_bytes(
 	end
 
 	-- log.trace("lines changed: " .. change_start .. " till " .. change_end)
+	local lintreq = state.lintreq[buf]
 	lintreq:clear_lines(buf, change_start, change_end)
-	local ranges = get_nodes(buf, change_start, change_end)
-	for _, range in ipairs(ranges) do
-		lintreq:add_range(buf, range)
-	end
+	add_nodes(buf, lintreq, change_start, change_end)
 
-	if not check.schedualled then
-		check.schedual()
+	if not check:schedualled() then
+		check:schedual(buf)
 	end
 end
 
 function M.setup()
-	check:setup(state, marks.mark_results)
-	lintreq = check:get_lintreq()
 	marks.setup(state)
 end
 

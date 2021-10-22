@@ -1,5 +1,4 @@
 local async = require("prosesitter/linter/check/async_cmd")
-local lintreq = require("prosesitter/linter/lintreq")
 local marks = require("prosesitter/linter/marks/marks")
 local state = require("prosesitter/state")
 local vale = require("prosesitter/backend/vale")
@@ -7,18 +6,17 @@ local langtool = require("prosesitter/backend/langtool")
 local log = require("prosesitter/log")
 local M = {}
 
-M.schedualled = false
-M.lintreq = "should be set in check.setup"
-local job = "should be set in check.setup"
+M.schedualled_bufs = {}
+local jobs = {}
 
-local cfg = "should be set in check.setup"
-local function do_check()
-	M.schedualled = false
-	if M.lintreq:is_empty() then
+local function check_buf(buf)
+	local lintreq = state.lintreq[buf]
+	if lintreq:is_empty() then
 		return
 	end
 
-	local req = M.lintreq:build()
+	local req = lintreq:build()
+	log.info(vim.inspect(req.text))
 
 	if state.langtool_running then
 		local function post_langtool(json)
@@ -30,39 +28,37 @@ local function do_check()
 		async.dispatch_with_stdin(req.text, "curl", args, post_langtool)
 	end
 
-	if cfg.vale_bin ~= nil then
+	if state.cfg.vale_bin ~= nil then
 		local function post_vale(json)
 			local results = vim.fn.json_decode(json)["stdin.md"]
 			marks.mark_results(results, req.areas, "vale", vale.to_meta)
 		end
-		local vale_args = { "--config", cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
-		async.dispatch_with_stdin(req.text, cfg.vale_bin, vale_args, post_vale)
+		local vale_args = { "--config", state.cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+		async.dispatch_with_stdin(req.text, state.cfg.vale_bin, vale_args, post_vale)
 	end
 end
 
-function M.cancelled_schedualled()
-	if job ~= nil then
+function M:cancelled_schedualled()
+	for buf, job in pairs(jobs) do
 		job:stop()
-		M.schedualled = false
+		self.schedualled[buf] = nil
 	end
 end
 
-function M.schedual()
-	job = vim.defer_fn(do_check, state.cfg.timeout)
+function M:schedualled(buf)
+	return self.schedualled_bufs[buf] ~= nil
 end
 
-function M:setup()
-	cfg = state.cfg
-	lintreq.setup(state)
-	self.lintreq = lintreq.new()
-end
-
-function M:get_lintreq()
-	return self.lintreq
+function M:schedual(buf)
+	local check = function()
+		check_buf(buf)
+		self.schedualled_bufs[buf] = nil
+	end
+	jobs[buf] = vim.defer_fn(check, state.cfg.timeout)
+	self.schedualled_bufs[buf] = true
 end
 
 function M:disable()
-	self.lintreq:reset()
 	self.cancelled_schedualled() -- stop any running async jobs
 end
 
