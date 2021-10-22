@@ -35,8 +35,8 @@ end
 
 local prose_queries = {}
 local function add_nodes(bufnr, lintreq, start_l, end_l)
-	local add_node = state.preprosessing[bufnr]
-	local parser = state.parsers[bufnr]
+	local add_node = state.buf[bufnr].preprosessing
+	local parser = state.buf[bufnr].parsers
 	local lang = parser:lang()
 	local prose_query = prose_queries[lang]
 
@@ -81,11 +81,11 @@ function M.attach(bufnr)
 
 	local lang = parser:lang()
 	if not prose_queries[lang] then
-		prose_queries[lang] = q.parse_query(lang, state.buf_query[bufnr])
+		prose_queries[lang] = q.parse_query(lang, state.buf[bufnr].query)
 	end
 
 	-- keep the parser to let vim know we need it
-	state.parsers[bufnr] = parser
+	state.buf[bufnr].parsers = parser
 	parser:register_cbs({ on_bytes = delayed_on_bytes })
 	M:lint_everything(bufnr)
 end
@@ -105,7 +105,7 @@ function M.on_bytes(
 	_ --new_byte
 )
 	-- -- stop calling on lines if the plugin was just disabled
-	local query = state.buf_query[buf]
+	local query = state.buf[buf].query
 	if query == nil then
 		return true
 	end
@@ -126,7 +126,7 @@ function M.on_bytes(
 	end
 
 	-- log.trace("lines changed: " .. change_start .. " till " .. change_end)
-	local lintreq = state.lintreq[buf]
+	local lintreq = state.buf[buf].lintreq
 	lintreq:clear_lines(buf, change_start, change_end)
 	add_nodes(buf, lintreq, change_start, change_end)
 

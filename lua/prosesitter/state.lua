@@ -3,15 +3,14 @@ local log = require("prosesitter/log")
 
 local M = {}
 M.langtool_running = false
-M.buf_query = {}
-M.parsers = {} -- table of parsers keyed by bufnr
-M.preprosessing = {}
+M.buf = {}
+
 M.lintreq = {}
 
 function M:attached()
 	local buf = nil
 	local iter = function()
-		buf = next(self.parsers, buf)
+		buf = next(self.buf, buf)
 		if buf ~= nil then
 			return buf
 		else
@@ -23,7 +22,7 @@ end
 
 function M:list_attached()
 	local list = {}
-	for buf, _ in pairs(self.parsers) do
+	for buf, _ in pairs(self.buf) do
 		list[#list+1] = buf
 	end
 	return list

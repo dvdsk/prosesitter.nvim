@@ -16,7 +16,7 @@ M.popup = require("prosesitter/actions/hover").popup
 
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
-	if state.buf_query[bufnr] ~= nil then
+	if state.buf[bufnr] ~= nil then
 		return
 	end
 
@@ -34,9 +34,11 @@ function M.attach()
 	local query = queries[lint_target]
 
 	local prepfunc = prep.get_fn(extension)
-	state.lintreq[bufnr] = lintreq.new()
-	state.preprosessing[bufnr] = prepfunc
-	state.buf_query[bufnr] = query
+	state.buf[bufnr] = {
+		lintreq = lintreq.new(),
+		preprosessing = prepfunc,
+		query = query,
+	}
 	state.issues:attach(bufnr)
 	on_event.attach(bufnr)
 end
@@ -52,10 +54,7 @@ function M.disable()
 	end
 
 	vim.cmd("autocmd! prosesitter") -- remove autocmd
-	for buf in pairs(state.lintreq) do
-		state.lintreq[buf]:reset()
-	end
-	state.buf_query = {}
+	state.buf = {}
 end
 
 function M.enable()

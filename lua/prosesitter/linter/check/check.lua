@@ -10,7 +10,7 @@ M.schedualled_bufs = {}
 local jobs = {}
 
 local function check_buf(buf)
-	local lintreq = state.lintreq[buf]
+	local lintreq = state.buf[buf].lintreq
 	if lintreq:is_empty() then
 		return
 	end
