@@ -16,7 +16,6 @@ local function check_buf(buf)
 	end
 
 	local req = lintreq:build()
-	log.info(vim.inspect(req.text))
 
 	if state.langtool_running then
 		local function post_langtool(json)

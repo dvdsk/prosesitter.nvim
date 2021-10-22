@@ -20,6 +20,7 @@ function M.new()
 end
 
 -- text can be empty list
+-- needs to be passed 1 based start_col
 function M:add_range(buf, lines, start_row, start_col)
 	for i, text in ipairs(lines) do
 		local row = start_row - 1 + i
