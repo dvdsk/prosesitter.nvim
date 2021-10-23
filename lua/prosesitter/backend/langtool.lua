@@ -59,7 +59,7 @@ local function mark_rdy_if_responding(on_event)
 	local async = require("prosesitter/linter/check/async_cmd")
 	local do_check = function()
 		if not M.langtool_running then
-			local args = M:curl_args()
+			local args = M:curl_args("")
 			async.dispatch_with_stdin("hi", "curl", args, on_exit)
 		end
 	end
@@ -128,7 +128,7 @@ function M.to_meta(problem)
 	return issue
 end
 
-function M:curl_args()
+function M:curl_args(disabled_rules)
 	return {
 		"--no-progress-meter",
 		"--data-urlencode",
@@ -136,7 +136,7 @@ function M:curl_args()
 		"--data-urlencode",
 		"disabledCategories=STYLE",
 		"--data-urlencode",
-		"disabledRules=WHITESPACE_RULE",
+		"disabledRules="..disabled_rules,
 		"--data-urlencode",
 		"text@-",
 		self.url,

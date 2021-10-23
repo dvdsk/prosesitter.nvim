@@ -10,7 +10,8 @@ M.schedualled_bufs = {}
 local jobs = {}
 
 local function check_buf(buf)
-	local lintreq = state.buf[buf].lintreq
+	local bufstate = state.buf[buf]
+	local lintreq = bufstate.lintreq
 	if lintreq:is_empty() then
 		return
 	end
@@ -23,7 +24,7 @@ local function check_buf(buf)
 			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
 		end
 
-		local args = langtool:curl_args()
+		local args = langtool:curl_args(bufstate.langtool_ig)
 		async.dispatch_with_stdin(req.text, "curl", args, post_langtool)
 	end
 

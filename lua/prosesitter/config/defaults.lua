@@ -7,30 +7,30 @@ local c_and_cpp_query = {
 }
 
 local default_queries = {
-	-- rs = {
-	-- 	strings = "[(string_literal)] @capture",
-	-- 	comments = "[(line_comment)+ (block_comment)] @capture",
-	-- },
-	-- py = {
-	-- 	strings = "[(string) ] @capture",
-	-- 	comments = "[(comment)+ ] @capture",
-	-- },
-	-- lua = {
-	-- 	strings = "[(string) ] @capture",
-	-- 	comments = "[(comment)+ ] @capture",
-	-- },
-	-- c = c_and_cpp_query,
-	-- h = c_and_cpp_query,
-	-- cpp = c_and_cpp_query,
-	-- hpp = c_and_cpp_query,
+	rs = {
+		strings = "[(string_literal)] @capture",
+		comments = "[(line_comment)+ (block_comment)] @capture",
+	},
+	py = {
+		strings = "[(string) ] @capture",
+		comments = "[(comment)+ ] @capture",
+	},
+	lua = {
+		strings = "[(string) ] @capture",
+		comments = "[(comment)+ ] @capture",
+	},
+	c = c_and_cpp_query,
+	h = c_and_cpp_query,
+	cpp = c_and_cpp_query,
+	hpp = c_and_cpp_query,
 	tex = {
 		strings = "[(text)] @capture",
 		comments = "[(comment)] @capture",
 	},
-	-- sh = {
-	-- 	strings = "[(string)] @capture",
-	-- 	comments = "[(comment)] @capture",
-	-- },
+	sh = {
+		strings = "[(string)] @capture",
+		comments = "[(comment)] @capture",
+	},
 }
 
 function M.merge_queries(to_merge)
@@ -45,12 +45,12 @@ function M:ext()
 		if queries["both"] == nil then
 			queries.both = self.merge_queries(queries)
 		end
-		ext[extension] = { queries = queries, lint_target = "both" }
+		ext[extension] = { queries = queries, lint_target = "both", langtool_ig="" }
 	end
 
 	-- override some options to not have both enabled
-	-- ext.sh.lint_target = "comments" -- doesnt really make sens to check bash strings (mostly paths/cmds)
-	log.info(vim.inspect(ext))
+	ext.sh.lint_target = "comments" -- doesnt really make sens to check bash strings (mostly paths/cmds)
+	ext.tex.langtool_ig = "WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE"
 	return ext
 end
 

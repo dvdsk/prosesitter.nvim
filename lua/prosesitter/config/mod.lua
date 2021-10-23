@@ -44,6 +44,9 @@ function Cfg:adjust_cfg(user_cfg)
 		for ext, conf in pairs(user_cfg.ext) do
 			if conf.queries ~= nil then
 				conf.queries.both = defaults.merge_queries(conf.queries)
+				if conf.ig_langtool_rules == nil then
+					conf.ig_langtool_rules = ""
+				end
 			end
 			layer_on_top(conf, self.ext[ext])
 		end

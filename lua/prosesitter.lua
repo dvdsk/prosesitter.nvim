@@ -31,15 +31,16 @@ function M.attach()
 	end
 
 	local lint_target = ext_cfg.lint_target
-	log.info(vim.inspect(ext_cfg.queries))
 	local query = ext_cfg.queries[lint_target]
 
 	local prepfunc = prep.get_fn(extension)
 	state.buf[bufnr] = {
+		langtool_ig = ext_cfg.langtool_ig,
 		lintreq = lintreq.new(),
 		preprosessing = prepfunc,
 		query = query,
 	}
+
 	state.issues:attach(bufnr)
 	on_event.attach(bufnr)
 end
