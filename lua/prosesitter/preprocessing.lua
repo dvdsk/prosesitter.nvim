@@ -24,28 +24,24 @@ end
 local fn_by_ext = {
 	tex = function(buf, node, req)
 		local text, row, col = get_lines(buf, node)
-		local i = 1
-		while i <= #text do
-			if i > 1 then -- ugly
-				col = 1
-			end
-
-			local line = text[i]
-			local start, stop = string.find(line, url_path_pattern)
-			if start ~= nil then
-				local before = string.sub(line, 1, start - 1)
-				if #before > 0 then
-					req:add(before, before, row - 1 + i, col)
+		for n, line in ipairs(text) do
+			while true do
+				local start, stop = string.find(line, url_path_pattern)
+				if start ~= nil then
+					if start > 1 then
+						local before = string.sub(line, 1, start - 1)
+						req:add(buf, before, row - 1 + n, col)
+					end
+					if stop < #line then
+						line = string.sub(line, stop+1)
+					else
+						break
+					end
+				else
+					req:add(buf, line, row - 1 + n, col + 1)
+					break
 				end
-				local after = string.sub(line, stop + 1)
-				if #after > 0 then
-					text[i] = after
-					i = i - 1
-				end
-			else
-				req:add(buf, line, row - 1 + i, col + 1)
 			end
-			i = i + 1
 		end
 	end,
 }
