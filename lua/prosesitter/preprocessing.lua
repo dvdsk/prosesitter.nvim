@@ -3,7 +3,6 @@ local log = require("prosesitter/log")
 local M = {}
 
 local function get_lines(buf, start_row, start_col, end_row, end_col )
-	-- TODO check out treesitters get node text
 	local text = api.nvim_buf_get_lines(buf, start_row, end_row + 1, true)
 	text[#text] = string.sub(text[#text], 1, end_col)
 	text[1] = string.sub(text[1], start_col + 1)

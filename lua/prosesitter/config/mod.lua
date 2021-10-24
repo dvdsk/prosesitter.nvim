@@ -30,6 +30,18 @@ local Cfg = {
 	ext = nil,
 }
 
+local queries = defaults.queries
+local newline = string.char(10)
+function M.build_query(lint_targets, ext)
+	local list = {}
+	for _, target in ipairs(lint_targets) do
+		if queries[ext][target] ~= nil then
+			list[#list+1] = queries[ext][target]
+		end
+	end
+	return table.concat(list, newline)
+end
+
 function Cfg:adjust_cfg(user_cfg)
 	if user_cfg == nil then
 		return
@@ -43,12 +55,12 @@ function Cfg:adjust_cfg(user_cfg)
 	if user_cfg.ext ~= nil then
 		for ext, conf in pairs(user_cfg.ext) do
 			if conf.queries ~= nil then
-				conf.queries.both = defaults.merge_queries(conf.queries)
-				if conf.ig_langtool_rules == nil then
-					conf.ig_langtool_rules = ""
-				end
+				queries[ext] = layer_on_top(conf.queries, queries[ext])
 			end
-			layer_on_top(conf, self.ext[ext])
+			if conf.ig_langtool_rules == nil then
+				conf.ig_langtool_rules = ""
+			end
+			self.ext[ext] = layer_on_top(conf, self.ext[ext])
 		end
 	end
 end

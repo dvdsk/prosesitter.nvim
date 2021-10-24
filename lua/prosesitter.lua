@@ -30,8 +30,8 @@ function M.attach()
 		return
 	end
 
-	local lint_target = ext_cfg.lint_target
-	local query = ext_cfg.queries[lint_target]
+	local lint_targets = ext_cfg.lint_targets
+	local query = config.build_query(lint_targets, extension)
 
 	local prepfunc = prep.get_fn(extension)
 	state.buf[bufnr] = {
