@@ -79,9 +79,9 @@ function M:setup(user_cfg)
 		return
 	end
 
-	if cfg.langtool_bin ~= nil then
-		langtool.start_server(on_event, cfg)
-	end
+	-- if cfg.langtool_bin ~= nil then
+	-- 	langtool.start_server(on_event, cfg)
+	-- end
 
 	if cfg.default_cmds then
 		config.add_cmds()

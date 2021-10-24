@@ -21,28 +21,42 @@ local function default_fn(buf, node, req)
 	req:add_range(buf, text, row, col + 1)
 end
 
-local fn_by_ext = {
-	tex = function(buf, node, req)
-		local text, row, col = get_lines(buf, node)
-		for n, line in ipairs(text) do
-			while true do
-				local start, stop = string.find(line, url_path_pattern)
-				if start ~= nil then
-					if start > 1 then
-						local before = string.sub(line, 1, start - 1)
-						req:add(buf, before, row - 1 + n, col)
-					end
-					if stop < #line then
-						line = string.sub(line, stop+1)
-					else
-						break
-					end
+local function add_if_not_pattern(req, pattern, buf, text, row, col)
+	for n, line in ipairs(text) do
+		while true do
+			local start, stop = string.find(line, pattern)
+			if start ~= nil then
+				if start > 1 then
+					local before = string.sub(line, 1, start - 1)
+					req:add(buf, before, row - 1 + n, col)
+				end
+				if stop < #line then
+					line = string.sub(line, stop + 1)
 				else
-					req:add(buf, line, row - 1 + n, col + 1)
 					break
 				end
+			else
+				req:add(buf, line, row - 1 + n, col + 1)
+				break
 			end
 		end
+		col = 0
+	end
+end
+
+local function is_latex_math(node)
+	local parent = node:parent()
+	return parent:type() == "inline_formula"
+end
+
+local fn_by_ext = {
+	tex = function(buf, node, req)
+		if is_latex_math(node) then
+			return
+		end
+
+		local text, row, col = get_lines(buf, node)
+		add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
 	end,
 }
 
