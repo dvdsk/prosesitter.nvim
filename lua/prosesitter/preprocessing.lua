@@ -2,8 +2,8 @@ local api = vim.api
 local log = require("prosesitter/log")
 local M = {}
 
-local function get_lines(buf, node)
-	local start_row, start_col, end_row, end_col = node:range()
+local function get_lines(buf, start_row, start_col, end_row, end_col )
+	-- TODO check out treesitters get node text
 	local text = api.nvim_buf_get_lines(buf, start_row, end_row + 1, true)
 	text[#text] = string.sub(text[#text], 1, end_col)
 	text[1] = string.sub(text[1], start_col + 1)
@@ -12,14 +12,6 @@ end
 
 -- matches urls domains and paths
 local url_path_pattern = "%S+[./]+%S+"
-
--- how to get space handling in here....
--- must be able to handle multi line node text
--- want to preserve native line ends
-local function default_fn(buf, node, req)
-	local text, row, col = get_lines(buf, node)
-	req:add_range(buf, text, row, col + 1)
-end
 
 local function add_if_not_pattern(req, pattern, buf, text, row, col)
 	for n, line in ipairs(text) do
@@ -44,21 +36,32 @@ local function add_if_not_pattern(req, pattern, buf, text, row, col)
 	end
 end
 
-local function is_latex_math(node)
-	local parent = node:parent()
-	return parent:type() == "inline_formula"
+local function range(node, meta)
+	if meta.content ~= nil then
+		return unpack(meta.content[1])
+	else
+		return node:range()
+	end
 end
 
 local fn_by_ext = {
-	tex = function(buf, node, req)
-		if is_latex_math(node) then
+	tex = function(buf, node, meta, req)
+		if node:parent():type() == "inline_formula" then
 			return
 		end
 
-		local text, row, col = get_lines(buf, node)
+		local text, row, col = get_lines(buf, range(node,meta))
 		add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
 	end,
 }
+
+-- how to get space handling in here....
+-- must be able to handle multi line node text
+-- want to preserve native line ends
+local function default_fn(buf, node, meta, req)
+	local text, row, col = get_lines(buf, range(node, meta))
+	add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
+end
 
 function M.get_fn(extension)
 	if fn_by_ext[extension] ~= nil then

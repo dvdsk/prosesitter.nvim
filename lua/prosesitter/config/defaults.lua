@@ -12,8 +12,10 @@ local default_queries = {
 		comments = "[(line_comment)+ (block_comment)] @capture",
 	},
 	py = {
-		strings = "[(string) ] @capture",
-		comments = "[(comment)+ ] @capture",
+		strings = "((string) @capture (#offset! @capture 0 1 0 -1))", -- may not be invalid range (will be skipped)
+		comments = "",
+		-- comments = "[(comment)+ ] @capture",
+		both = ""
 	},
 	lua = {
 		strings = "[(string) ] @capture",
@@ -51,6 +53,8 @@ function M:ext()
 	-- override some options to not have both enabled
 	ext.sh.lint_target = "comments" -- doesnt really make sens to check bash strings (mostly paths/cmds)
 	ext.tex.langtool_ig = "WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE"
+	-- comments may use whitespace to line out tables etc
+	ext.py.langtool_ig = "WHITESPACE_RULE"
 	return ext
 end
 

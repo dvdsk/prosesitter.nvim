@@ -18,15 +18,15 @@ local function check_buf(buf)
 
 	local req = lintreq:build()
 
-	-- if state.langtool_running then
-	-- 	local function post_langtool(json)
-	-- 		local results = langtool.add_spans(json)
-	-- 		marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
-	-- 	end
+	if state.langtool_running then
+		local function post_langtool(json)
+			local results = langtool.add_spans(json)
+			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
+		end
 
-	-- 	local args = langtool:curl_args(bufstate.langtool_ig)
-	-- 	async.dispatch_with_stdin(req.text, "curl", args, post_langtool)
-	-- end
+		local args = langtool:curl_args(bufstate.langtool_ig)
+		async.dispatch_with_stdin(req.text, "curl", args, post_langtool)
+	end
 
 	if state.cfg.vale_bin ~= nil then
 		local function post_vale(json)

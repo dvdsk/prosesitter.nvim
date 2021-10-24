@@ -16,6 +16,7 @@ prosesitter.nvim is a text linting tool that adds grammar, spell and style check
 
 ### Requirements
  - neovim > 0.5
+ - treesitter set up
  - (windows only) vale installed
 
 ### Installation
@@ -125,6 +126,10 @@ In no paticular order I would like to add the following features:
  - allow easy switching between linting comments, strings and comments and strings
  - making linting strings more practical by filtering out urls and paths
  - function to try and automatically fix an issue
+
+### Trouble shooting
+ - Do you have a treesitter parser installed for the file you want to prose lint? Try installing one with `TSInstall` \<tab to autocomplete\>.
+ - If the treesitter parser is crashing it can help to update it to the latest version with `TSInstall update`
 
 ### Related work
 If you like this plugin you might also be intrested in:

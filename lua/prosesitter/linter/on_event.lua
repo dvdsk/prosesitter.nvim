@@ -46,9 +46,9 @@ local function add_nodes(bufnr, lintreq, start_l, end_l)
 			return -- return in this callback skips to checking the next tree
 		end
 
-		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
+		for _, node, meta in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
 			if node_in_range(start_l, end_l, node) then
-				add_node(bufnr, node, lintreq)
+				add_node(bufnr, node, meta, lintreq)
 			end
 		end
 	end)
