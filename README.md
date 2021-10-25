@@ -130,6 +130,7 @@ In no paticular order I would like to add the following features:
 ### Trouble shooting
  - Do you have a treesitter parser installed for the file you want to prose lint? Try installing one with `TSInstall` \<tab to autocomplete\>.
  - If the treesitter parser is crashing it can help to update it to the latest version with `TSInstall update`
+ - No linting is done on a `.tex` file. It could be that vim has decided the file does not contain LaTeX. You can force vim to treat `.tex` files as LaTeX by setting `vim.g.tex_flavor = "latex"` in your init.lua.
 
 ### Related work
 If you like this plugin you might also be intrested in:
