@@ -125,7 +125,6 @@ function M.on_bytes(
 		return
 	end
 
-	-- log.trace("lines changed: " .. change_start .. " till " .. change_end)
 	local lintreq = state.buf[buf].lintreq
 	lintreq:clear_lines(buf, change_start, change_end)
 	add_nodes(buf, lintreq, change_start, change_end)
