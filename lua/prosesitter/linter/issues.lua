@@ -34,18 +34,45 @@ local function other(linter)
 	end
 end
 
+Issue = {}
+Issue.__index = Issue
+function Issue.new()
+	local self = setmetatable({}, Issue)
+	return self
+end
+
+function Issue:suggestion_text()
+	if self.replacements == nil then
+		return "replace with: "..self.replacements[1].value
+	end
+end
+
+function Issue:suggestion_lists()
+	if self.replacements == nil then
+		return
+	end
+
+	local list = {}
+	for _, repl in ipairs(self.replacements) do
+		list[#list+1] = repl.value
+	end
+	return list
+end
+
+M.Issue = Issue
+
 -- meta is a dict containing all kind of properties
 -- m = buffer/linter/id/meta
 -- then meta is a list of:
 --
 -- msg, severity, type, full_source, action
 --
-Issues = { m = {} }
-function Issues:attach(buf)
+IssueList = { m = {} }
+function IssueList:attach(buf)
 	self.m[buf] = { vale = {}, langtool = {} }
 end
 
-function Issues:clear_meta_for(linter, buf, id)
+function IssueList:clear_meta_for(linter, buf, id)
 	if self.m[buf][linter][id] ~= nil then
 		self.m[buf][linter][id] = nil
 	end
@@ -58,17 +85,17 @@ function Issues:clear_meta_for(linter, buf, id)
 	end
 end
 
-function Issues:set(buf, linter, id, meta)
+function IssueList:set(buf, linter, id, meta)
 	self.m[buf][linter][id] = meta
 end
 
-function Issues:for_id(id)
+function IssueList:for_id(id)
 	local buf = vim.api.nvim_get_current_buf()
 	return self:for_buf_id(buf, id)
 end
 
 -- returns a list of issues given a mark id
-function Issues:for_buf_id(buf, id)
+function IssueList:for_buf_id(buf, id)
 	local issues = {}
 	for _, issues_by_linter in pairs(self.m[buf]) do
 		local issues_list = issues_by_linter[id]
@@ -81,7 +108,7 @@ function Issues:for_buf_id(buf, id)
 	return issues
 end
 
-function Issues:all_issues()
+function IssueList:all_issues()
 	local issues = {}
 	for buf in state:attached() do
 		issues[#issues + 1] = self:for_buf(buf)
@@ -89,5 +116,5 @@ function Issues:all_issues()
 	return issues
 end
 
-M.Issues = Issues
+M.IssueList = IssueList
 return M

@@ -1,6 +1,7 @@
 local defaults = require("prosesitter/config/defaults")
 local log = require("prosesitter/log")
 local util = require("prosesitter/util")
+local Issue = require("prosesitter/linter/issues").Issue
 local M = {}
 
 function M.setup_binairy_and_styles()
@@ -64,11 +65,11 @@ function M.setup_cfg()
 end
 
 function M.to_meta(problem)
-	local issue = {}
+	local issue = Issue.new()
 	issue.msg = problem.Message
 	issue.severity = problem.Severity
 	issue.full_source = problem.Check
-	issue.action = "TODO"
+	issue.replacement = nil
 	return issue
 end
 

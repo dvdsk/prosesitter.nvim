@@ -4,12 +4,17 @@ local marks = require("prosesitter/linter/marks/marks")
 local api = vim.api
 
 M = {}
-
+-- [1].value
 local function format(issues)
 	local lines = {}
 	for _, issue in ipairs(issues) do
 		lines[#lines+1] = issue.msg
 		lines[#lines+1] = "["..issue.severity.."]".." "..issue.full_source
+
+		local suggestion = issue:suggestion_text()
+		if suggestion ~= nil then
+			lines[#lines+1] = suggestion
+		end
 	end
 	return lines
 end

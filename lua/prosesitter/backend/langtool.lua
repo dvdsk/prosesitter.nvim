@@ -2,6 +2,7 @@ local util = require("prosesitter/util")
 local log = require("prosesitter/log")
 local state = require("prosesitter/state")
 local defaults = require("prosesitter/config/defaults")
+local Issue = require("prosesitter/linter/issues").Issue
 local M = {}
 
 M.url = "set in start_server function"
@@ -120,11 +121,11 @@ local id_to_severity = {
 }
 
 function M.to_meta(problem)
-	local issue = {}
+	local issue = Issue.new()
 	issue.msg = problem.message
 	issue.severity = id_to_severity[problem.rule.category.id]
 	issue.full_source = problem.rule.category.name..": "..problem.rule.id
-	issue.action = "TODO"
+	issue.replacements = problem.replacements
 	return issue
 end
 
