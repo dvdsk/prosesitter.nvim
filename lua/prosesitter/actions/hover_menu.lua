@@ -106,7 +106,7 @@ function M:popup(issues)
 		style = "minimal",
 		relative = "cursor",
 		width = max_width(lines)+1,
-		height = 4,
+		height = #lines,
 		row = 1,
 		col = 0,
 	}
