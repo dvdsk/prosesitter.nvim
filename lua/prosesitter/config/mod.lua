@@ -75,6 +75,7 @@ function M:setup(user_cfg)
 		if do_setup == "y" then
 			vale.setup_binairy_and_styles()
 			vale.setup_cfg()
+			print("installation completed, restart vim for changes to take effect")
 		else
 			print("please setup vale manually and adjust your config")
 			return nil
@@ -88,6 +89,7 @@ function M:setup(user_cfg)
 		if do_setup == "y" then
 			langtool.setup_binairy()
 			langtool.setup_cfg()
+			print("installation completed, restart vim for changes to take effect")
 		else
 			print("please set up language tool manually and adjust your config")
 			return nil

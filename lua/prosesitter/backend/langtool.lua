@@ -18,7 +18,7 @@ function M.setup_binairy()
 
 		url="https://languagetool.org/download/LanguageTool-stable.zip"
 		curl --location --output "$tmp/langtool.zip" $url 
-		unzip "$tmp/langtool.zip" -d languagetool 
+		unzip -q "$tmp/langtool.zip" -d languagetool
 		# get languagetool-server.jar and its dependencies out of the version specific
 		# folder into one we can depend on
 		mv languagetool/*/* languagetool 

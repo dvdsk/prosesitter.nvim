@@ -40,7 +40,7 @@ function M.setup_binairy_and_styles()
 			url="https://github.com/errata-ai/$style/releases/download/$version/$style.zip"
 
 			curl --location --output "$tmp/$style.zip" $url 
-			unzip "$tmp/$style.zip" -d styles 
+			unzip -q "$tmp/$style.zip" -d styles
 		done
 	]=====]
 
