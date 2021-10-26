@@ -40,7 +40,6 @@ function Issue:suggestion_lists()
 	return list
 end
 
-
 IssueList = {}
 IssueList.__index = IssueList
 function IssueList.new()
@@ -85,13 +84,15 @@ function IssueIndex:remove(linter, buf, id)
 	return old
 end
 
+-- can only be called if you are sure other issue exists
 function IssueIndex:linked_issue(linter, buf, id)
-	local other_linter_issues = self.m[buf][other(linter)]
-	if other_linter_issues ~= nil then
-		return other_linter_issues[id]
-	else
-		return nil
-	end
+	return self.m[buf][other(linter)][id]
+end
+
+function IssueIndex:update_linked(linter, buf, old_id, new_id)
+	local by_linter = self.m[buf][other(linter)]
+	by_linter[new_id] = by_linter[old_id]
+	by_linter[old_id] = nil
 end
 
 function IssueIndex:set(buf, linter, id, issue_list)

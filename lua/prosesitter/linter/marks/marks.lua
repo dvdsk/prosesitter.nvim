@@ -74,9 +74,8 @@ local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
 	end
 
 	-- as there is already an extmark there **has tot be a linked issue**
-	-- this because we cleared any unlinked marks previously
-	-- currently does not work as there are smaller and larger extmarks from the same source
-	-- need to match the extmark length exactly
+	-- this because we cleared any of the current linters marks previously
+	-- and mark pos, length is unique
 	local linked_id = mark[1]
 	local linked = state.issues:linked_issue(linter, buf, linked_id)
 
@@ -86,6 +85,7 @@ local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
 		api.nvim_buf_del_extmark(buf, ns_marks, linked_id)
 		local id = api.nvim_buf_set_extmark(buf, ns_marks, row, start_col, opt)
 		state.issues:set(buf, linter, id, issue_list)
+		state.issues:update_linked(linter, buf, linked_id, id)
 	end
 end
 
@@ -120,7 +120,8 @@ function M.setup()
 end
 
 function M.get_closest(start, stop)
-	local marks = api.nvim_buf_get_extmarks(0, ns_marks, start, stop, { limit = 1 })
+	local marks = api.nvim_buf_get_extmarks(0, ns_marks, start, stop, {})
+	-- local marks = api.nvim_buf_get_extmarks(0, ns_marks, start, stop, { limit = 1 })
 	return marks[1]
 end
 

@@ -17,7 +17,6 @@ local function goto_mark(start, stop)
 	vim.api.nvim_win_set_cursor(0, { row+1, col })
 
 	local id = mark[1]
-	log.info(id)
 	local issues = state.issues:for_id(id)
 	local cb = function()
 		menu:popup(issues)

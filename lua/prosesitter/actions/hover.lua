@@ -33,7 +33,6 @@ function M.popup()
 	end
 
 	local id = mark[1]
-	log.info(id)
 	local issues = state.issues:for_id(id)
 
 	local text = format(issues)
