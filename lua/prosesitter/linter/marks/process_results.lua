@@ -41,10 +41,10 @@ local function spans_match(a, b)
 	return a[1] == b[1] and a[2] == b[2]
 end
 
-local function collect_current_span(problems, to_meta, issues, i)
-	issues[1] = to_meta(problems[i])
+local function collect_current_span(i, problems, issues, to_issue, hl)
+	issues[1] = to_issue(problems[i], hl.start_col, hl.end_col)
 	while spans_match(problems[i].Span, next_problem_span(problems, i)) do
-		issues[#issues+1] = to_meta(problems[i])
+		issues[#issues+1] = to_issue(problems[i], hl.start_col, hl.end_col)
 		i = i + 1
 	end
 	return i
@@ -52,7 +52,7 @@ end
 
 -- returns hl: start_col, end_col, buf_id, row_id, meta
 -- from meta the hl group can be deduced
-function M.mark_iter(problems, areas, to_meta)
+function M.mark_iter(problems, areas, to_issue)
 	if problems == nil then
 		return function()
 			return nil
@@ -68,14 +68,15 @@ function M.mark_iter(problems, areas, to_meta)
 			return nil
 		end
 
-		local issues = {}
-		i = collect_current_span(problems, to_meta, issues, i)
-
 		local hl = {}
 		hl.start_col, j = start_col(problems[i], areas, j)
 		hl.end_col = end_col(problems[i], areas, j)
 		hl.buf_id = areas[j].buf_id
 		hl.row_id = areas[j].row_id
+
+		local issues = {}
+		i = collect_current_span(i, problems, issues, to_issue, hl)
+
 		return hl, issues
 	end
 end

@@ -46,9 +46,9 @@ local function remove_old_marks(areas, linter)
 	end
 end
 
-function M.mark_results(results, areas, linter, to_meta)
+function M.mark_results(results, areas, linter, to_issue)
 	remove_old_marks(areas, linter)
-	for hl, lints in res.mark_iter(results, areas, to_meta) do
+	for hl, lints in res.mark_iter(results, areas, to_issue) do
 		local mark, _ = api.nvim_buf_get_extmark_by_id(hl.buf_id, ns_placeholders, hl.row_id, { details = true })
 		if mark[1] == nil then goto continue end
 

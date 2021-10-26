@@ -21,7 +21,7 @@ local function check_buf(buf)
 	if state.langtool_running then
 		local function post_langtool(json)
 			local results = langtool.add_spans(json)
-			marks.mark_results(results, req.areas, "langtool", langtool.to_meta)
+			marks.mark_results(results, req.areas, "langtool", langtool.to_issue)
 		end
 
 		local args = langtool:curl_args(bufstate.langtool_ig)
@@ -30,11 +30,8 @@ local function check_buf(buf)
 
 	if state.cfg.vale_bin ~= nil then
 		local function post_vale(json)
-			if #json == 0 then
-				return
-			end
 			local results = vim.fn.json_decode(json)["stdin.md"]
-			marks.mark_results(results, req.areas, "vale", vale.to_meta)
+			marks.mark_results(results, req.areas, "vale", vale.to_issue)
 		end
 		local vale_args = { "--config", state.cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
 		async.dispatch_with_stdin(req.text, state.cfg.vale_bin, vale_args, post_vale)

@@ -74,12 +74,12 @@ function M.setup_cfg()
 	end
 end
 
-function M.to_meta(problem)
+function M.to_issue(problem, _, _)
 	local issue = Issue.new()
 	issue.msg = problem.Message
 	issue.severity = problem.Severity
 	issue.full_source = problem.Check
-	issue.replacement = nil
+	issue.replacements = {}
 	return issue
 end
 

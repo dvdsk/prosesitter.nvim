@@ -42,14 +42,15 @@ function Issue.new()
 end
 
 function Issue:suggestion_text()
-	if self.replacements == nil then
+	if #self.replacements > 0 then
+		log.info(vim.inspect(self.replacements))
 		return "replace with: "..self.replacements[1].value
 	end
 end
 
 function Issue:suggestion_lists()
-	if self.replacements == nil then
-		return
+	if #self.replacements == 0 then
+		return nil
 	end
 
 	local list = {}
@@ -63,7 +64,7 @@ M.Issue = Issue
 
 -- meta is a dict containing all kind of properties
 -- m = buffer/linter/id/meta
--- then meta is a list of:
+-- then issues is a list of:
 --
 -- msg, severity, type, full_source, action
 --
@@ -85,8 +86,8 @@ function IssueList:clear_meta_for(linter, buf, id)
 	end
 end
 
-function IssueList:set(buf, linter, id, meta)
-	self.m[buf][linter][id] = meta
+function IssueList:set(buf, linter, id, issues)
+	self.m[buf][linter][id] = issues
 end
 
 function IssueList:for_id(id)

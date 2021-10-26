@@ -125,12 +125,14 @@ local id_to_severity = {
 	WIKIPEDIA = "suggestion", --not active by default
 }
 
-function M.to_meta(problem)
+function M.to_issue(problem, start_col, end_col)
 	local issue = Issue.new()
 	issue.msg = problem.message
 	issue.severity = id_to_severity[problem.rule.category.id]
 	issue.full_source = problem.rule.category.name..": "..problem.rule.id
 	issue.replacements = problem.replacements
+	issue.start_col = start_col
+	issue.end_col = end_col
 	return issue
 end
 

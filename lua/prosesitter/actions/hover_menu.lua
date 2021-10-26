@@ -1,6 +1,5 @@
 local log = require("prosesitter/log")
 local api = vim.api
-local util = require("prosesitter/util")
 
 M = {}
 
@@ -17,8 +16,8 @@ end
 
 local function map_keys(buf)
 	local opt = { nowait = true, noremap = true, silent = true }
-	local close_popup = ":lua _G.Test:callback('c')<CR>"
-	local chars = "abcdefghijklmnopqrstuvwxyz"
+	local close_popup = [[:lua require("prosesitter/actions/hover_menu"):callback("c")<CR>]]
+	local chars = "abcdefghijklmnopqrstuvwxyz:,."
 	for i = 1, #chars do
 		local key = chars:sub(i, i)
 		api.nvim_buf_set_keymap(buf, "n", key, close_popup, opt)
@@ -31,7 +30,7 @@ local function map_keys(buf)
 	end
 
 	for i = 1, 10 do
-		local cmd = ":lua _G.Test:callback(" .. i .. ")<CR>"
+		local cmd = [[:lua require("prosesitter/actions/hover_menu"):callback(]] .. i .. [[)<CR>]]
 		api.nvim_buf_set_keymap(buf, "n", tostring(i), cmd, opt)
 	end
 end
@@ -42,38 +41,53 @@ function M:close_popup()
 	restore_cursor()
 end
 
-local function replace(new)
-	local old = vim.fn.expand("<cword>")
-	vim.cmd("s/" .. old .. "/" .. new .. "/g")
-end
-
 function M:callback(order)
 	self:close_popup()
 	if order == "c" then
 		return
 	end
 
-	if self.suggestions ~= nil then
-		local action = self.suggestions[order]
-		replace(action)
+	if #self.suggestions > 0 then
+		local replacement = self.suggestions[order]
+		local range = {
+			["start"] = {
+				line = self.row - 1,
+				character = self.issue.start_col - 2,
+			},
+			["end"] = {
+				line = self.row - 1,
+				character = self.issue.end_col - 1,
+			},
+		}
+		local replace_span = {
+			range = range,
+			newText = replacement,
+		}
+		vim.lsp.util.apply_text_edits({ replace_span }, 0)
 	end
 end
 
-local function format(issues)
-	local suggestions = {}
+local function best_issue(issues)
 	local issue
+	local suggestions
 	for _, v in ipairs(issues) do
 		issue = v
 		suggestions = issue:suggestion_lists()
 		if suggestions ~= nil then
-			break
+			return issue, suggestions
 		end
 	end
+	return issue, {}
+end
 
+local function format(issue, suggestions)
 	local lines = {}
 	lines[#lines + 1] = issue.msg
 	lines[#lines + 1] = "[" .. issue.severity .. "]" .. " " .. issue.full_source
-	return lines, suggestions
+	for i, sug in ipairs(suggestions) do
+		lines[#lines + 1] = i .. ": " .. sug
+	end
+	return lines
 end
 
 local function max_width(lines)
@@ -89,10 +103,9 @@ end
 -- open hover window if lint error on current pos
 -- else return false
 function M:popup(issues)
-	local lines, suggestions = format(issues)
-	for i, sug in ipairs(suggestions) do
-		lines[#lines + 1] = i .. ": " .. sug
-	end
+	log.info(vim.inspect(issues))
+	local issue, suggestions = best_issue(issues)
+	local lines = format(issue, suggestions)
 
 	local buf = api.nvim_create_buf(false, true)
 	api.nvim_buf_set_option(buf, "bufhidden", "wipe")
@@ -105,16 +118,17 @@ function M:popup(issues)
 	local opt = {
 		style = "minimal",
 		relative = "cursor",
-		width = max_width(lines)+1,
+		width = max_width(lines) + 1,
 		height = #lines,
 		row = 1,
 		col = 0,
 	}
 
 	self.suggestions = suggestions
+	self.issue = issue
+	self.row = api.nvim_win_get_cursor(0)[1]
 	self.win = api.nvim_open_win(buf, true, opt)
 	map_keys() -- make any key close the window
 end
 
-_G.Test = M
 return M
