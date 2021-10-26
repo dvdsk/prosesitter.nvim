@@ -2,38 +2,40 @@ local api = vim.api
 local log = require("prosesitter/log")
 local res = require("prosesitter/linter/marks/process_results")
 local state = require("prosesitter/state")
-local issues = require("prosesitter/linter/issues")
 
 local M = {}
 local ns_placeholders = "will be set in setup"
 local ns_marks = "will be set in setup"
 
-local function remove_row_marks(buf, row, linter)
-	local marks = api.nvim_buf_get_extmarks(buf, ns_marks, { row, 0 }, { row, -1 }, {})
-	for _, mark in ipairs(marks) do
-		local id = mark[1]
-		if state.issues:clear_meta_for(linter, buf, id) then
-			api.nvim_buf_del_extmark(buf, ns_marks, mark[1])
-		end
+local function clear_mark_for(buf, mark, linter)
+	local id = mark[1]
+	local outdated = state.issues:remove(linter, buf, id)
+	if outdated == nil then
+		return
 	end
+
+	local linked = state.issues:linked_issue(linter, buf, id)
+	if linked == nil then
+		api.nvim_buf_del_extmark(buf, ns_marks, id)
+		return
+	end
+
+	if mark[4].hl_group == outdated:hl_group() then
+		return
+	end
+
+	api.nvim_buf_del_extmark(buf, ns_marks, id)
+	local row = mark[2]
+	local col = mark[3]
+	local opt = { end_col = mark[4].end_col, hl_group = linked:hl_group() }
+	api.nvim_buf_set_extmark(buf, ns_marks, row, col, opt)
 end
 
-local function set_extmark(buf_id, row, col, opt)
-	local ok, val = pcall(api.nvim_buf_set_extmark, buf_id, ns_marks, row, col, opt)
-	-- if not ok then
-	-- 	log.fatal(
-	-- 		"could not place extmark"
-	-- 			.. "\nbuf_id: "
-	-- 			.. vim.inspect(buf_id)
-	-- 			.. "\nrow: "
-	-- 			.. vim.inspect(row)
-	-- 			.. "\ncol_start: "
-	-- 			.. vim.inspect(col)
-	-- 			.. "\ncol_end: "
-	-- 			.. vim.inspect(opt.end_col)
-	-- 	)
-	-- end
-	return ok, val
+local function remove_row_marks(buf, row, linter)
+	local marks = api.nvim_buf_get_extmarks(buf, ns_marks, { row, 0 }, { row, -1 }, {details = true})
+	for _, mark in ipairs(marks) do
+		clear_mark_for(buf, mark, linter)
+	end
 end
 
 local function remove_old_marks(areas, linter)
@@ -46,23 +48,43 @@ local function remove_old_marks(areas, linter)
 	end
 end
 
+local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
+	local marks = api.nvim_buf_get_extmarks(buf, ns_marks,
+		{ row, start_col }, { row, end_col },
+		{details = true, limit = 1})
+
+	local opt = { end_col = end_col, hl_group = issue_list:hl_group()}
+	if #marks == 0 then
+		local id = api.nvim_buf_set_extmark(buf, ns_marks, row, start_col, opt)
+		state.issues:set(buf, linter, id, issue_list)
+		return
+	end
+
+	-- as there is already an extmark there **has tot be a linked issue**
+	local linked_id = marks[1][1]
+	local linked = state.issues:linked_issue(linter, buf, linked_id)
+
+	if linked:severity() > issue_list:severity() then
+		state.issues:set(buf, linter, linked_id, issue_list)
+	else
+		api.nvim_buf_del_extmark(buf, ns_marks, linked_id)
+		local id = api.nvim_buf_set_extmark(buf, ns_marks, row, start_col, opt)
+		state.issues:set(buf, linter, id, issue_list)
+	end
+end
+
 function M.mark_results(results, areas, linter, to_issue)
 	remove_old_marks(areas, linter)
-	for hl, lints in res.mark_iter(results, areas, to_issue) do
+	for hl, issue_list in res.mark_iter(results, areas, to_issue) do
 		local mark, _ = api.nvim_buf_get_extmark_by_id(hl.buf_id, ns_placeholders, hl.row_id, { details = true })
 		if mark[1] == nil then goto continue end
 
 		local row = mark[1]
 		local col_offset = mark[2]
 
-		local opt = {
-			end_col = col_offset + hl.end_col - 1,
-			hl_group = issues.hl_group(lints),
-		}
-		local ok, id = set_extmark(hl.buf_id, row, col_offset + hl.start_col - 2, opt)
-		if not ok then goto continue end
-
-		state.issues:set(hl.buf_id, linter, id, lints)
+		local start_col = col_offset + hl.start_col - 2
+		local end_col = col_offset + hl.end_col - 1
+		ensure_marked(linter, issue_list, hl.buf_id, row, start_col, end_col)
 		::continue::
 	end
 end
@@ -81,12 +103,7 @@ function M.setup()
 	ns_placeholders = state.ns_placeholders
 end
 
--- works unless lines > 999999 chars
--- local function offset(mark)
--- 	return mark[1][2] * 999999 + mark[1][3]
--- end
-
-function M.get_closest_mark(start, stop)
+function M.get_closest(start, stop)
 	local marks = api.nvim_buf_get_extmarks(0, ns_marks, start, stop, { limit = 1 })
 	return marks[1]
 end

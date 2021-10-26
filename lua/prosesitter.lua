@@ -88,7 +88,7 @@ function M:setup(user_cfg)
 	end
 
 	state.cfg = cfg
-	state.issues = issues.IssueList
+	state.issues = issues.IssueIndex
 	on_event.setup(state)
 	if cfg.auto_enable then
 		vim.cmd("augroup prosesitter")

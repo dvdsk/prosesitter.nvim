@@ -7,7 +7,7 @@ local api = vim.api
 M = {}
 
 local function goto_mark(start, stop)
-	local mark = marks.get_closest_mark(start, stop)
+	local mark = marks.get_closest(start, stop)
 	if mark == nil then
 		return false
 	end

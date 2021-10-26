@@ -26,7 +26,7 @@ function M.popup()
 	local row, col = unpack(api.nvim_win_get_cursor(0))
 	local start = { row - 1, col } -- row needs to be zero indexed for get_extmarks
 	local stop = { row - 1, 0 } -- search entire line, TODO handle multi line extmarks
-	local mark = marks.get_closest_mark(start, stop)
+	local mark = marks.get_closest(start, stop)
 
 	if mark == nil then
 		return false

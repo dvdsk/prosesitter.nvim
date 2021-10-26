@@ -1,3 +1,4 @@
+local IssueList = require("prosesitter/linter/issues").IssueList
 local log = require("prosesitter/log")
 local M = {}
 
@@ -74,7 +75,7 @@ function M.mark_iter(problems, areas, to_issue)
 		hl.buf_id = areas[j].buf_id
 		hl.row_id = areas[j].row_id
 
-		local issues = {}
+		local issues = IssueList.new()
 		i = collect_current_span(i, problems, issues, to_issue, hl)
 
 		return hl, issues
