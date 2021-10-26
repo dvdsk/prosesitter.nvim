@@ -103,7 +103,6 @@ end
 -- open hover window if lint error on current pos
 -- else return false
 function M:popup(issues)
-	log.info(vim.inspect(issues))
 	local issue, suggestions = best_issue(issues)
 	local lines = format(issue, suggestions)
 

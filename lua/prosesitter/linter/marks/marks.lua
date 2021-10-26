@@ -39,29 +39,45 @@ local function remove_row_marks(buf, row, linter)
 end
 
 local function remove_old_marks(areas, linter)
+	local cleared =	{}
 	for _, area in ipairs(areas) do
 		local mark = api.nvim_buf_get_extmark_by_id(area.buf_id, ns_placeholders, area.row_id, { details = true })
 		local row = mark[1]
 		if row ~= nil then
-			remove_row_marks(area.buf_id, row, linter)
+			if cleared[row] == nil then
+				remove_row_marks(area.buf_id, row, linter)
+			end
+			cleared[row] = true
+		end
+	end
+end
+
+local function check_existing_mark(buf, row, start_col, end_col)
+	local marks = api.nvim_buf_get_extmarks(buf, ns_marks,
+		{ row, start_col }, { row, end_col },
+		{details = true})
+
+	for _, mark in ipairs(marks) do
+		if end_col == mark[4].end_col then
+			return mark
 		end
 	end
 end
 
 local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
-	local marks = api.nvim_buf_get_extmarks(buf, ns_marks,
-		{ row, start_col }, { row, end_col },
-		{details = true, limit = 1})
-
+	local mark = check_existing_mark(buf, row, start_col, end_col)
 	local opt = { end_col = end_col, hl_group = issue_list:hl_group()}
-	if #marks == 0 then
+	if mark == nil then
 		local id = api.nvim_buf_set_extmark(buf, ns_marks, row, start_col, opt)
 		state.issues:set(buf, linter, id, issue_list)
 		return
 	end
 
 	-- as there is already an extmark there **has tot be a linked issue**
-	local linked_id = marks[1][1]
+	-- this because we cleared any unlinked marks previously
+	-- currently does not work as there are smaller and larger extmarks from the same source
+	-- need to match the extmark length exactly
+	local linked_id = mark[1]
 	local linked = state.issues:linked_issue(linter, buf, linked_id)
 
 	if linked:severity() > issue_list:severity() then

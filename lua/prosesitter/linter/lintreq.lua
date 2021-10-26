@@ -108,7 +108,6 @@ function M:build()
 	end
 
 	self:reset()
-	-- log.info(vim.inspect(self.text))
 	return req
 end
 
