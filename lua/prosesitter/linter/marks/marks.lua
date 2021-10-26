@@ -68,7 +68,11 @@ local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
 	local mark = check_existing_mark(buf, row, start_col, end_col)
 	local opt = { end_col = end_col, hl_group = issue_list:hl_group()}
 	if mark == nil then
-		local id = api.nvim_buf_set_extmark(buf, ns_marks, row, start_col, opt)
+		-- log.info(vim.inspect(issue_list))
+		-- log.info(buf, start_col, end_col, row)
+		-- log.info("curr buff: "..vim.api.nvim_get_current_buf())
+		local ok, id = pcall(api.nvim_buf_set_extmark, buf, ns_marks, row, start_col, opt)
+		if not ok then return end
 		state.issues:set(buf, linter, id, issue_list)
 		return
 	end
