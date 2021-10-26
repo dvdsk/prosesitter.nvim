@@ -18,9 +18,9 @@ end
 local Cfg = {
 	timeout = 500,
 	severity_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
+	vale_bin = nil,
 	vale_cfg = util.plugin_path .. "/vale_cfg.ini",
-	vale_bin = false,
-	langtool_bin = false,
+	langtool_bin = nil,
 	langtool_port = 34287, -- just a random port thats probably free
 	langtool_cfg = util.plugin_path .. "/langtool.cfg",
 	default_cmds = true,
@@ -36,7 +36,7 @@ function M.build_query(lint_targets, ext)
 	local list = {}
 	for _, target in ipairs(lint_targets) do
 		if queries[ext][target] ~= nil then
-			list[#list+1] = queries[ext][target]
+			list[#list + 1] = queries[ext][target]
 		end
 	end
 	return table.concat(list, newline)
@@ -68,33 +68,37 @@ end
 function M:setup(user_cfg)
 	Cfg:adjust_cfg(user_cfg)
 
-	-- for now vale is not optional
+	local setup_vale = false
 	Cfg.vale_bin = util:resolve_path(Cfg.vale_bin, "vale")
 	if Cfg.vale_bin == nil then
 		local do_setup = vim.fn.input("vale is not installed, install vale? y/n: ")
 		if do_setup == "y" then
-			vale.setup_binairy_and_styles()
-			vale.setup_cfg()
-			print("installation completed, restart vim for changes to take effect")
+			setup_vale = true
 		else
-			print("please setup vale manually and adjust your config")
-			return nil
+			print("please set 'vale_bin = false' in prosesitter plugin")
 		end
 	end
 
-	-- for now langtool is not optional
+	local setup_langtool = false
 	Cfg.langtool_bin = util:resolve_path(Cfg.langtool_bin, "languagetool/languagetool-server.jar")
 	if Cfg.langtool_bin == nil then
 		local do_setup = vim.fn.input("Language tool not installed, install language tool? y/n: ")
 		if do_setup == "y" then
-			langtool.setup_binairy()
-			langtool.setup_cfg()
-			print("installation completed, restart vim for changes to take effect")
+			setup_langtool = true
 		else
-			print("please set up language tool manually and adjust your config")
-			return nil
+			print("please set 'langtool_bin = false' in prosesitter plugin")
 		end
 	end
+
+	if setup_langtool then
+		langtool.setup_binairy()
+		langtool.setup_cfg()
+	end
+	if setup_vale then
+		vale.setup_binairy_and_styles()
+		vale.setup_cfg()
+	end
+
 	return Cfg
 end
 
