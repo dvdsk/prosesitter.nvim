@@ -123,6 +123,7 @@ In no paticular order I would like to add the following features:
 ### Related work
 If you like this plugin you might also be intrested in:
 
+ - [ltex](https://valentjn.github.io/ltex/), a language server for latex with spell and grammar checking build in using languagetool. A great alternative for this plugin if you want to have spell and grammar checking for latex in vim.
  - [spellsitter](https://github.com/lewis6991/spellsitter.nvim), the inspiration for this plugin and a great alternative if you are just looking for spellchecking comments
  - [ale](https://github.com/dense-analysis/ale) a asynchronous linting plugin that leaves syntax handling to the linters. Supports the default syntax vale supports (Markdown, AsciiDoc, reStructuredText, HTML, XML).
  - [vim-language](https://github.com/Konfekt/vim-langtool) collects all grammer mistakes into the quickfix list
