@@ -1,6 +1,6 @@
 # prosesitter
 
-Prosesitter uses treesitter and vale to bring true syntax aware prose linting to neovim
+Prosesitter uses treesitter and vale to bring true syntax aware prose linting to neovim. While it is reasonably feature complete it still needs a lot of stability work.
 
 ## What is Prosesitter?
 prosesitter.nvim is a text linting tool that adds grammar, spell and style checking to your comments and strings. It uses [language tool](https://github.com/languagetool-org/languagetool) and [vale](https://github.com/errata-ai/vale) as backends to check what you write for problems. Style issues can vary using the passive voice, weasle words ('very' unique) to using noninclusive terms. You  set your own style or use an existing one. Prosesitter will offer to setup a self contained install of language tool and vale including some defaults styles from the vales [style libary](https://github.com/errata-ai/styles). 
