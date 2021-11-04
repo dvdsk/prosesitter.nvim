@@ -1,6 +1,6 @@
 # prosesitter
 
-Prosesitter uses treesitter and vale to bring true syntax aware prose linting to neovim. While it is reasonably feature complete it still needs a lot of stability work.
+Prosesitter uses treesitter and vale to bring true syntax aware prose linting to neovim. While it is reasonably feature complete it still **needs a lot of stability work**. There is a list of great alternative the end of the readme if you are looking for something right now.
 
 ## What is Prosesitter?
 prosesitter.nvim is a text linting tool that adds grammar, spell and style checking to your comments and strings. It uses [language tool](https://github.com/languagetool-org/languagetool) and [vale](https://github.com/errata-ai/vale) as backends to check what you write for problems. Style issues can vary using the passive voice, weasle words ('very' unique) to using noninclusive terms. You  set your own style or use an existing one. Prosesitter will offer to setup a self contained install of language tool and vale including some defaults styles from the vales [style libary](https://github.com/errata-ai/styles). 
@@ -123,7 +123,7 @@ In no paticular order I would like to add the following features:
 ### Related work
 If you like this plugin you might also be intrested in:
 
- - [ltex](https://valentjn.github.io/ltex/), a language server for latex with spell and grammar checking build in using languagetool. A great alternative for this plugin if you want to have spell and grammar checking for latex in vim.
+ - [ltex](https://valentjn.github.io/ltex/), a language server for latex and markdown with spell and grammar checking build in using languagetool. A great alternative for this plugin if you want to have spell and grammar checking for latex and markdown in vim. Use together with [grammar-guard.nvim](https://github.com/brymer-meneses/grammar-guard.nvim).
  - [spellsitter](https://github.com/lewis6991/spellsitter.nvim), the inspiration for this plugin and a great alternative if you are just looking for spellchecking comments
  - [ale](https://github.com/dense-analysis/ale) a asynchronous linting plugin that leaves syntax handling to the linters. Supports the default syntax vale supports (Markdown, AsciiDoc, reStructuredText, HTML, XML).
  - [vim-language](https://github.com/Konfekt/vim-langtool) collects all grammer mistakes into the quickfix list
