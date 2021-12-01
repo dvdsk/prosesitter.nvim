@@ -33,7 +33,8 @@ local function check_buf(buf)
 			local results = vim.fn.json_decode(json)["stdin.md"]
 			marks.mark_results(results, req.areas, "vale", vale.to_issue)
 		end
-		local vale_args = { "--config", state.cfg.vale_cfg, "--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
+		local vale_args = { "--config", state.cfg.vale_cfg,
+			"--no-exit", "--ignore-syntax", "--ext=.md", "--output=JSON" }
 		async.dispatch_with_stdin(req.text, state.cfg.vale_bin, vale_args, post_vale)
 	end
 end

@@ -7,8 +7,10 @@ local M = {}
 local ns_placeholders = state.ns_placeholders
 local ns_marks =state.ns_marks
 
+-- clear a mark and issue if no other linter is depending on it
 local function clear_mark_for(buf, mark, linter)
 	local id = mark[1]
+	log.debug("possibly clearing mark id,linter,buf",id,linter,buf)
 	local outdated = state.issues:remove(linter, buf, id)
 	if outdated == nil then
 		return
@@ -16,6 +18,7 @@ local function clear_mark_for(buf, mark, linter)
 
 	local linked = state.issues:linked_issue(linter, buf, id)
 	if linked == nil then
+		log.debug("removing mark buf,id:",buf,id)
 		api.nvim_buf_del_extmark(buf, ns_marks, id)
 		return
 	end
@@ -34,15 +37,17 @@ end
 
 local function remove_row_marks(buf, row, linter)
 	local marks = api.nvim_buf_get_extmarks(buf, ns_marks, { row, 0 }, { row, -1 }, {details = true})
+	log.info(marks)
 	for _, mark in ipairs(marks) do
 		clear_mark_for(buf, mark, linter)
 	end
 end
 
 local function remove_old_marks(areas, linter)
+	log.info("---->removing old marks")
 	local cleared =	{}
 	for _, area in ipairs(areas) do
-		local mark = api.nvim_buf_get_extmark_by_id(area.buf_id, ns_placeholders, area.row_id, { details = true })
+		local mark = api.nvim_buf_get_extmark_by_id(area.buf_id, ns_placeholders, area.row_id, {})
 		local row = mark[1]
 		if row ~= nil then
 			if cleared[row] == nil then
@@ -66,6 +71,7 @@ local function check_existing_mark(buf, row, start_col, end_col)
 end
 
 local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
+	log.info("!!!! linter,buf,row,start_col,end_col",linter, buf, row, start_col,end_col)
 	local mark = check_existing_mark(buf, row, start_col, end_col)
 	if mark == nil then
 		local opt = { end_col = end_col, hl_group = issue_list:hl_group()}
@@ -79,8 +85,10 @@ local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
 	-- as there is already an extmark there **has tot be a linked issue**
 	-- this because we cleared any of the current linters marks previously
 	-- and mark pos, length is unique
+	log.info(mark)
 	local linked_id = mark[1]
 	local linked = state.issues:linked_issue(linter, buf, linked_id)
+	assert(linked ~= nil, "no linked issue id,linter,buf: "..linked_id..","..linter..","..buf)
 
 	if linked:severity() > issue_list:severity() then
 		state.issues:set(buf, linter, linked_id, issue_list)
@@ -92,10 +100,11 @@ local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
 end
 
 function M.mark_results(results, areas, linter, to_issue)
+	log.info("*** mark results")
 	remove_old_marks(areas, linter)
 	for hl, issue_list in res.mark_iter(results, areas, to_issue) do
 		local mark, _ = api.nvim_buf_get_extmark_by_id(hl.buf_id, ns_placeholders, hl.row_id, { details = true })
-		if mark[1] == nil then goto continue end
+		if mark[1] == nil then goto continue end -- placeholder removed thus line was removed
 
 		local row = mark[1]
 		local col_offset = mark[2]

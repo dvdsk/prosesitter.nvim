@@ -114,7 +114,8 @@ function M.on_bytes(
 		return
 	end
 
-	-- on deletion it seems like new row is always '-0' while old_row is not '-0' (might be the number of rows deleted)
+	-- on deletion it seems like new row is always '-0' while old_row is not '-0'
+	-- 		(might be the number of rows deleted)
 	-- TODO check if this condition never happens in any other case
 	-- do not clean up highlighting extmarks, they are still needed in case of undo
 	local lines_removed = (new_row == -0 and old_row ~= -0)
