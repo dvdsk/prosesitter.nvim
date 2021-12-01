@@ -16,20 +16,19 @@ local function clear_mark_for(buf, mark, linter)
 
 	local linked = state.issues:linked_issue(linter, buf, id)
 	if linked == nil then
-		-- log.info(buf, ns_marks, id)
 		api.nvim_buf_del_extmark(buf, ns_marks, id)
 		return
 	end
 
+	-- return if the mark is still valid for the other linter
 	if mark[4].hl_group == outdated:hl_group() then
 		return
 	end
 
-	-- log.info(buf, ns_marks, id)
-	api.nvim_buf_del_extmark(buf, ns_marks, id)
+	-- color of the mark needs to be adjusted
 	local row = mark[2]
 	local col = mark[3]
-	local opt = { end_col = mark[4].end_col, hl_group = linked:hl_group() }
+	local opt = { id= id, end_col = mark[4].end_col, hl_group = linked:hl_group() }
 	api.nvim_buf_set_extmark(buf, ns_marks, row, col, opt)
 end
 
