@@ -67,13 +67,11 @@ end
 
 local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
 	local mark = check_existing_mark(buf, row, start_col, end_col)
-	local opt = { end_col = end_col, hl_group = issue_list:hl_group()}
 	if mark == nil then
-		-- log.info(vim.inspect(issue_list))
-		-- log.info(buf, start_col, end_col, row)
-		-- log.info("curr buff: "..vim.api.nvim_get_current_buf())
+		local opt = { end_col = end_col, hl_group = issue_list:hl_group()}
 		local ok, id = pcall(api.nvim_buf_set_extmark, buf, ns_marks, row, start_col, opt)
 		if not ok then return end
+		log.debug("added mark, id,linter,buf:",id,linter,buf)
 		state.issues:set(buf, linter, id, issue_list)
 		return
 	end
@@ -87,11 +85,9 @@ local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
 	if linked:severity() > issue_list:severity() then
 		state.issues:set(buf, linter, linked_id, issue_list)
 	else
-		log.info(buf, ns_marks, linked_id)
-		api.nvim_buf_del_extmark(buf, ns_marks, linked_id)
-		local id = api.nvim_buf_set_extmark(buf, ns_marks, row, start_col, opt)
-		state.issues:set(buf, linter, id, issue_list)
-		state.issues:update_linked(linter, buf, linked_id, id)
+		local opt = { id = linked_id, end_col = end_col, hl_group = issue_list:hl_group()}
+		api.nvim_buf_set_extmark(buf, ns_marks, row, start_col, opt)
+		state.issues:set(buf, linter, linked_id, issue_list)
 	end
 end
 
