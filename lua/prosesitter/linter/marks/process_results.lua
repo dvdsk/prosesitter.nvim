@@ -45,7 +45,7 @@ end
 local function collect_current_span(i, problems, issues, to_issue, hl)
 	issues[1] = to_issue(problems[i], hl.start_col, hl.end_col)
 	while spans_match(problems[i].Span, next_problem_span(problems, i)) do
-		issues[#issues+1] = to_issue(problems[i], hl.start_col, hl.end_col)
+		issues[#issues+1] = to_issue(problems[i+1], hl.start_col, hl.end_col)
 		i = i + 1
 	end
 	return i

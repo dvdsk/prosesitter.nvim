@@ -30,8 +30,8 @@ function M:add_range(buf, lines, start_row, start_col)
 end
 
 function M:append(buf, id, text, start_col)
-	-- if start col matches meta_list[1] then clear?
 	local meta_list = self.meta_by_mark[id]
+
 	local meta = {
 		buf = buf,
 		id = id,
@@ -39,17 +39,13 @@ function M:append(buf, id, text, start_col)
 		idx = #self.text + 1,
 	}
 	meta_list[#meta_list + 1] = meta
-	self.meta_by_idx[#self.text + 1] = meta
-	self.text[#self.text + 1] = text
+	self.meta_by_idx[meta.idx] = meta
+	self.text[meta.idx] = text
 end
 
 function M:add(buf, text, row, start_col)
 	local id = nil
 	local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
-	-- local all_marks = api.nvim_buf_get_extmarks(buf, ns, { 0, 0 }, { -1, -1 }, {})
-	-- log.info("row: " .. row, "marks: " .. vim.inspect(marks), buf, ns, row)
-	-- log.info("row: " .. row, "marks: " .. vim.inspect(all_marks))
-	-- assert(#marks < 2, "there should never be more then one placeholder on a line")
 	if #marks > 0 then
 		id = marks[1][1] -- there can be a max of 1 placeholder per line
 		if self.meta_by_mark[id] ~= nil then
@@ -57,14 +53,13 @@ function M:add(buf, text, row, start_col)
 			return
 		end
 	else
-		-- log.info("adding placeholder at: ", row)
 		id = api.nvim_buf_set_extmark(buf, ns, row, 0, { end_col = 0 })
 	end
 
 	local meta = { buf = buf, id = id, row_col = start_col, idx = #self.text + 1 }
 	self.meta_by_mark[id] = { meta }
-	self.meta_by_idx[#self.text + 1] = meta
-	self.text[#self.text + 1] = text
+	self.meta_by_idx[meta.idx] = meta
+	self.text[meta.idx] = text
 end
 
 local function delete_by_idx(deleted_meta, array, map)
@@ -77,7 +72,8 @@ end
 
 function M:clear_lines(buf, start, stop)
 	local marks = api.nvim_buf_get_extmarks(buf, ns, { start, 0 }, { stop, 0 }, {})
-	for _, mark in ipairs(marks) do
+	for i = #marks, 1, -1 do
+		local mark = marks[i]
 		local id = mark[1]
 		local deleted = self.meta_by_mark[id]
 		if deleted ~= nil then
@@ -97,6 +93,16 @@ function M:build()
 	local req = {}
 	req.text = table.concat(self.text, " ")
 	req.areas = {}
+
+	-- TODO hide check under debug flag
+	local meta_seen = {}
+	for _, meta in ipairs(self.meta_by_idx) do
+		local hash = table.concat({meta.buf,meta.id,meta.row_col},",")
+		if meta_seen[hash] ~= nil then
+			assert(false, "lintreq contains duplicates!")
+		end
+		meta_seen[hash] = true
+	end
 
 	local col = 0
 	for i = 1, #self.text do

@@ -77,7 +77,6 @@ function IssueIndex:attach(buf)
 end
 
 function IssueIndex:remove(linter, buf, id)
-	log.debug("removing issue list for id,linter,buf:",id,linter,buf)
 	local old = self.m[buf][linter][id]
 	if old ~= nil then
 		self.m[buf][linter][id] = nil
@@ -87,13 +86,11 @@ end
 
 -- can only be called if you are sure other issue exists
 function IssueIndex:linked_issue(linter, buf, id)
-	log.debug("retrieving issue list for id,linter,buf:",id,other(linter),buf)
 	return self.m[buf][other(linter)][id]
 end
 
 -- adds the list of issues under id for linter on buffer buf
 function IssueIndex:set(buf, linter, id, issue_list)
-	log.debug("adding issue list for id,linter,buf:",id,linter,buf)
 	self.m[buf][linter][id] = issue_list
 end
 
