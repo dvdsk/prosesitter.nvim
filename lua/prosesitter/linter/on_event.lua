@@ -134,10 +134,6 @@ function M.on_bytes(
 	end
 end
 
-function M.setup()
-	marks.setup(state)
-end
-
 function M.disable()
 	BufMemory:reset()
 	check:disable()

@@ -4,8 +4,8 @@ local res = require("prosesitter/linter/marks/process_results")
 local state = require("prosesitter/state")
 
 local M = {}
-local ns_placeholders = "will be set in setup"
-local ns_marks = "will be set in setup"
+local ns_placeholders = state.ns_placeholders
+local ns_marks =state.ns_marks
 
 local function clear_mark_for(buf, mark, linter)
 	local id = mark[1]
@@ -16,6 +16,7 @@ local function clear_mark_for(buf, mark, linter)
 
 	local linked = state.issues:linked_issue(linter, buf, id)
 	if linked == nil then
+		-- log.info(buf, ns_marks, id)
 		api.nvim_buf_del_extmark(buf, ns_marks, id)
 		return
 	end
@@ -24,6 +25,7 @@ local function clear_mark_for(buf, mark, linter)
 		return
 	end
 
+	-- log.info(buf, ns_marks, id)
 	api.nvim_buf_del_extmark(buf, ns_marks, id)
 	local row = mark[2]
 	local col = mark[3]
@@ -86,6 +88,7 @@ local function ensure_marked(linter, issue_list, buf, row, start_col, end_col)
 	if linked:severity() > issue_list:severity() then
 		state.issues:set(buf, linter, linked_id, issue_list)
 	else
+		log.info(buf, ns_marks, linked_id)
 		api.nvim_buf_del_extmark(buf, ns_marks, linked_id)
 		local id = api.nvim_buf_set_extmark(buf, ns_marks, row, start_col, opt)
 		state.issues:set(buf, linter, id, issue_list)
@@ -110,17 +113,13 @@ function M.mark_results(results, areas, linter, to_issue)
 end
 
 function M.remove_placeholders(buf, start_row, up_to_row)
+	-- log.info("removing placeholders row: "..start_row.." up to: "..up_to_row)
 	local start = {start_row, 0}
 	local up_to = {up_to_row, -1}
 	local marks = api.nvim_buf_get_extmarks(buf, ns_placeholders, start, up_to, {})
 	for _, mark in ipairs(marks) do
 		api.nvim_buf_del_extmark(buf, ns_placeholders, mark[1])
 	end
-end
-
-function M.setup()
-	ns_marks = state.ns_marks
-	ns_placeholders = state.ns_placeholders
 end
 
 function M.get_closest(start, stop)

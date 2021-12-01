@@ -1,6 +1,7 @@
 local log = require("prosesitter/log")
 local state = require("prosesitter/state")
 local marks = require("prosesitter/linter/marks/marks")
+local menu = require("prosesitter/actions/hover_menu")
 local api = vim.api
 
 M = {}
@@ -34,9 +35,10 @@ function M.popup()
 
 	local id = mark[1]
 	local issues = state.issues:for_id(id)
-
-	local text = format(issues)
-	vim.lsp.util.open_floating_preview(text, "markdown", {})
+	local cb = function()
+		menu:popup(issues)
+	end
+	vim.schedule(cb)
 end
 
 return M

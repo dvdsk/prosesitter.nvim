@@ -89,7 +89,6 @@ function M:setup(user_cfg)
 
 	state.cfg = cfg
 	state.issues = issues.IssueIndex
-	on_event.setup(state)
 	if cfg.auto_enable then
 		vim.cmd("augroup prosesitter")
 		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")

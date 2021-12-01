@@ -46,7 +46,10 @@ end
 function M:add(buf, text, row, start_col)
 	local id = nil
 	local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
-	assert(#marks < 2, "there should never be more then one placeholder on a line")
+	-- local all_marks = api.nvim_buf_get_extmarks(buf, ns, { 0, 0 }, { -1, -1 }, {})
+	-- log.info("row: " .. row, "marks: " .. vim.inspect(marks), buf, ns, row)
+	-- log.info("row: " .. row, "marks: " .. vim.inspect(all_marks))
+	-- assert(#marks < 2, "there should never be more then one placeholder on a line")
 	if #marks > 0 then
 		id = marks[1][1] -- there can be a max of 1 placeholder per line
 		if self.meta_by_mark[id] ~= nil then
@@ -54,6 +57,7 @@ function M:add(buf, text, row, start_col)
 			return
 		end
 	else
+		-- log.info("adding placeholder at: ", row)
 		id = api.nvim_buf_set_extmark(buf, ns, row, 0, { end_col = 0 })
 	end
 
