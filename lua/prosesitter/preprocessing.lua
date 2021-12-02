@@ -23,6 +23,7 @@ local function add_if_not_pattern(req, pattern, buf, text, row, col)
 				end
 				if stop < #line then
 					line = string.sub(line, stop + 1)
+					col = col + stop
 				else
 					break
 				end
