@@ -15,7 +15,7 @@ prosesitter.nvim is a text linting tool that adds grammar, spell and style check
  - Telescope integration.
 
 ### Requirements
- - neovim > 0.5
+ - neovim > 0.6
  - treesitter set up
  - (windows only) vale installed
 
