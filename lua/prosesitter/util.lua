@@ -64,4 +64,11 @@ function M.array_remove(t, fnKeep)
     return t;
 end
 
+function M.array_concat(a,b)
+	for _, v in ipairs(b) do
+		a[#a+1] = v
+	end
+	return a
+end
+
 return M

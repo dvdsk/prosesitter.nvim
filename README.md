@@ -16,6 +16,7 @@ prosesitter.nvim is a text linting tool that adds grammar, spell and style check
 
 ### Requirements
  - neovim > 0.5
+ - treesitter set up
  - (windows only) vale installed
 
 ### Installation
@@ -37,28 +38,34 @@ require("telescope").load_extension("prosesitter") -- Optionally, depends on tel
 require("prosesitter"):setup()
 ```
 
-or pass a (partial)configuration; setting up your own vale binary, vale config and or adding extra treesitter queries (see [adding queries](adding_queries.md)
+or pass a (partial)configuration; setting up your own vale binary, vale config and or adding extra treesitter queries (see [adding queries](adding_queries.md))
 ```lua
 require("telescope").load_extension("prosesitter") -- Optionally, depends on telescope.nvim
 require("prosesitter"):setup({
 	vale_bin = vim.fn.stdpath("data") .. "/prosesitter/vale",
 	vale_cfg = vim.fn.stdpath("data") .. "/prosesitter/vale_cfg.ini",
-	--optional extra queries overrides existing queries
-	queries = { 
-		-- see the piece on adding queries on how to use this 
-		-- (not needed if using an out of the box supported language
-		py = { 
-			strings = "[(string) ] @capture",
-			comments = "[(comment)+ ] @capture",
+	-- override default behaviour for a languag
+	ext = {
+		py = {
+			queries = {
+				strings = "[(string) ] @capture",
+				comments = "[(comment)+ ] @capture",
+			},
+			lint_target = "both",
+			disabled = false,
 		},
-	}, 
+		tex = {
+			lint_target = "strings",
+			disabled = false,
+		},
+		sh = {
+			lint_target = "comments",
+		},
+	},
 	-- highlight groups to use for lint errors, warnings and suggestions
-	severity_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion: "SpellCap" },
-	-- weather to lint strings, comments or both for a language
-	lint_targets = { py = "both", tex = "strings", sh = "comments" }, 
-	disabled_ext = { "tex" }, -- do not ever lint tex files
-	auto_enable = false, -- do not start linting files on open (default = true)
-	default_cmds = false,  -- do not add commands (default = true)
+	severity_to_hl = { error = "SpellBad", warning = "SpellRare", suggestion = "SpellCap" },
+	auto_enable = true, -- do not start linting files on open (default = true)
+	default_cmds = false, -- do not add commands (default = true)
 })
 ```
 
@@ -119,6 +126,11 @@ In no paticular order I would like to add the following features:
  - allow easy switching between linting comments, strings and comments and strings
  - making linting strings more practical by filtering out urls and paths
  - function to try and automatically fix an issue
+
+### Trouble shooting
+ - Do you have a treesitter parser installed for the file you want to prose lint? Try installing one with `TSInstall` \<tab to autocomplete\>.
+ - If the treesitter parser is crashing it can help to update it to the latest version with `TSInstall update`
+ - No linting is done on a `.tex` file. It could be that vim has decided the file does not contain LaTeX. You can force vim to treat `.tex` files as LaTeX by setting `vim.g.tex_flavor = "latex"` in your init.lua.
 
 ### Related work
 If you like this plugin you might also be intrested in:

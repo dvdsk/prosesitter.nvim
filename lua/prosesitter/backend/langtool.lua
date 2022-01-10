@@ -2,6 +2,7 @@ local util = require("prosesitter/util")
 local log = require("prosesitter/log")
 local state = require("prosesitter/state")
 local defaults = require("prosesitter/config/defaults")
+local Issue = require("prosesitter/linter/issues").Issue
 local M = {}
 
 M.url = "set in start_server function"
@@ -10,17 +11,22 @@ function M.setup_binairy()
 	vim.fn.mkdir(util.plugin_path, "p")
 	local install_script = [=====[
 		set -e 
+		GREEN='\033[0;32m'
+		NC='\033[0m' # No Color
 		  
 		tmp="/tmp/prosesitter"
 		mkdir -p $tmp
 		mkdir -p languagetool
 
 		url="https://languagetool.org/download/LanguageTool-stable.zip"
+		printf "${GREEN}downloading languagetool${NC}\n"
 		curl --location --output "$tmp/langtool.zip" $url 
-		unzip "$tmp/langtool.zip" -d languagetool 
+
+		unzip -q "$tmp/langtool.zip" -d languagetool
 		# get languagetool-server.jar and its dependencies out of the version specific
 		# folder into one we can depend on
 		mv languagetool/*/* languagetool 
+		printf "${GREEN}done installing languagetool, restart nvim for changes to take effect${NC}\n"
 	]=====]
 
 	local ok_msg = "[prosesitter] installed language tool"
@@ -59,7 +65,7 @@ local function mark_rdy_if_responding(on_event)
 	local async = require("prosesitter/linter/check/async_cmd")
 	local do_check = function()
 		if not M.langtool_running then
-			local args = M:curl_args()
+			local args = M:curl_args("")
 			async.dispatch_with_stdin("hi", "curl", args, on_exit)
 		end
 	end
@@ -119,16 +125,18 @@ local id_to_severity = {
 	WIKIPEDIA = "suggestion", --not active by default
 }
 
-function M.to_meta(problem)
-	local issue = {}
+function M.to_issue(problem, start_col, end_col)
+	local issue = Issue.new()
 	issue.msg = problem.message
 	issue.severity = id_to_severity[problem.rule.category.id]
 	issue.full_source = problem.rule.category.name..": "..problem.rule.id
-	issue.action = "TODO"
+	issue.replacements = problem.replacements
+	issue.start_col = start_col
+	issue.end_col = end_col
 	return issue
 end
 
-function M:curl_args()
+function M:curl_args(disabled_rules)
 	return {
 		"--no-progress-meter",
 		"--data-urlencode",
@@ -136,7 +144,7 @@ function M:curl_args()
 		"--data-urlencode",
 		"disabledCategories=STYLE",
 		"--data-urlencode",
-		"disabledRules=WHITESPACE_RULE",
+		"disabledRules="..disabled_rules,
 		"--data-urlencode",
 		"text@-",
 		self.url,

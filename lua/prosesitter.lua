@@ -4,6 +4,8 @@ local state = require("prosesitter/state")
 local config = require("prosesitter/config/mod")
 local langtool = require("prosesitter/backend/langtool")
 local issues = require("prosesitter/linter/issues")
+local lintreq = require("prosesitter/linter/lintreq")
+local prep = require("prosesitter/preprocessing")
 
 local api = vim.api
 local M = {}
@@ -14,24 +16,31 @@ M.popup = require("prosesitter/actions/hover").popup
 
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
-	if state.buf_query[bufnr] ~= nil then
+	if state.buf[bufnr] ~= nil then
 		return
 	end
 
 	local extension = vim.fn.expand("%:e")
-	if state.cfg.disabled_ext[extension] ~= nil then
+	local ext_cfg = state.cfg.ext[extension]
+	if ext_cfg == nil then
 		return
 	end
 
-	local queries = state.cfg.queries[extension]
-	if queries == nil then
+	if ext_cfg.disabled ~= nil and ext_cfg.disabled == true then
 		return
 	end
 
-	local lint_target = state.cfg.lint_target[extension]
-	local query = queries[lint_target]
+	local lint_targets = ext_cfg.lint_targets
+	local query = config.build_query(lint_targets, extension)
 
-	state.buf_query[bufnr] = query
+	local prepfunc = prep.get_fn(extension)
+	state.buf[bufnr] = {
+		langtool_ig = ext_cfg.langtool_ig,
+		lintreq = lintreq.new(),
+		preprosessing = prepfunc,
+		query = query,
+	}
+
 	state.issues:attach(bufnr)
 	on_event.attach(bufnr)
 end
@@ -47,7 +56,7 @@ function M.disable()
 	end
 
 	vim.cmd("autocmd! prosesitter") -- remove autocmd
-	state.buf_query = {}
+	state.buf = {}
 end
 
 function M.enable()
@@ -64,6 +73,7 @@ end
 
 function M:setup(user_cfg)
 	local cfg = config:setup(user_cfg)
+
 	if cfg == nil then
 		print("setup unsuccesful; exiting")
 		return
@@ -78,8 +88,7 @@ function M:setup(user_cfg)
 	end
 
 	state.cfg = cfg
-	state.issues = issues.Issues
-	on_event.setup(state)
+	state.issues = issues.IssueIndex
 	if cfg.auto_enable then
 		vim.cmd("augroup prosesitter")
 		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")

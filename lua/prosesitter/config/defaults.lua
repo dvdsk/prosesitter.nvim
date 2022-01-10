@@ -1,63 +1,51 @@
+local log = require("prosesitter/log")
 local M = {}
 
 local c_and_cpp_query = {
-	strings = "[(string_literal) ] @capture",
-	comments = "[(comment) ] @capture",
+	strings = "(string_literal) @capture",
+	comments = "(comment) @capture",
 }
 
 M.queries = {
 	rs = {
-		strings = "[(string_literal)] @capture",
-		comments = "[(line_comment)+ (block_comment)] @capture",
+		strings = "(string_literal) @capture",
+		comments = "(line_comment)+ (block_comment) @capture",
 	},
 	py = {
-		strings = "[(string) ] @capture",
-		comments = "[(comment)+ ] @capture",
+		docstrings = "((expression_statement(string) @capture) (#offset! @capture 0 3 0 -3))",
+		strings = "((string) @capture (#offset! @capture 0 1 0 -1))",
+		comments = "(comment)+ @capture",
 	},
 	lua = {
-		strings = "[(string) ] @capture",
-		comments = "[(comment)+ ] @capture",
+		strings = "(string) @capture",
+		comments = "(comment)+ @capture",
 	},
 	c = c_and_cpp_query,
 	h = c_and_cpp_query,
 	cpp = c_and_cpp_query,
 	hpp = c_and_cpp_query,
 	tex = {
-		strings = "[(text)] @capture",
-		comments = "[(comment)] @capture",
+		strings = "(text) @capture",
+		comments = "(comment) @capture",
 	},
 	sh = {
-		strings = "[(string)] @capture",
-		comments = "[(comment)] @capture",
+		strings = "(string) @capture",
+		comments = "(comment) @capture",
 	},
 }
 
-function M.merge_queries(queries)
-	local q1 = string.match(queries.strings, "%[(.-)%]")
-	local q2 = string.match(queries.comments, "%[(.-)%]")
-	return "[" .. q1 .. " " .. q2 .. "] @capture"
-end
-
-for _, queries in pairs(M.queries) do
-	if queries["both"] == nil then
-		queries["both"] = M.merge_queries(queries)
+function M:ext()
+	local ext = {}
+	for extension, _ in pairs(self.queries) do
+		-- comments may use whitespace to line out tables etc so be default we ignore it
+		ext[extension] = { lint_targets = { "comments" }, langtool_ig = "WHITESPACE_RULE" }
 	end
-end
 
-M.lint_target = {}
-for key, _ in pairs(M.queries) do
-	M.lint_target[key] = "both"
-end
+	ext.py.lint_targets = { "comments", "docstrings" }
+	ext.tex.lint_targets = { "strings" }
+	ext.tex.langtool_ig = "WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE"
 
--- override some options to not have both enabled
-M.lint_target.sh = "comments" -- doesnt really make sens to check bash strings (mostly paths/cmds)
-
-function M.all_disabled(queries, disabled)
-	local table = {}
-	for key, _ in pairs(queries) do
-		table[key] = disabled
-	end
-	return table
+	return ext
 end
 
 M.vale_cfg_ini = [==[

@@ -34,11 +34,11 @@ function BufMemory:no_change(buf, start_row)
 end
 
 local prose_queries = {}
-local function get_nodes(bufnr, start_l, end_l)
-	local parser = state.parsers[bufnr]
+local function add_nodes(bufnr, lintreq, start_l, end_l)
+	local add_node = state.buf[bufnr].preprosessing
+	local parser = state.buf[bufnr].parsers
 	local lang = parser:lang()
 	local prose_query = prose_queries[lang]
-	local nodes = {}
 
 	parser:for_each_tree(function(tstree, _)
 		local root_node = tstree:root()
@@ -46,13 +46,12 @@ local function get_nodes(bufnr, start_l, end_l)
 			return -- return in this callback skips to checking the next tree
 		end
 
-		for _, node in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
+		for _, node, meta in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
 			if node_in_range(start_l, end_l, node) then
-				nodes[#nodes+1] = node
+				add_node(bufnr, node, meta, lintreq)
 			end
 		end
 	end)
-	return nodes
 end
 
 local function delayed_on_bytes(...)
@@ -82,17 +81,16 @@ function M.attach(bufnr)
 
 	local lang = parser:lang()
 	if not prose_queries[lang] then
-		prose_queries[lang] = q.parse_query(lang, state.buf_query[bufnr])
+		prose_queries[lang] = q.parse_query(lang, state.buf[bufnr].query)
 	end
 
 	-- keep the parser to let vim know we need it
-	state.parsers[bufnr] = parser
+	state.buf[bufnr].parsers = parser
 	parser:register_cbs({ on_bytes = delayed_on_bytes })
 	M:lint_everything(bufnr)
 end
 
 
-local lintreq = nil
 function M.on_bytes(
 	buf,
 	_, --changed_tick,
@@ -107,7 +105,7 @@ function M.on_bytes(
 	_ --new_byte
 )
 	-- -- stop calling on lines if the plugin was just disabled
-	local query = state.buf_query[buf]
+	local query = state.buf[buf].query
 	if query == nil then
 		return true
 	end
@@ -116,7 +114,8 @@ function M.on_bytes(
 		return
 	end
 
-	-- on deletion it seems like new row is always '-0' while old_row is not '-0' (might be the number of rows deleted)
+	-- on deletion it seems like new row is always '-0' while old_row is not '-0'
+	-- 		(might be the number of rows deleted)
 	-- TODO check if this condition never happens in any other case
 	-- do not clean up highlighting extmarks, they are still needed in case of undo
 	local lines_removed = (new_row == -0 and old_row ~= -0)
@@ -127,22 +126,13 @@ function M.on_bytes(
 		return
 	end
 
-	-- log.trace("lines changed: " .. change_start .. " till " .. change_end)
+	local lintreq = state.buf[buf].lintreq
 	lintreq:clear_lines(buf, change_start, change_end)
-	local nodes = get_nodes(buf, change_start, change_end)
-	for _, node in ipairs(nodes) do
-		lintreq:add_node(buf, node)
-	end
+	add_nodes(buf, lintreq, change_start, change_end)
 
-	if not check.schedualled then
-		check.schedual()
+	if not check:schedualled() then
+		check:schedual(buf)
 	end
-end
-
-function M.setup()
-	check:setup(state, marks.mark_results)
-	lintreq = check:get_lintreq()
-	marks.setup(state)
 end
 
 function M.disable()
