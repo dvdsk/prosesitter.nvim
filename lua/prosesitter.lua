@@ -35,7 +35,7 @@ function M.attach()
 
 	local prepfunc = prep.get_fn(extension)
 	state.buf[bufnr] = {
-		langtool_ig = ext_cfg.langtool_ig,
+		langtool_ignore = ext_cfg.langtool_ig,
 		lintreq = lintreq.new(),
 		preprosessing = prepfunc,
 		query = query,

@@ -24,7 +24,7 @@ local function check_buf(buf)
 			marks.mark_results(results, req.areas, "langtool", langtool.to_issue)
 		end
 
-		local args = langtool:curl_args(bufstate.langtool_ig)
+		local args = langtool:curl_args(bufstate.langtool_ignore)
 		async.dispatch_with_stdin(req.text, "curl", args, post_langtool)
 	end
 

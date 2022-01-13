@@ -38,12 +38,12 @@ function M:ext()
 	local ext = {}
 	for extension, _ in pairs(self.queries) do
 		-- comments may use whitespace to line out tables etc so be default we ignore it
-		ext[extension] = { lint_targets = { "comments" }, langtool_ig = "WHITESPACE_RULE" }
+		ext[extension] = { lint_targets = { "comments" }, langtool_ignore = "WHITESPACE_RULE" }
 	end
 
 	ext.py.lint_targets = { "comments", "docstrings" }
 	ext.tex.lint_targets = { "strings" }
-	ext.tex.langtool_ig = "WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE"
+	ext.tex.langtool_ignore = "WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE"
 
 	return ext
 end
