@@ -66,17 +66,18 @@ function M:lint_everything(bufnr)
 	local info = vim.fn.getbufinfo(bufnr)
 	local last_line = info[1].linecount
 	self.on_bytes(bufnr, nil, 0, nil, nil, last_line, nil, nil, last_line, nil, nil)
+	print("hi")
 end
 
 local q = require("vim.treesitter.query")
 function M.attach(bufnr)
 	if not api.nvim_buf_is_loaded(bufnr) or api.nvim_buf_get_option(bufnr, "buftype") ~= "" then
-		return false
+		return false, "not a normal buffer"
 	end
 
 	local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
 	if not ok then
-		return false
+		return false, "treesitter had no parser for this buffer"
 	end
 
 	local lang = parser:lang()
@@ -88,6 +89,7 @@ function M.attach(bufnr)
 	state.buf[bufnr].parsers = parser
 	parser:register_cbs({ on_bytes = delayed_on_bytes })
 	M:lint_everything(bufnr)
+	return true
 end
 
 

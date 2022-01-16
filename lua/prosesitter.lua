@@ -17,32 +17,32 @@ M.popup = require("prosesitter/actions/hover").popup
 function M.attach()
 	local bufnr = api.nvim_get_current_buf()
 	if state.buf[bufnr] ~= nil then
-		return
+		return false, "buffer ("..bufnr..") already attached"
 	end
 
-	local extension = vim.fn.expand("%:e")
-	local ext_cfg = state.cfg.ext[extension]
-	if ext_cfg == nil then
-		return
+	local filetype = vim.bo[bufnr].filetype
+	local file_cfg = state.cfg.filetype[filetype]
+	if file_cfg == nil then
+		return false, "can not handle filetype: \""..filetype.."\""
 	end
 
-	if ext_cfg.disabled ~= nil and ext_cfg.disabled == true then
-		return
+	if file_cfg.disabled ~= nil and file_cfg.disabled == true then
+		return false, "handling filetype: \""..filetype.."\" files has been disabled"
 	end
 
-	local lint_targets = ext_cfg.lint_targets
-	local query = config.build_query(lint_targets, extension)
+	local lint_targets = file_cfg.lint_targets
+	local query = config.build_query(lint_targets, filetype)
 
-	local prepfunc = prep.get_fn(extension)
+	local prepfunc = prep.get_fn(filetype)
 	state.buf[bufnr] = {
-		langtool_ignore = ext_cfg.langtool_ig,
+		langtool_ignore = file_cfg.langtool_ig,
 		lintreq = lintreq.new(),
 		preprosessing = prepfunc,
 		query = query,
 	}
 
 	state.issues:attach(bufnr)
-	on_event.attach(bufnr)
+	return on_event.attach(bufnr)
 end
 
 function M.disable()

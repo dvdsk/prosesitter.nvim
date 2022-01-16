@@ -64,7 +64,8 @@ local function mark_rdy_if_responding(on_event)
 
 	local async = require("prosesitter/linter/check/async_cmd")
 	local do_check = function()
-		if not M.langtool_running then
+		print("cheking!")
+		if not state.langtool_running then
 			local args = M:curl_args("")
 			async.dispatch_with_stdin("hi", "curl", args, on_exit)
 		end
@@ -79,7 +80,7 @@ end
 -- dependency loop
 function M.start_server(on_event, cfg)
 	local on_exit = function()
-		M.langtool_running = false
+		state.langtool_running = false
 	end
 
 	M.url = "http://localhost:" .. cfg.langtool_port .. "/v2/check"
@@ -97,6 +98,7 @@ function M.start_server(on_event, cfg)
 	})
 
 	if res > 0 then
+		print("spawned")
 		mark_rdy_if_responding(on_event)
 	else
 		error("could not start language server using path: " .. cfg.langtool_bin)

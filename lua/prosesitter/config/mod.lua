@@ -27,16 +27,16 @@ local Cfg = {
 	auto_enable = true,
 	-- keyed by file_extention a subtable of queries,
 	-- disabled and of lint target
-	ext = nil,
+	filetype = nil,
 }
 
 local queries = defaults.queries
 local newline = string.char(10)
-function M.build_query(lint_targets, ext)
+function M.build_query(lint_targets, filetype)
 	local list = {}
 	for _, target in ipairs(lint_targets) do
-		if queries[ext][target] ~= nil then
-			list[#list + 1] = queries[ext][target]
+		if queries[filetype][target] ~= nil then
+			list[#list + 1] = queries[filetype][target]
 		end
 	end
 	return table.concat(list, newline)
@@ -51,16 +51,16 @@ function Cfg:adjust_cfg(user_cfg)
 		self[key] = user_cfg[key]
 	end
 
-	self.ext = defaults:ext()
-	if user_cfg.ext ~= nil then
-		for ext, conf in pairs(user_cfg.ext) do
+	self.filetype = defaults:filetype()
+	if user_cfg.filetype ~= nil then
+		for type, conf in pairs(user_cfg.filetype) do
 			if conf.queries ~= nil then
-				queries[ext] = layer_on_top(conf.queries, queries[ext])
+				queries[type] = layer_on_top(conf.queries, queries[type])
 			end
 			if conf.ig_langtool_rules == nil then
 				conf.ig_langtool_rules = ""
 			end
-			self.ext[ext] = layer_on_top(conf, self.ext[ext])
+			self.filetype[type] = layer_on_top(conf, self.filetype[type])
 		end
 	end
 end

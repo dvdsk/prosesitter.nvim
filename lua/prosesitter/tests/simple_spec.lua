@@ -7,6 +7,7 @@ local ps = require("prosesitter")
 local util = require("prosesitter/util")
 local test_util = require("prosesitter/tests/test_util")
 local on_event = require("prosesitter/linter/on_event")
+local state = require("prosesitter/state")
 
 local cwd = vim.loop.cwd()
 vim.cmd("set rtp+=" .. cwd)
@@ -65,7 +66,15 @@ describe("Static", function()
 			local content = get_content(file)
 			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
 
-			ps.attach(bufnr)
+			local ok, err = ps.attach(bufnr)
+			assert.message(err).is_true(ok)
+
+			local function check()
+				return state.issues[bufnr] ~= nil
+			end
+
+			print("waiting")
+			vim.wait(20000, check, 20, false)
 
 			vim.api.nvim_buf_delete(bufnr, { force = true })
 		end)

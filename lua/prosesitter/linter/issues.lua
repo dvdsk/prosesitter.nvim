@@ -65,7 +65,7 @@ function IssueList:hl_group()
 	return state.cfg.severity_to_hl[sev]
 end
 
--- meta is a dict containing all kind of properties
+-- a table containing all kind of properties
 -- m = buffer/linter/id/meta
 -- then issues is a list of:
 --

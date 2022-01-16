@@ -44,7 +44,7 @@ local function range(node, meta)
 	end
 end
 
-local fn_by_ext = {
+local fn_by_ftype = {
 	tex = function(buf, node, meta, req)
 		if node:parent():type() == "inline_formula" then
 			return
@@ -63,9 +63,9 @@ local function default_fn(buf, node, meta, req)
 	add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
 end
 
-function M.get_fn(extension)
-	if fn_by_ext[extension] ~= nil then
-		return fn_by_ext[extension]
+function M.get_fn(filetype)
+	if fn_by_ftype[filetype] ~= nil then
+		return fn_by_ftype[filetype]
 	else
 		return default_fn
 	end

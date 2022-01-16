@@ -7,11 +7,11 @@ local c_and_cpp_query = {
 }
 
 M.queries = {
-	rs = {
+	rust = {
 		strings = "(string_literal) @capture",
 		comments = "(line_comment)+ (block_comment) @capture",
 	},
-	py = {
+	python = {
 		docstrings = "((expression_statement(string) @capture) (#offset! @capture 0 3 0 -3))",
 		strings = "((string) @capture (#offset! @capture 0 1 0 -1))",
 		comments = "(comment)+ @capture",
@@ -20,11 +20,9 @@ M.queries = {
 		strings = "(string) @capture",
 		comments = "(comment)+ @capture",
 	},
-	c = c_and_cpp_query,
-	h = c_and_cpp_query,
 	cpp = c_and_cpp_query,
-	hpp = c_and_cpp_query,
-	tex = {
+	c = c_and_cpp_query,
+	latex = {
 		strings = "(text) @capture",
 		comments = "(comment) @capture",
 	},
@@ -34,18 +32,18 @@ M.queries = {
 	},
 }
 
-function M:ext()
-	local ext = {}
+function M:filetype()
+	local filetype = {}
 	for extension, _ in pairs(self.queries) do
 		-- comments may use whitespace to line out tables etc so be default we ignore it
-		ext[extension] = { lint_targets = { "comments" }, langtool_ignore = "WHITESPACE_RULE" }
+		filetype[extension] = { lint_targets = { "comments" }, langtool_ignore = "WHITESPACE_RULE" }
 	end
 
-	ext.py.lint_targets = { "comments", "docstrings" }
-	ext.tex.lint_targets = { "strings" }
-	ext.tex.langtool_ignore = "WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE"
+	filetype.python.lint_targets = { "comments", "docstrings" }
+	filetype.latex.lint_targets = { "strings" }
+	filetype.latex.langtool_ignore = "WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE"
 
-	return ext
+	return filetype
 end
 
 M.vale_cfg_ini = [==[
