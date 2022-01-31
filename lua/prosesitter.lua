@@ -35,7 +35,7 @@ function M.attach()
 
 	local prepfunc = prep.get_fn(filetype)
 	state.buf[bufnr] = {
-		langtool_ignore = file_cfg.langtool_ig,
+		langtool_ignore = file_cfg.langtool_ignore,
 		lintreq = lintreq.new(),
 		preprosessing = prepfunc,
 		query = query,
@@ -79,7 +79,7 @@ function M:setup(user_cfg)
 		return
 	end
 
-	if cfg.langtool_bin ~= nil then
+	if cfg.langtool_bin ~= false then
 		langtool.start_server(on_event, cfg)
 	end
 

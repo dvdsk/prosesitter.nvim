@@ -91,7 +91,9 @@ end
 
 -- adds the list of issues under id for linter on buffer buf
 function IssueIndex:set(buf, linter, id, issue_list)
+	print("here", buf, linter)
 	self.m[buf][linter][id] = issue_list
+	print(vim.inspect(self))
 end
 
 function IssueIndex:for_id(id)

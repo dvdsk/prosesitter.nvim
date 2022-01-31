@@ -30,6 +30,9 @@ local function check_buf(buf)
 
 	if state.cfg.vale_bin ~= nil then
 		local function post_vale(json)
+			if json == "" then
+				return
+			end
 			local results = vim.fn.json_decode(json)["stdin.md"]
 			marks.mark_results(results, req.areas, "vale", vale.to_issue)
 		end

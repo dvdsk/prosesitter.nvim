@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# set -e 
 
 BIN_PATH=test_data/languagetool/languagetool-server.jar
 CONFIG_PATH=test_data/langtool.cfg
@@ -20,8 +21,9 @@ while [[ true ]]; do
 		http://localhost:$PORT/v2/check
 	)
 	
-	if !$?; then
-		echo hi
+	if [ $? != 0 ] ; then
+		echo waiting.. \n
+		sleep 0.5
 		continue
 	fi
 

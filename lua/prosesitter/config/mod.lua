@@ -69,24 +69,32 @@ function M:setup(user_cfg)
 	Cfg:adjust_cfg(user_cfg)
 
 	local setup_vale = false
-	Cfg.vale_bin = util:resolve_path(Cfg.vale_bin, "vale")
-	if Cfg.vale_bin == nil then
-		local do_setup = vim.fn.input("vale is not installed, install vale? y/n: ")
-		if do_setup == "y" then
-			setup_vale = true
-		else
-			print("please set 'vale_bin = false' in prosesitter plugin")
+	if Cfg.vale_bin == false then
+		print("not enabling vale")
+	else
+		Cfg.vale_bin = util:resolve_path(Cfg.vale_bin, "vale")
+		if Cfg.vale_bin == nil then
+			local do_setup = vim.fn.input("vale is not installed, install vale? y/n: ")
+			if do_setup == "y" then
+				setup_vale = true
+			else
+				print("please set 'vale_bin = false' in prosesitter plugin")
+			end
 		end
 	end
 
 	local setup_langtool = false
-	Cfg.langtool_bin = util:resolve_path(Cfg.langtool_bin, "languagetool/languagetool-server.jar")
-	if Cfg.langtool_bin == nil then
-		local do_setup = vim.fn.input("Language tool not installed, install language tool? y/n: ")
-		if do_setup == "y" then
-			setup_langtool = true
-		else
-			print("please set 'langtool_bin = false' in prosesitter plugin")
+	if Cfg.langtool_bin == false then
+		print("not enabling langtool")
+	else
+		Cfg.langtool_bin = util:resolve_path(Cfg.langtool_bin, "languagetool/languagetool-server.jar")
+		if Cfg.langtool_bin == nil then
+			local do_setup = vim.fn.input("Language tool not installed, install language tool? y/n: ")
+			if do_setup == "y" then
+				setup_langtool = true
+			else
+				print("please set 'langtool_bin = false' in prosesitter plugin to skip langtool install")
+			end
 		end
 	end
 

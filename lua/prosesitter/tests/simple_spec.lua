@@ -51,32 +51,39 @@ end
 
 test_util.setup()
 
+-- describe("some basics", function()
+-- 	it("some test", function()
+-- 		assert.truthy("Pass.")
+-- 	end)
+-- end)
+
 describe("Static", function()
-	after_each(function()
-		test_util.reset()
+after_each(function()
+	test_util.reset()
+end)
+
+for_each_file(function(file)
+	it(string.format(": %s", file), function()
+		assert.truthy("Pass.")
+
+		local bufnr = vim.api.nvim_create_buf(false, false)
+		vim.api.nvim_win_set_buf(0, bufnr)
+		vim.bo[bufnr].filetype = filetype(file)
+		local content = get_content(file)
+		vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
+
+		local ok, err = ps.attach(bufnr)
+		assert.message(err).is_true(ok)
+
+		local function check()
+			return #state.issues.m[bufnr].langtool > 1
+		end
+
+		vim.wait(2000, check, 500, false)
+		print("buffy:", bufnr)
+		print(vim.inspect(state.issues.m[bufnr]))
+
+		vim.api.nvim_buf_delete(bufnr, { force = true })
 	end)
-
-	for_each_file(function(file)
-		it(string.format(": %s", file), function()
-			assert.truthy("Pass.")
-
-			local bufnr = vim.api.nvim_create_buf(false, false)
-			vim.api.nvim_win_set_buf(0, bufnr)
-			vim.bo[bufnr].filetype = filetype(file)
-			local content = get_content(file)
-			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
-
-			local ok, err = ps.attach(bufnr)
-			assert.message(err).is_true(ok)
-
-			local function check()
-				return state.issues[bufnr] ~= nil
-			end
-
-			print("waiting")
-			vim.wait(20000, check, 20, false)
-
-			vim.api.nvim_buf_delete(bufnr, { force = true })
-		end)
-	end)
+end)
 end)
