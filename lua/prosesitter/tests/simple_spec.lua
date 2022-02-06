@@ -34,6 +34,14 @@ local function get_content(file)
 	return util.split_string(read_file(file), "\n")
 end
 
+local function get_marks(file)
+	local extension = file:match("^.+%.(.+)$")
+	local dir = file:match("^(.+/).+$")
+	local path = dir .. extension .. ".json"
+	local json = read_file(path)
+	return vim.fn.json_decode(json)
+end
+
 local extension_to_filetype = {
 	["lua"] = "lua",
 	["py"] = "python",
@@ -58,32 +66,44 @@ test_util.setup()
 -- end)
 
 describe("Static", function()
-after_each(function()
-	test_util.reset()
-end)
-
-for_each_file(function(file)
-	it(string.format(": %s", file), function()
-		assert.truthy("Pass.")
-
-		local bufnr = vim.api.nvim_create_buf(false, false)
-		vim.api.nvim_win_set_buf(0, bufnr)
-		vim.bo[bufnr].filetype = filetype(file)
-		local content = get_content(file)
-		vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
-
-		local ok, err = ps.attach(bufnr)
-		assert.message(err).is_true(ok)
-
-		local function check()
-			return #state.issues.m[bufnr].langtool > 1
-		end
-
-		vim.wait(2000, check, 500, false)
-		print("buffy:", bufnr)
-		print(vim.inspect(state.issues.m[bufnr]))
-
-		vim.api.nvim_buf_delete(bufnr, { force = true })
+	after_each(function()
+		test_util.reset()
 	end)
-end)
+
+	for_each_file(function(file)
+		it(string.format(": %s", file), function()
+			assert.truthy("Pass.")
+
+			local bufnr = vim.api.nvim_create_buf(false, false)
+			vim.api.nvim_win_set_buf(0, bufnr)
+			vim.bo[bufnr].filetype = filetype(file)
+			local content = get_content(file)
+			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
+
+			local ok, err = ps.attach()
+			assert.message(err).is_true(ok)
+
+			local function check()
+				return #state.issues.m[bufnr].langtool > 1
+			end
+
+			vim.wait(2000, check, 500, false)
+
+			local details = vim.api.nvim_buf_get_extmarks(bufnr, state.ns_marks, 0, -1, { details = true })
+
+			local marks = {}
+			for _, mark in ipairs(details) do
+				marks[#marks + 1] = {
+					row = mark[2],
+					col_start = mark[3],
+					col_end = mark[4].end_col,
+				}
+			end
+
+			local correct_marks = get_marks(file)
+			assert.are.same(marks, correct_marks)
+
+			vim.api.nvim_buf_delete(bufnr, { force = true })
+		end)
+	end)
 end)

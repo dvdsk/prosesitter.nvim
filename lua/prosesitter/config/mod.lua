@@ -70,7 +70,7 @@ function M:setup(user_cfg)
 
 	local setup_vale = false
 	if Cfg.vale_bin == false then
-		print("not enabling vale")
+		print("setup not enabling vale")
 	else
 		Cfg.vale_bin = util:resolve_path(Cfg.vale_bin, "vale")
 		if Cfg.vale_bin == nil then
@@ -85,7 +85,7 @@ function M:setup(user_cfg)
 
 	local setup_langtool = false
 	if Cfg.langtool_bin == false then
-		print("not enabling langtool")
+		print("setup not enabling langtool")
 	else
 		Cfg.langtool_bin = util:resolve_path(Cfg.langtool_bin, "languagetool/languagetool-server.jar")
 		if Cfg.langtool_bin == nil then
