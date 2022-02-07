@@ -1,11 +1,11 @@
 [
   {
-    "row": 6,
+    "row": 3,
     "sources": [
       "Possible Typo: MORFOLOGIK_RULE_EN_US"
     ],
-    "col_start": 25,
-    "col_end": 33,
+    "col_start": 5,
+    "col_end": 8,
     "severity": "error"
   }
 ]

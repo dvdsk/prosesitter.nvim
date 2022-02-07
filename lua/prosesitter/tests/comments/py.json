@@ -1,0 +1,20 @@
+[
+  {
+    "row": 0,
+    "sources": [
+      "Miscellaneous: ENGLISH_WORD_REPEAT_RULE"
+    ],
+    "col_start": 2,
+    "col_end": 11,
+    "severity": "warning"
+  },
+  {
+    "row": 0,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 12,
+    "col_end": 17,
+    "severity": "error"
+  }
+]

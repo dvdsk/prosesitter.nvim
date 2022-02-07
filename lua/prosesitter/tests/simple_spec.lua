@@ -59,12 +59,6 @@ end
 
 test_util.setup()
 
--- describe("some basics", function()
--- 	it("some test", function()
--- 		assert.truthy("Pass.")
--- 	end)
--- end)
-
 describe("Static", function()
 	after_each(function()
 		test_util.reset()
@@ -73,6 +67,10 @@ describe("Static", function()
 	for_each_file(function(file)
 		it(string.format(": %s", file), function()
 			assert.truthy("Pass.")
+
+			-- if file ~= "comments/code.c" then
+			-- 	return
+			-- end
 
 			local bufnr = vim.api.nvim_create_buf(false, false)
 			vim.api.nvim_win_set_buf(0, bufnr)
@@ -87,16 +85,21 @@ describe("Static", function()
 				return #state.issues.m[bufnr].langtool > 1
 			end
 
-			vim.wait(2000, check, 500, false)
+			local test, wtf = vim.wait(2500, check, 500, false)
+			print(test, wtf)
 
 			local details = vim.api.nvim_buf_get_extmarks(bufnr, state.ns_marks, 0, -1, { details = true })
 
 			local marks = {}
 			for _, mark in ipairs(details) do
+				local id = mark[1]
+				local issues = state.issues:for_buf_id(bufnr, id)
 				marks[#marks + 1] = {
 					row = mark[2],
 					col_start = mark[3],
 					col_end = mark[4].end_col,
+					severity = issues:severity(),
+					sources = issues:sources(),
 				}
 			end
 

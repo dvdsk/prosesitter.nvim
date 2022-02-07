@@ -60,6 +60,14 @@ function IssueList:severity()
 	return res
 end
 
+function IssueList:sources()
+	local sources = {}
+	for _, issue in ipairs(self) do
+		sources[#sources + 1] = issue.full_source
+	end
+	return sources
+end
+
 function IssueList:hl_group()
 	local sev = self:severity()
 	return state.cfg.severity_to_hl[sev]
@@ -101,7 +109,7 @@ end
 
 -- returns a list of issues given a mark id
 function IssueIndex:for_buf_id(buf, id)
-	local list = {}
+	local list = IssueList:new()
 	for _, by_linter in pairs(self.m[buf]) do
 		local issues_list = by_linter[id]
 		if issues_list ~= nil then

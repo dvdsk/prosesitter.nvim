@@ -1,0 +1,83 @@
+[
+  {
+    "row": 1,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 16,
+    "col_end": 24,
+    "severity": "error"
+  },
+  {
+    "row": 2,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 7,
+    "col_end": 12,
+    "severity": "error"
+  },
+  {
+    "row": 6,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 7,
+    "col_end": 14,
+    "severity": "error"
+  },
+  {
+    "row": 7,
+    "sources": [
+      "Miscellaneous: ENGLISH_WORD_REPEAT_RULE"
+    ],
+    "col_start": 6,
+    "col_end": 11,
+    "severity": "warning"
+  },
+  {
+    "row": 7,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 12,
+    "col_end": 21,
+    "severity": "error"
+  },
+  {
+    "row": 7,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 22,
+    "col_end": 31,
+    "severity": "error"
+  },
+  {
+    "row": 8,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 15,
+    "col_end": 23,
+    "severity": "error"
+  },
+  {
+    "row": 9,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 6,
+    "col_end": 15,
+    "severity": "error"
+  },
+  {
+    "row": 9,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 16,
+    "col_end": 20,
+    "severity": "error"
+  }
+]
