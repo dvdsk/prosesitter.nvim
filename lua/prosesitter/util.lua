@@ -5,10 +5,14 @@ M = {}
 M.plugin_path = vim.fn.stdpath("data") .. "/prosesitter"
 
 function M:shell_in_new_window(bash_script, ok_msg, err_msg)
+	local ok = nil
 	local function on_exit(_, code)
+		print("done")
 		if code ~= 0 then
+			ok = true
 			error(err_msg)
 		else
+			ok = false
 			print(ok_msg)
 		end
 	end
@@ -19,6 +23,7 @@ function M:shell_in_new_window(bash_script, ok_msg, err_msg)
 	vim.fn.termopen(bash_script, { cwd = self.plugin_path, on_exit = on_exit })
 	vim.o.shell = shell
 	vim.cmd("startinsert")
+	return ok
 end
 
 function M:resolve_path(cfg_bin, exe_name)

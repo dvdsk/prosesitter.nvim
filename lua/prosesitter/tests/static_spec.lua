@@ -69,9 +69,9 @@ describe("Static", function()
 		it(string.format(": %s", file), function()
 			assert.truthy("Pass.")
 
-			-- if file ~= "comments/code.c" then
-			-- 	return
-			-- end
+			if file ~= "comments/code.c" then
+				return
+			end
 
 			local bufnr = vim.api.nvim_create_buf(false, false)
 			vim.api.nvim_win_set_buf(0, bufnr)

@@ -1,5 +1,0 @@
-describe("Comments", function()
-	it("should pass", function()
-		assert.truthy("Pass.")
-	end)
-end)

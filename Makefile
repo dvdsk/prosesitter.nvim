@@ -23,13 +23,6 @@ test: test_data/vale test_data/languagetool
 	-u scripts/minimal.vim \
 	-c "PlenaryBustedDirectory lua/prosesitter/tests {minimal_init = 'scripts/minimal.vim'}"
 
-test_install:
-	echo "===> Testing Install:"
-	rm .local/share
-	XDG_DATA_HOME=test_data/install_test nvim --headless --clean \
-		-u scripts/with_plugin.vim \
-		-c "PlenaryBustedDirectory lua/prosesitter/test_install {minimal_init = 'scripts/with_plugin.vim'}"
-
 deploy:
 	mkdir -p ~/.local/share/nvim/site/pack/manually_installed/opt/prosesitter.nvim
 	cp -r lua ~/.local/share/nvim/site/pack/manually_installed/opt/prosesitter.nvim

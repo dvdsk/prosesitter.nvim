@@ -56,7 +56,7 @@ function M.setup_binairy_and_styles()
 
 	local ok_msg = "[prosesitter] installed vale with default styles"
 	local err_msg= "[prosesitter] could not setup vale styles"
-	util:shell_in_new_window(install_script, ok_msg, err_msg)
+	return util:shell_in_new_window(install_script, ok_msg, err_msg)
 end
 
 function M.setup_cfg()

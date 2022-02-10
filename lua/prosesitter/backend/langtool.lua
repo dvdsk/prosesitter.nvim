@@ -31,7 +31,7 @@ function M.setup_binairy()
 
 	local ok_msg = "[prosesitter] installed language tool"
 	local err_msg = "[prosesitter] could not setup language tool"
-	util:shell_in_new_window(install_script, ok_msg, err_msg)
+	return util:shell_in_new_window(install_script, ok_msg, err_msg)
 end
 
 function M.setup_cfg()
