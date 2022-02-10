@@ -1,0 +1,56 @@
+Here I will discuss my implementation in three parts. I will begin by going over the states a cluster node goes through during its operation. Then I will show how the meta-data is changed, following a mkdir request through the cluster. Finally, I detail the technical side discussing the use of async over classical concurrency primitives.
+Some systems I will not discuss in depth, these are:
+
+\begin{enumerate}
+	\item The client implementation. It automatically finds the right node to talk to and retries any request until accepted by the cluster. It will ask the cluster for new addresses if it notices a node going offline. If the cluster does not move too quickly it will stay operating even if the cluster moves to all new IP addresses.
+	\item The automatic cluster configuration. The cluster nodes do not need to know each other address. The nodes will use UDP multicasts to build an address book and keep it up to date while operating. Nodes can be added\footnote{as long as the cluster size does not grow beyond a statically set maximum} while the cluster operates.
+\end{enumerate}
+
+\subsection{The life of a node}
+A node in the cluster can go through three states in its life: \textit{disconnected}, \textit{readserver} and \textit{writeserver}. We can see the stages the node goes through in \cref{fig:nodelife}. Every node starts \textit{disconnected}. In this state its discovering cluster members and waiting till it has discovered at least 50\% of the (maximum) cluster size. 
+
+When it has found enough cluster members our node becomes a \textit{readserver}, it can then start serving metadata for read requests \footnote{such as opening a file in read only mode or listing everything in a directory}. It will serve those requests as long as it's not \textit{outdated}. A \textit{readserver} starts outdated and can get up to date by syncing with an elected \textit{writeserver}. At any time if no \textit{writeserver} is found an election will start using the \textit{raft}\cite{raft} consensus algorithm. 
+
+If our node wins the election it will become the current \textit{writeserver}. As \textit{writeserver} it will handle client requests modifying the metadata and maintain a heartbeat. The heartbeat is part of \textit{raft} and ensures no new elections start.
+
+\begin{figure}[htbp]
+	\centering
+	\input{figs/serverlife.tex}
+	\caption{The states a server node goes through (left of the braces) and the various processes it does}
+	\label{fig:nodelife}
+\end{figure}
+
+\subsection{Modifying metadata}
+Here I will describe what happens during a successful make directory request (mkdir) where some servers malfunctioned. The transaction is illustrated in \cref{fig:mkdir}. It starts with the client sending a mkdir request over TCP. Servers and clients communicate between each other over TCP. Requests and responses consist of serialized\footnote{As serialization format I use Bincode which guarantees an encoded size no larger than the deserialized size} high level types. 
+
+\begin{figure}[htbp]
+	\centering
+	\input{figs/mkdir.tex}
+	\caption{The states the client and cluster go through during a mkdir request}
+	\label{fig:mkdir}
+\end{figure}
+
+Once the write server receives the request it will cancel the next heartbeat and instead publish the change to the cluster. To speed this up the writeserver caches connections to the read servers. It is no problem if a cluster member does not receive a request as:
+\begin{enumerate}
+	\item If the member receives the next heartbeat it will notice it is outdated and stop hosting meta-data. 
+	\item If the member fails to receive the next two heartbeats it will declare itself outdated and stop hosting meta-data.
+\end{enumerate}
+After declaring itself outdated a server will ask and get from the write server an up-to-date copy of the file system directory. 
+
+Any read server that is not malfunctioning now receives the change and checks if it can safely apply it using the \textit{Raft} consensus algorithm. Then it applies the change to its database and answers the writeserver all is well.
+
+After publishing a change the writeserver can run into three scenarios:
+\begin{enumerate}
+	\item \textit{Everyone acknowledged}: continue
+	\item \textit{A majority acknowledged}: some server(s) failed to answer, the new change will still be available to all clients two heartbeat durations after the writeserver published. By then any malfunctioning server(s) will have noticed it/they are outdated.
+	\item \textit{A minority acknowledged}: the writeserver is no longer in control it will crash, and the cluster will go through an election.
+\end{enumerate}
+
+Now the request completes with the writeserver answers the client.
+
+\subsection{Technicalities}
+The implementation has been written in \textit{Rust}: a high performance memory safe language without garbage collection. It makes extensive use of libraries for networking, the database and logging/tracing. The system is split into a binary for the server software, a libary defining the communcation protocol and a client libary for interacting with the server. The client libary provides various example binaries.
+
+The implementation is made without any blocking code using only asynchronous (async) functions instead. The result is a fully concurrent system where most work runs in parallel. I have written a short primer on async in the past here included in \cref{sec:async} though a far better resource is the \textit{rust async book}\footnote{freely available at: https://rust-lang.github.io/async-book}. In general a machine can handle many more asynchronous tasks than threads. Async is a good fit here as consistency requires us to wait before answering and finishing many tasks.
+
+Debugging distributed systems is notoriously hard. To help development this implementation uses `tracing`, a framework for structured logging. The information is sent to a (potentially distributed) tracing collection system which provides a web interface to inspect the structured logs of all the nodes in a central location.

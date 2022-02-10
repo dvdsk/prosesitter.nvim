@@ -73,6 +73,8 @@ end
 
 function M:setup(user_cfg)
 	local cfg = config:setup(user_cfg)
+	log.info(vim.inspect(cfg))
+	log.info("*************")
 
 	if cfg == nil then
 		print("setup unsuccesful; exiting")

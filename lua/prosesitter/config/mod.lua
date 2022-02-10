@@ -79,6 +79,7 @@ function M:setup(user_cfg)
 				setup_vale = true
 			else
 				print("please set 'vale_bin = false' in prosesitter plugin")
+				Cfg.vale_bin = false
 			end
 		end
 	end
@@ -94,6 +95,7 @@ function M:setup(user_cfg)
 				setup_langtool = true
 			else
 				print("please set 'langtool_bin = false' in prosesitter plugin to skip langtool install")
+				Cfg.langtool_bin = false
 			end
 		end
 	end

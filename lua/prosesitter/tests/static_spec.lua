@@ -48,12 +48,13 @@ local extension_to_filetype = {
 	["rs"] = "rust",
 	["c"] = "c",
 	["cpp"] = "cpp",
+	["tex"] = "latex",
 }
 local function filetype(file)
 	local parts = util.split_string(file, "%.")
 	local extension = parts[2]
 	local res = extension_to_filetype[extension]
-	assert(res ~= nil, "filetype no in extension_to_filetype")
+	assert(res ~= nil, "filetype not in extension_to_filetype")
 	return res
 end
 
