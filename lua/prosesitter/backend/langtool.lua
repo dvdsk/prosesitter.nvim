@@ -64,7 +64,6 @@ local function mark_rdy_if_responding(on_event)
 
 	local async = require("prosesitter/linter/check/async_cmd")
 	local do_check = function()
-		print("cheking!")
 		if not state.langtool_running then
 			local args = M:curl_args("")
 			async.dispatch_with_stdin("hi", "curl", args, on_exit)
@@ -98,7 +97,6 @@ function M.start_server(on_event, cfg)
 	})
 
 	if res > 0 then
-		print("spawned")
 		mark_rdy_if_responding(on_event)
 	else
 		error("could not start language server using path: " .. cfg.langtool_bin)
@@ -131,7 +129,7 @@ function M.to_issue(problem, start_col, end_col)
 	local issue = Issue.new()
 	issue.msg = problem.message
 	issue.severity = id_to_severity[problem.rule.category.id]
-	issue.full_source = problem.rule.category.name..": "..problem.rule.id
+	issue.full_source = problem.rule.category.name .. ": " .. problem.rule.id
 	issue.replacements = problem.replacements
 	issue.start_col = start_col
 	issue.end_col = end_col
@@ -146,7 +144,7 @@ function M:curl_args(disabled_rules)
 		"--data-urlencode",
 		"disabledCategories=STYLE",
 		"--data-urlencode",
-		"disabledRules="..disabled_rules,
+		"disabledRules=" .. disabled_rules,
 		"--data-urlencode",
 		"text@-",
 		self.url,

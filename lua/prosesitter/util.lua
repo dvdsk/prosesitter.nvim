@@ -7,7 +7,6 @@ M.plugin_path = vim.fn.stdpath("data") .. "/prosesitter"
 function M:shell_in_new_window(bash_script, ok_msg, err_msg)
 	local ok = nil
 	local function on_exit(_, code)
-		print("done")
 		if code ~= 0 then
 			ok = true
 			error(err_msg)

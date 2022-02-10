@@ -60,8 +60,9 @@ function M.disable()
 end
 
 function M.enable()
+	vim.cmd("augroup prosesitter")
 	vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
-	M.attach()
+	return M.attach()
 end
 
 function M.switch_vale_cfg(path)
@@ -90,8 +91,7 @@ function M:setup(user_cfg)
 	state.cfg = cfg
 	state.issues = issues.IssueIndex
 	if cfg.auto_enable then
-		vim.cmd("augroup prosesitter")
-		vim.cmd("autocmd prosesitter BufEnter * lua require('prosesitter').attach()")
+		M.enable()
 	end
 end
 
