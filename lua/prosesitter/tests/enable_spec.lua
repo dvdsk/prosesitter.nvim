@@ -11,16 +11,13 @@ describe("Check manually enabling", function()
 	it("test", function()
 		assert.truthy("Pass.")
 
-		-- if file ~= "comments/code.c" then
-		-- 	return
-		-- end
-
 		local bufnr = vim.api.nvim_create_buf(false, false)
 		vim.api.nvim_win_set_buf(0, bufnr)
 		vim.bo[bufnr].filetype = "python"
 		local content = {
-			"def test_function():",
-			"    print(\"spell erro\")",
+			[[# comment with spllerr]],
+			[[def test_function():]],
+			[[    print("spellr erro")]],
 		}
 		vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
 
@@ -49,7 +46,29 @@ describe("Check manually enabling", function()
 			}
 		end
 
-		local correct_marks = {}
+		local correct_marks = {
+			{
+				col_end = 22,
+				col_start = 15,
+				row = 0,
+				severity = "error",
+				sources = { "Possible Typo: MORFOLOGIK_RULE_EN_US" },
+			},
+			{
+				col_end = 17,
+				col_start = 11,
+				row = 2,
+				severity = "error",
+				sources = { "Possible Typo: MORFOLOGIK_RULE_EN_US" },
+			},
+			{
+				col_end = 22,
+				col_start = 18,
+				row = 2,
+				severity = "error",
+				sources = { "Possible Typo: MORFOLOGIK_RULE_EN_US" },
+			},
+		}
 		assert.are.same(marks, correct_marks)
 
 		vim.api.nvim_buf_delete(bufnr, { force = true })

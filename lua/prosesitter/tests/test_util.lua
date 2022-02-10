@@ -13,9 +13,19 @@ M.setup = function()
 
 		auto_enable = false,
 		default_cmds = false,
+		timeout = 0,
+
+		filetype = {
+			python = {
+				lint_targets = { "comments", "docstrings", "strings" },
+			},
+			rust = {
+				lint_targets = { "comments", "strings" },
+			},
+		},
 	})
 
-	state.langtool_running = true;
+	state.langtool_running = true
 	langtool.url = "http://localhost:34287/v2/check"
 end
 

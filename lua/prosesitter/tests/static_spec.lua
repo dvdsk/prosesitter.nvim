@@ -69,7 +69,7 @@ describe("Static", function()
 		it(string.format(": %s", file), function()
 			assert.truthy("Pass.")
 
-			if file ~= "comments/code.c" then
+			if file ~= "static/simple/code.py" then
 				return
 			end
 
@@ -86,8 +86,8 @@ describe("Static", function()
 				return #state.issues.m[bufnr].langtool > 1
 			end
 
-			local test, wtf = vim.wait(2500, check, 500, false)
-			print(test, wtf)
+			ok, _ = vim.wait(2500, check, 500, false)
+			assert.is_true(ok)
 
 			local details = vim.api.nvim_buf_get_extmarks(bufnr, state.ns_marks, 0, -1, { details = true })
 
