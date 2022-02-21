@@ -1,0 +1,29 @@
+-- local util = require("prosesitter/util");
+
+-- describe("overlap:", function()
+--     it("a before b", function()
+-- 		local a = { col_start = 3, col_end = 5 }
+-- 		local b = { col_start = 6, col_end = 8 }
+-- 		assert.False(util.overlap(a, b))
+--     end)
+--     it("a after b", function()
+-- 		local a = { col_start = 4, col_end = 5 }
+-- 		local b = { col_start = 0, col_end = 3 }
+-- 		assert.False(util.overlap(a, b))
+--     end)
+--     it("a then overlap then b", function()
+-- 		local a = { col_start = 2, col_end = 5 }
+-- 		local b = { col_start = 4, col_end = 8 }
+-- 		assert.True(util.overlap(a, b))
+--     end)
+--     it("b contained in a", function()
+-- 		local a = { col_start = 2, col_end = 12 }
+-- 		local b = { col_start = 6, col_end = 8 }
+-- 		assert.True(util.overlap(a, b))
+--     end)
+--     it("a contained in b", function()
+-- 		local a = { col_start = 6, col_end = 8 }
+-- 		local b = { col_start = 0, col_end = 9 }
+-- 		assert.True(util.overlap(a, b))
+--     end)
+-- end)

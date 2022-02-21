@@ -60,6 +60,7 @@ local fn_by_ftype = {
 -- want to preserve native line ends
 local function default_fn(buf, node, meta, req)
 	local text, row, col = get_lines(buf, range(node, meta))
+	print("text: "..vim.inspect(text));
 	add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
 end
 

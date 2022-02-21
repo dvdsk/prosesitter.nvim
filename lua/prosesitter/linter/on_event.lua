@@ -105,7 +105,7 @@ function M.on_bytes(
 	_, --new_col,
 	_ --new_byte
 )
-	-- -- stop calling on lines if the plugin was just disabled
+	-- stop calling on lines if the plugin was just disabled
 	local query = state.buf[buf].query
 	if query == nil then
 		return true
@@ -117,7 +117,6 @@ function M.on_bytes(
 
 	-- on deletion it seems like new row is always '-0' while old_row is not '-0'
 	-- 		(might be the number of rows deleted)
-	-- TODO check if this condition never happens in any other case
 	-- do not clean up highlighting extmarks, they are still needed in case of undo
 	local lines_removed = (new_row == -0 and old_row ~= -0)
 	local change_start = start_row
