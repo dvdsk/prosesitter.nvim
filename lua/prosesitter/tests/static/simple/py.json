@@ -16,5 +16,14 @@
     "col_start": 12,
     "col_end": 17,
     "severity": "error"
+  },
+  {
+    "row": 5,
+    "sources": [
+      "Possible Typo: MORFOLOGIK_RULE_EN_US"
+    ],
+    "col_start": 23,
+    "col_end": 33,
+    "severity": "error"
   }
 ]

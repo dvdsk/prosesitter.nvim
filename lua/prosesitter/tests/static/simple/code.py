@@ -3,6 +3,6 @@ def main():
     print("Large spelling mistakes here.")
 
     """
-        Multi line string with errors in them.
-        Has lines! Multiple even! Test.
+        Can not handle docstrings without false positives
+        see: https://github.com/dvdsk/prosesitter.nvim/issues/55
     """

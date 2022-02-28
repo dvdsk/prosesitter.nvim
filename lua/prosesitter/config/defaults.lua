@@ -12,7 +12,6 @@ M.queries = {
 		comments = "(line_comment)+ (block_comment) @capture",
 	},
 	python = {
-		docstrings = "((expression_statement(string) @capture) (#offset! @capture 0 3 0 -3))",
 		strings = "((string) @capture (#offset! @capture 0 1 0 -1))",
 		comments = "(comment)+ @capture",
 	},

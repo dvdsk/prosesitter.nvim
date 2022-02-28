@@ -36,7 +36,7 @@ local function add_if_not_pattern(req, pattern, buf, text, row, col)
 	end
 end
 
-local function range(node, meta)
+function M.range(node, meta)
 	if meta.content ~= nil then
 		return unpack(meta.content[1])
 	else
@@ -44,25 +44,22 @@ local function range(node, meta)
 	end
 end
 
+-- how to get space handling in here....
+-- must be able to handle multi line node text
+-- want to preserve native line ends
+local function default_fn(buf, node, meta, req)
+	local text, row, col = get_lines(buf, M.range(node, meta))
+	add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
+end
+
 local fn_by_ftype = {
 	tex = function(buf, node, meta, req)
 		if node:parent():type() == "inline_formula" then
 			return
 		end
-
-		local text, row, col = get_lines(buf, range(node,meta))
-		add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
+		default_fn(buf, node, meta, req)
 	end,
 }
-
--- how to get space handling in here....
--- must be able to handle multi line node text
--- want to preserve native line ends
-local function default_fn(buf, node, meta, req)
-	local text, row, col = get_lines(buf, range(node, meta))
-	print("text: "..vim.inspect(text));
-	add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
-end
 
 function M.get_fn(filetype)
 	if fn_by_ftype[filetype] ~= nil then

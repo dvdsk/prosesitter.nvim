@@ -33,12 +33,12 @@ function BufMemory:no_change(buf, start_row)
 	end
 end
 
-local prose_queries = {}
+local queries = {}
 local function add_nodes(bufnr, lintreq, start_l, end_l)
 	local add_node = state.buf[bufnr].preprosessing
 	local parser = state.buf[bufnr].parsers
 	local lang = parser:lang()
-	local prose_query = prose_queries[lang]
+	local query = queries[lang]
 
 	parser:for_each_tree(function(tstree, _)
 		local root_node = tstree:root()
@@ -46,9 +46,10 @@ local function add_nodes(bufnr, lintreq, start_l, end_l)
 			return -- return in this callback skips to checking the next tree
 		end
 
-		for _, node, meta in prose_query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
+		for id, node, meta in query:iter_captures(root_node, bufnr, start_l, end_l + 1) do
 			if node_in_range(start_l, end_l, node) then
-				add_node(bufnr, node, meta, lintreq)
+				local capture = query.captures[id]
+				add_node(bufnr, node, meta, lintreq, capture)
 			end
 		end
 	end)
@@ -80,8 +81,8 @@ function M.attach(bufnr)
 	end
 
 	local lang = parser:lang()
-	if not prose_queries[lang] then
-		prose_queries[lang] = q.parse_query(lang, state.buf[bufnr].query)
+	if not queries[lang] then
+		queries[lang] = q.parse_query(lang, state.buf[bufnr].query)
 	end
 
 	-- keep the parser to let vim know we need it

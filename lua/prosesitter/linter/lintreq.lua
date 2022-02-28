@@ -29,8 +29,7 @@ function M:add_range(buf, lines, start_row, start_col)
     end
 end
 
--- check if the range of two meta entries
--- are overlapping returns a single entry encompassing
+-- given overlapping entries returns a single entry encompassing
 -- the entire range
 local function update(new, existing)
     if existing.col_start < new.col_start then
@@ -41,10 +40,7 @@ local function update(new, existing)
     end
 end
 
--- TODO FIXME, check not overlapping with prev
--- TODO FIXME, meta list should be cleared right...?
 function M:append_or_update(buf, id, text, start_col)
-    print("update: " .. id .. text .. start_col)
     local meta_list = self.meta_by_mark[id]
 
     local new = {
@@ -67,7 +63,7 @@ function M:append_or_update(buf, id, text, start_col)
             text = api.nvim_buf_get_lines(buf, row, row + 1, true)
             text = text[1]
             text = string.sub(text, 1, new.col_end)
-            text = string.sub(text, new.col_start + 1)
+            text = string.sub(text, new.col_start)
         end
     end
 
@@ -88,10 +84,10 @@ function M:add(buf, text, row, start_col)
         id = api.nvim_buf_set_extmark(buf, ns, row, 0, { end_col = 0 })
     end
 
-    print("add: " .. id .. text .. start_col)
+	local idx = #self.text + 1
     local meta = { buf = buf, id = id, col_start = start_col,
-                   col_end = start_col + #text, idx = #self.text + 1 }
-    self.meta_by_mark[id] = { idx = meta }
+                   col_end = start_col + #text, idx = idx }
+    self.meta_by_mark[id] = {[idx] = meta}
     self.meta_by_idx[meta.idx] = meta
     self.text[meta.idx] = text
 end
@@ -124,25 +120,25 @@ end
 -- returns a request with members:
 function M:build()
     local req = {}
-    req.text = table.concat(self.text, " ")
     req.areas = {}
 
     -- TODO hide check under debug flag
     local meta_seen = {}
-    print(vim.inspect(self.meta_by_idx));
     for _, meta in pairs(self.meta_by_idx) do
-        local hash = table.concat({ meta.buf, meta.id, meta.row_col }, ",")
+        local hash = table.concat({ meta.buf, meta.id, meta.col_end, meta.col_start }, ",")
         if meta_seen[hash] ~= nil then
             local err = "lintreq contains overlapping/duplicate entries, (idx: "
                 .. meta_seen[hash] .. ") and  (idx: " .. meta.idx .. ")"
+				.. "\n lintreq dump: "..vim.inspect(self)
             assert(false, err)
         end
         meta_seen[hash] = meta.idx
     end
 
     local col = 0
-    for i = 1, #self.text do
-        local meta = self.meta_by_idx[i]
+	local text_list = {}
+    for idx, text in pairs(self.text) do
+        local meta = self.meta_by_idx[idx]
         local area = {
    col = col, -- column in text passed to linter
    row_col = meta.col_start, -- column in buffer
@@ -150,9 +146,11 @@ function M:build()
    buf_id = meta.buf,
         }
         req.areas[#req.areas + 1] = area
-        col = col + #self.text[i] + 1 -- plus one for the line end
+		text_list[#text_list+1] = text
+        col = col + #text + 1 -- plus one for the line end
     end
 
+    req.text = table.concat(text_list, " ")
     self:reset()
     return req
 end

@@ -17,6 +17,7 @@ local function check_buf(buf)
 	end
 
 	local req = lintreq:build()
+	print("req text: "..req.text)
 
 	if state.langtool_running then
 		local function post_langtool(json)
