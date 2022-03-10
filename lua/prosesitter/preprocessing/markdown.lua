@@ -14,7 +14,7 @@ local function markdown_split_paragraph(buf, node, meta, req)
 		add(curr_row_s, curr_col_s, child_row_start, child_col_start)
 		add(child_row_start, child_col_start+trim, child_row_end, child_col_end-trim)
 		curr_row_s = child_row_end
-		curr_col_s = child_col_end+trim
+		curr_col_s = child_col_end
 	end
 
 	for child in node:iter_children() do

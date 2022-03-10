@@ -9,9 +9,9 @@ local function get_lines(buf, start_row, start_col, end_row, end_col )
 end
 
 -- matches urls domains and paths
-local url_path_pattern = "%S+[./]+%S+"
+M.url_path_pattern = "%S+[./]+%S+"
 
-local function add_if_not_pattern(req, pattern, buf, text, row, col)
+function M.add_if_not_pattern(req, pattern, buf, text, row, col)
 	for n, line in ipairs(text) do
 		while true do
 			local start, stop = string.find(line, pattern)
@@ -48,7 +48,7 @@ end
 -- want to preserve native line ends
 function M.default_fn(buf, node, meta, req)
 	local text, row, col = get_lines(buf, M.range(node, meta))
-	add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
+	M.add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
 end
 
 return M
