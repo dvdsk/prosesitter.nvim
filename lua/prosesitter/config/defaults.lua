@@ -29,6 +29,9 @@ M.queries = {
 		strings = "(string) @capture",
 		comments = "(comment) @capture",
 	},
+	markdown = {
+		strings = "(paragraph) @capture",
+	},
 }
 
 function M:filetype()
@@ -38,7 +41,8 @@ function M:filetype()
 		filetype[extension] = { lint_targets = { "comments" }, langtool_ignore = "WHITESPACE_RULE" }
 	end
 
-	filetype.python.lint_targets = { "comments", "docstrings" }
+	filetype.markdown.lint_targets = { "strings" }
+	filetype.python.lint_targets = { "comments" }
 	filetype.latex.lint_targets = { "strings" }
 	filetype.latex.langtool_ignore = "WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE"
 

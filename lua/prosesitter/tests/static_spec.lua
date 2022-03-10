@@ -49,6 +49,7 @@ local extension_to_filetype = {
 	["c"] = "c",
 	["cpp"] = "cpp",
 	["tex"] = "latex",
+	["md"] = "markdown",
 }
 local function filetype(file)
 	local parts = util.split_string(file, "%.")
@@ -69,7 +70,7 @@ describe("Static", function()
 		it(string.format(": %s", file), function()
 			assert.truthy("Pass.")
 
-			if file ~= "static/simple/code.py" then
+			if file ~= "static/simple/python.md" then
 				return
 			end
 

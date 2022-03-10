@@ -5,7 +5,7 @@ local config = require("prosesitter/config/mod")
 local langtool = require("prosesitter/backend/langtool")
 local issues = require("prosesitter/linter/issues")
 local lintreq = require("prosesitter/linter/lintreq")
-local prep = require("prosesitter/preprocessing")
+local prep = require("prosesitter/preprocessing/preprocessing")
 
 local api = vim.api
 local M = {}
