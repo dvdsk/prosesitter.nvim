@@ -18,7 +18,7 @@ function M.add_if_not_pattern(req, pattern, buf, text, row, col)
 			if start ~= nil then
 				if start > 1 then
 					local before = string.sub(line, 1, start - 1)
-					req:add(buf, before, row - 1 + n, col)
+					req:add(buf, before, row - 1 + n, col, col + #before)
 				end
 				if stop < #line then
 					line = string.sub(line, stop + 1)
@@ -27,7 +27,7 @@ function M.add_if_not_pattern(req, pattern, buf, text, row, col)
 					break
 				end
 			else
-				req:add(buf, line, row - 1 + n, col + 1)
+				req:add(buf, line, row - 1 + n, col + 1, col + 1 + #line)
 				break
 			end
 		end

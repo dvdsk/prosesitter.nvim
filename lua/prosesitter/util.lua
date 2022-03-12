@@ -100,4 +100,11 @@ function M.overlap(a, b)
 	return a.col_start <= b.col_end and b.col_start <= a.col_end
 end
 
+function M.table_get_first(tab)
+	for _, v in pairs(tab) do
+		return v
+	end
+end
+
+
 return M

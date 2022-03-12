@@ -11,10 +11,20 @@ function M.new()
     -- an array
     self.text = {}
     -- key: placeholder_id,
-    -- value: by idx tables of buf, id(same as key), row_col, idx
+    -- value: table indexed by idx of tables of:
+	-- 		buf,
+	-- 		placeholder_id,
+	-- 		col_start,
+	-- 		col_end,
+	-- 		idx
     self.meta_by_mark = {}
     -- key: index of corrosponding text in self.text (idx)
-    -- value: table of buf, id, row_col, idx(same as key)
+    -- value: table indexed by idx of tables of:
+	-- 		buf,
+	-- 		placeholder_id,
+	-- 		col_start,
+	-- 		col_end,
+	-- 		idx
     self.meta_by_idx = {}
     return self
 end
@@ -24,7 +34,7 @@ end
 function M:add_range(buf, lines, start_row, start_col)
     for i, text in ipairs(lines) do
         local row = start_row - 1 + i
-        self:add(buf, text, row, start_col)
+        self:add(buf, text, row, start_col, start_col+#text)
         start_col = 1
     end
 end
@@ -72,7 +82,8 @@ function M:append_or_update(buf, id, text, start_col)
     self.text[new.idx] = text
 end
 
-function M:add(buf, text, row, start_col)
+-- add text starting (including) from start_col (zero indexed)
+function M:add(buf, text, row, start_col, end_col)
     local id = nil
     local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
     if #marks > 0 then
@@ -117,12 +128,8 @@ function M:is_empty()
     return empty
 end
 
--- returns a request with members:
-function M:build()
-    local req = {}
-    req.areas = {}
-
-    -- TODO hide check under debug flag
+-- TODO hide check under debug flag
+function M:assert_no_duplicate()
     local meta_seen = {}
     for _, meta in pairs(self.meta_by_idx) do
         local hash = table.concat({ meta.buf, meta.id, meta.col_end, meta.col_start }, ",")
@@ -134,24 +141,35 @@ function M:build()
         end
         meta_seen[hash] = meta.idx
     end
+end
 
-    local col = 0
-	local text_list = {}
-    for idx, text in pairs(self.text) do
-        local meta = self.meta_by_idx[idx]
-        local area = {
-   col = col, -- column in text passed to linter
-   row_col = meta.col_start, -- column in buffer
-   row_id = meta.id, -- extmark at the start of the row
-   buf_id = meta.buf,
-        }
-        req.areas[#req.areas + 1] = area
-		text_list[#text_list+1] = text
-        col = col + #text + 1 -- plus one for the line end
-    end
+-- returns a request with members:
+function M:build()
+    local req = {}
+    req.areas = {}
+	req.text = {}
 
-    req.text = table.concat(text_list, " ")
+	local col = 0
+	for mark, meta_list in pairs(self.meta_by_mark) do
+		local buf = util.table_get_first(meta_list).buf
+		local row = api.nvim_buf_get_extmark_by_id(buf, state.ns_placeholders, mark, {})[1]
+		local line = api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
+
+		for _, meta in pairs(meta_list) do
+			req.areas[#req.areas+1] = {
+				col = col,
+				row_col = meta.col_start,
+				row_id = meta.id,
+				buf_id = meta.buf,
+			}
+
+			req.text[#req.text+1] = string.sub(line, meta.col_start+1, meta.col_end+1)
+			col = meta.col_end - meta.col_start
+		end
+	end
+
     self:reset()
+	req.text = table.concat(req.text, " ")
     return req
 end
 

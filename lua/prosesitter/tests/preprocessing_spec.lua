@@ -25,8 +25,8 @@ local function docstring_buffer(buf)
 end
 
 FakeReq = { list = {} }
-function FakeReq:add(_, text, row, start_col)
-    self.list[#self.list + 1] = { text = text, row = row, start_col = start_col }
+function FakeReq:add(_, text, row, start_col, end_col)
+    self.list[#self.list + 1] = { text = text, row = row, start_col = start_col, end_col = end_col }
 end
 
 local buf = vim.api.nvim_create_buf(false, false)
