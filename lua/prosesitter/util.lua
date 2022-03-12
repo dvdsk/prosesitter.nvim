@@ -100,11 +100,29 @@ function M.overlap(a, b)
 	return a.col_start <= b.col_end and b.col_start <= a.col_end
 end
 
-function M.table_get_first(tab)
-	for _, v in pairs(tab) do
-		return v
+-- get first value in array with holes (harray)
+-- a hole is marked by the value "deleted"
+function M.harray_get_first(tab)
+	for _, v in ipairs(tab) do
+		if v ~= "deleted" then
+			return v
+		end
 	end
 end
 
+-- iterate over an array with holes (harray)
+-- a hole is marked by the value "deleted"
+function M.hpairs(array)
+	local len = #array
+	local i = 0
+	return function()
+		while i < len do
+			i = i + 1
+			if array[i] ~= "deleted" then
+				return i, array[i]
+			end
+		end
+	end
+end
 
 return M

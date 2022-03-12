@@ -48,7 +48,7 @@ end
 -- want to preserve native line ends
 function M.default_fn(buf, node, meta, req)
 	local text, row, col = get_lines(buf, M.range(node, meta))
-	M.add_if_not_pattern(req, url_path_pattern, buf, text, row, col)
+	M.add_if_not_pattern(req, M.url_path_pattern, buf, text, row, col)
 end
 
 return M

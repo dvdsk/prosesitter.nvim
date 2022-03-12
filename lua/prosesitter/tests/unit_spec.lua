@@ -1,5 +1,17 @@
 -- local util = require("prosesitter/util");
 
+-- describe("hole arrays", function()
+-- 	it("iter", function()
+-- 		local input = {true, "deleted", false, "deleted", true}
+-- 		local correct = {true, false, true}
+-- 		local res = {}
+-- 		for _, value in util.hpairs(input) do
+-- 			res[#res+1] = value
+-- 		end
+-- 		assert.are.same(correct, res)
+-- 	end)
+-- end)
+
 -- describe("overlap:", function()
 --     it("a before b", function()
 -- 		local a = { col_start = 3, col_end = 5 }

@@ -8,24 +8,15 @@ local M = {}
 M.__index = M -- failed table lookups on the instances should fallback to the class table, to get methods
 function M.new()
     local self = setmetatable({}, M)
-    -- an array
-    self.text = {}
     -- key: placeholder_id,
-    -- value: table indexed by idx of tables of:
+    -- value: array with holes of tables of:
 	-- 		buf,
 	-- 		placeholder_id,
 	-- 		col_start,
 	-- 		col_end,
-	-- 		idx
+	-- sentinel value "deleted" is used to indicate
+	-- holes (removed values)
     self.meta_by_mark = {}
-    -- key: index of corrosponding text in self.text (idx)
-    -- value: table indexed by idx of tables of:
-	-- 		buf,
-	-- 		placeholder_id,
-	-- 		col_start,
-	-- 		col_end,
-	-- 		idx
-    self.meta_by_idx = {}
     return self
 end
 
@@ -34,7 +25,7 @@ end
 function M:add_range(buf, lines, start_row, start_col)
     for i, text in ipairs(lines) do
         local row = start_row - 1 + i
-        self:add(buf, text, row, start_col, start_col+#text)
+        self:add(buf, row, start_col, start_col+#text)
         start_col = 1
     end
 end
@@ -50,64 +41,43 @@ local function update(new, existing)
     end
 end
 
-function M:append_or_update(buf, id, text, start_col)
+function M:append_or_update(buf, id, start_col, end_col)
     local meta_list = self.meta_by_mark[id]
 
     local new = {
   buf = buf,
   id = id,
   col_start = start_col,
-  col_end = start_col + #text,
-  idx = #self.text + 1,
+  col_end = end_col,
     }
     -- expand new if it overlaps with an existing range
     -- remove the existing range
-    for idx, meta in pairs(meta_list) do
+    for i, meta in util.hpairs(meta_list) do
         if util.overlap(new, meta) then
-            meta_list[idx] = nil
-            self.meta_by_idx[idx] = nil
-            self.text[idx] = nil
-
+            meta_list[i] = "deleted" -- sentinel value
             update(new, meta)
-            local row = api.nvim_buf_get_extmark_by_id(buf, ns, id, {})[1]
-            text = api.nvim_buf_get_lines(buf, row, row + 1, true)
-            text = text[1]
-            text = string.sub(text, 1, new.col_end)
-            text = string.sub(text, new.col_start)
         end
     end
 
-    meta_list[new.idx] = new
-    self.meta_by_idx[new.idx] = new
-    self.text[new.idx] = text
+    meta_list[#meta_list+1] = new
 end
 
 -- add text starting (including) from start_col (zero indexed)
-function M:add(buf, text, row, start_col, end_col)
+function M:add(buf, row, start_col, end_col)
     local id = nil
     local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
     if #marks > 0 then
         id = marks[1][1] -- there can be a max of 1 placeholder per line
         assert(self.meta_by_mark[id] ~= nil, "should be a metadata entry for placeholder")
-        self:append_or_update(buf, id, text, start_col)
+        self:append_or_update(buf, id, start_col, end_col)
         return
     else
         id = api.nvim_buf_set_extmark(buf, ns, row, 0, { end_col = 0 })
     end
 
-	local idx = #self.text + 1
     local meta = { buf = buf, id = id, col_start = start_col,
-                   col_end = start_col + #text, idx = idx }
-    self.meta_by_mark[id] = {[idx] = meta}
-    self.meta_by_idx[meta.idx] = meta
-    self.text[meta.idx] = text
-end
-
-local function delete_by_idx(meta_by_mark, array, map)
-    for idx, _ in pairs(meta_by_mark) do
-        table.remove(array, idx)
-        table.remove(map, idx)
-    end
+                   col_end = end_col }
+    self.meta_by_mark[id] = { meta }
 end
 
 function M:clear_lines(buf, start, stop)
@@ -118,44 +88,62 @@ function M:clear_lines(buf, start, stop)
         local deleted = self.meta_by_mark[id]
         if deleted ~= nil then
             self.meta_by_mark[id] = {}
-            delete_by_idx(deleted, self.text, self.meta_by_idx)
         end
     end
 end
 
 function M:is_empty()
-    local empty = next(self.text) == nil
-    return empty
+    return #self.meta_by_mark == 0
 end
 
--- TODO hide check under debug flag
+-- TODO PERF hide check under debug flag
 function M:assert_no_duplicate()
     local meta_seen = {}
-    for _, meta in pairs(self.meta_by_idx) do
-        local hash = table.concat({ meta.buf, meta.id, meta.col_end, meta.col_start }, ",")
-        if meta_seen[hash] ~= nil then
-            local err = "lintreq contains overlapping/duplicate entries, (idx: "
-                .. meta_seen[hash] .. ") and  (idx: " .. meta.idx .. ")"
-				.. "\n lintreq dump: "..vim.inspect(self)
-            assert(false, err)
-        end
-        meta_seen[hash] = meta.idx
+    for mark, meta_list in pairs(self.meta_by_mark) do
+		for _, meta in util.hpairs(meta_list) do
+			local hash = table.concat({ mark, meta.buf, meta.id, meta.col_end, meta.col_start }, ",")
+			if meta_seen[hash] ~= nil then
+				local err = "lintreq contains overlapping/duplicate entries, (mark: "
+					.. meta_seen[hash] .. ") and  (mark: " .. mark .. ")"
+					.. "\n lintreq dump: "..vim.inspect(self)
+				assert(false, err)
+			end
+			meta_seen[hash] = mark
+		end
     end
+end
+
+-- TODO PERF hide check under debug flag
+function M:assert_meta_lists_sorted()
+	-- verify meta lists is sorted by column
+	for mark, meta_list in pairs(self.meta_by_mark) do
+		local col = 0
+		for _, meta in util.hpairs(meta_list) do
+			if meta.col_start < col then
+				assert(false, "meta_list is for mark: "..mark.."not sorted: "..meta_list)
+			end
+			col = meta.col_start
+		end
+	end
+
 end
 
 -- returns a request with members:
 function M:build()
+	self:assert_no_duplicate()
+	self:assert_meta_lists_sorted()
+
     local req = {}
     req.areas = {}
 	req.text = {}
 
 	local col = 0
 	for mark, meta_list in pairs(self.meta_by_mark) do
-		local buf = util.table_get_first(meta_list).buf
+		local buf = util.harray_get_first(meta_list).buf
 		local row = api.nvim_buf_get_extmark_by_id(buf, state.ns_placeholders, mark, {})[1]
 		local line = api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
 
-		for _, meta in pairs(meta_list) do
+		for _, meta in util.hpairs(meta_list) do
 			req.areas[#req.areas+1] = {
 				col = col,
 				row_col = meta.col_start,
@@ -174,9 +162,7 @@ function M:build()
 end
 
 function M:reset()
-    self.text = {}
     self.meta_by_mark = {}
-    self.meta_by_idx = {}
 end
 
 return M
