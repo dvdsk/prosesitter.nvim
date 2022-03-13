@@ -80,6 +80,18 @@ function M:add(buf, row, start_col, end_col)
     self.meta_by_mark[id] = { meta }
 end
 
+-- add a string to the text send to the spell/grammer checker. Any feedback from the
+-- spell/grammer checker will be ignored. Usefull for adding spaces between lines or
+-- for adding placeholders in text containing paths and urls.
+function M:add_append_text(buf, row, text)
+    local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
+    if #marks > 0 then
+        local id = marks[1][1] -- there can be a max of 1 placeholder per line
+		local meta_list = self.meta_by_mark[id]
+		meta_list[#meta_list+1] = { append_text = text}
+	end
+end
+
 function M:clear_lines(buf, start, stop)
     local marks = api.nvim_buf_get_extmarks(buf, ns, { start, 0 }, { stop, 0 }, {})
     for i = #marks, 1, -1 do
@@ -119,10 +131,15 @@ function M:assert_meta_lists_sorted()
 	for mark, meta_list in pairs(self.meta_by_mark) do
 		local col = 0
 		for _, meta in util.hpairs(meta_list) do
+			if meta.append_text ~= nil then
+				goto continue
+			end
+
 			if meta.col_start < col then
 				assert(false, "meta_list is for mark: "..mark.."not sorted: "..meta_list)
 			end
 			col = meta.col_start
+			::continue::
 		end
 	end
 
@@ -144,20 +161,26 @@ function M:build()
 		local line = api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
 
 		for _, meta in util.hpairs(meta_list) do
-			req.areas[#req.areas+1] = {
-				col = col,
-				row_col = meta.col_start,
-				row_id = meta.id,
-				buf_id = meta.buf,
-			}
+			if meta.append_text then
+				req.text[#req.text+1] = meta.append_text
+				col = col + #meta.append_text
+			else
+				req.areas[#req.areas+1] = {
+					col = col,
+					row_col = meta.col_start,
+					row_id = meta.id,
+					buf_id = meta.buf,
+				}
 
-			req.text[#req.text+1] = string.sub(line, meta.col_start+1, meta.col_end+1)
-			col = meta.col_end - meta.col_start
+				req.text[#req.text+1] = string.sub(line, meta.col_start+1, meta.col_end+1)
+				local length = meta.col_end - meta.col_start
+				col = col + length -- why? why is this not before the req.areas?
+			end
 		end
 	end
 
     self:reset()
-	req.text = table.concat(req.text, " ")
+	req.text = table.concat(req.text, "")
     return req
 end
 

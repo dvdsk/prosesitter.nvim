@@ -5,33 +5,30 @@ local function get_lines(buf, start_row, start_col, end_row, end_col )
 	local text = api.nvim_buf_get_lines(buf, start_row, end_row + 1, true)
 	text[#text] = string.sub(text[#text], 1, end_col)
 	text[1] = string.sub(text[1], start_col + 1)
-	return text, start_row, start_col
+	return text
 end
 
 -- matches urls domains and paths
 M.url_path_pattern = "%S+[./]+%S+"
 
-function M.add_if_not_pattern(req, pattern, buf, text, row, col)
-	for n, line in ipairs(text) do
-		while true do
-			local start, stop = string.find(line, pattern)
-			if start ~= nil then
-				if start > 1 then
-					local before = string.sub(line, 1, start - 1)
-					req:add(buf, before, row - 1 + n, col, col + #before)
-				end
-				if stop < #line then
-					line = string.sub(line, stop + 1)
-					col = col + stop
-				else
-					break
-				end
+function M.add_if_not_pattern(req, pattern, buf, line, row, col)
+	while true do
+		local start, stop = string.find(line, pattern)
+		if start ~= nil then
+			if start > 1 then
+				local before = string.sub(line, 1, start - 1)
+				req:add(buf, before, row, col, col + #before)
+			end
+			if stop < #line then
+				line = string.sub(line, stop + 1)
+				col = col + stop
 			else
-				req:add(buf, line, row - 1 + n, col + 1, col + 1 + #line)
 				break
 			end
+		else
+			req:add(buf, line, row, col + 1, col + 1 + #line)
+			break
 		end
-		col = 0
 	end
 end
 
@@ -47,8 +44,15 @@ end
 -- must be able to handle multi line node text
 -- want to preserve native line ends
 function M.default_fn(buf, node, meta, req)
-	local text, row, col = get_lines(buf, M.range(node, meta))
-	M.add_if_not_pattern(req, M.url_path_pattern, buf, text, row, col)
+	local start_row, start_col, end_row, end_col = M.range(node, meta)
+	local text = get_lines(buf, start_row, start_col, end_row, end_col)
+	local col = start_col
+	for n, line in ipairs(text) do
+		local row = start_row + n -1
+		M.add_if_not_pattern(req, M.url_path_pattern, buf, line, row, col)
+		req:add_append(buf, row, " ")
+		col = 0
+	end
 end
 
 return M
