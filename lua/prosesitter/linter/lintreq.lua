@@ -12,22 +12,12 @@ function M.new()
     -- value: array with holes of tables of:
 	-- 		buf,
 	-- 		placeholder_id,
-	-- 		col_start,
-	-- 		col_end,
+	-- 		col_start [zero based],
+	-- 		col_end [zero based],
 	-- sentinel value "deleted" is used to indicate
 	-- holes (removed values)
     self.meta_by_mark = {}
     return self
-end
-
--- text can be empty list
--- needs to be passed 1 based start_col
-function M:add_range(buf, lines, start_row, start_col)
-    for i, text in ipairs(lines) do
-        local row = start_row - 1 + i
-        self:add(buf, row, start_col, start_col+#text)
-        start_col = 1
-    end
 end
 
 -- given overlapping entries returns a single entry encompassing
@@ -53,7 +43,7 @@ function M:append_or_update(buf, id, start_col, end_col)
     -- expand new if it overlaps with an existing range
     -- remove the existing range
     for i, meta in util.hpairs(meta_list) do
-        if util.overlap(new, meta) then
+        if meta.append_text == nil and util.overlap(new, meta) then
             meta_list[i] = "deleted" -- sentinel value
             update(new, meta)
         end
@@ -113,14 +103,19 @@ function M:assert_no_duplicate()
     local meta_seen = {}
     for mark, meta_list in pairs(self.meta_by_mark) do
 		for _, meta in util.hpairs(meta_list) do
+			if meta.append_text ~= nil then
+				goto continue
+			end
+
 			local hash = table.concat({ mark, meta.buf, meta.id, meta.col_end, meta.col_start }, ",")
 			if meta_seen[hash] ~= nil then
-				local err = "lintreq contains overlapping/duplicate entries, (mark: "
-					.. meta_seen[hash] .. ") and  (mark: " .. mark .. ")"
+				local err = "lintreq contains overlapping/duplicate entries, (meta: "
+					.. vim.inspect(meta_seen[hash]) .. ") and  (meta: " .. vim.inspect(meta) .. ")"
 					.. "\n lintreq dump: "..vim.inspect(self)
 				assert(false, err)
 			end
-			meta_seen[hash] = mark
+			meta_seen[hash] = meta
+			::continue::
 		end
     end
 end

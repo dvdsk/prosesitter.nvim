@@ -4,6 +4,16 @@ local prep = require "prosesitter.preprocessing.preprocessing"
 local util = require "prosesitter.preprocessing.util"
 local lintreq = require "prosesitter.linter.lintreq"
 
+local function markdown_buffer(buf)
+    local content = {
+    [[1nd paragraph. Italic, bold, and code ]],
+    [[    ]],
+    [[2nd paragraph italics or bold ]],
+    [[    ]],
+    }
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, content)
+end
+
 local function emphasis_buffer(buf)
     local content = {
     [[1nd paragraph. *Italic*, **bold**, and code `monospace` ]],
@@ -49,26 +59,49 @@ describe("preprocessing", function()
 	-- end)
 
 	-- DISABLED as currently failing
-	-- it("markdown emphasis stripping", function()
-	-- 	emphasis_buffer(buf)
-	-- 	vim.bo[buf].filetype = "markdown"
- --        local ok, parser = pcall(vim.treesitter.get_parser, buf)
- --        assert(ok, "failed to get parser")
+	it("markdown no emphasis", function()
+		markdown_buffer(buf)
+		vim.bo[buf].filetype = "markdown"
+        local ok, parser = pcall(vim.treesitter.get_parser, buf)
+        assert(ok, "failed to get parser")
 
- --        local query_str = defaults.queries.markdown.strings
- --        local query = q.parse_query(parser:lang(), query_str)
+        local query_str = defaults.queries.markdown.strings
+        local query = q.parse_query(parser:lang(), query_str)
 
- --        local tree = parser:trees()[1]
- --        local root = tree:root()
+        local tree = parser:trees()[1]
+        local root = tree:root()
 
-	-- 	local lr = lintreq.new()
-	-- 	local prepfn = prep.get_fn("markdown")
- --        for _, node, meta in query:iter_captures(root, buf, 0, -1) do
-	-- 		prepfn(buf, node, meta, lr)
- --        end
- --        local req = lr:build()
-	-- 	assert.are.same("1nd paragraph. Italic, bold, and code      2nd paragraph italics or bold     ", req.text)
-	-- end)
+		local lr = lintreq.new()
+		local prepfn = prep.get_fn("markdown")
+        for _, node, meta in query:iter_captures(root, buf, 0, -1) do
+			prepfn(buf, node, meta, lr)
+        end
+		assert.are_same(0, lr.meta_by_mark[1][1].col_start, "first line should start at col 0")
+        local req = lr:build()
+		assert.are.same("1nd paragraph. Italic, bold, and code       2nd paragraph italics or bold       ", req.text)
+	end)
+
+	-- -- DISABLED as currently failing
+	it("markdown emphasis stripping", function()
+		emphasis_buffer(buf)
+		vim.bo[buf].filetype = "markdown"
+        local ok, parser = pcall(vim.treesitter.get_parser, buf)
+        assert(ok, "failed to get parser")
+
+        local query_str = defaults.queries.markdown.strings
+        local query = q.parse_query(parser:lang(), query_str)
+
+        local tree = parser:trees()[1]
+        local root = tree:root()
+
+		local lr = lintreq.new()
+		local prepfn = prep.get_fn("markdown")
+        for _, node, meta in query:iter_captures(root, buf, 0, -1) do
+			prepfn(buf, node, meta, lr)
+        end
+        local req = lr:build()
+		assert.are.same("1nd paragraph. Italic, bold, and code      2nd paragraph italics or bold     ", req.text)
+	end)
 
 	-- DISABLED as docstrings are not supported yet
     -- it("python docstring offset range", function()

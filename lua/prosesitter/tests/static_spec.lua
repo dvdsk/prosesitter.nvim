@@ -71,7 +71,7 @@ describe("Static", function()
 		it(string.format(": %s", file), function()
 			assert.truthy("Pass.")
 
-			if file ~= "static/simple/ecode.py" then
+			if file ~= "static/simple/coode.md" then
 				return
 			end
 
@@ -81,7 +81,11 @@ describe("Static", function()
 			local content = get_content(file)
 			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
 
+			local start_t = os.clock()
 			local ok, err = ps.attach()
+			local duration = os.clock() - start_t
+			assert.is_true(duration < 0.1, "attach is taking way to long")
+
 			assert.message(err).is_true(ok)
 
 			local function check()

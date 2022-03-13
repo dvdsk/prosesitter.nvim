@@ -28,7 +28,7 @@ local function markdown_split_paragraph(buf, node, meta, req)
 			curr_row_s = child_row_end
 			curr_col_s = child_col_end
 		else
-			-- do not add others node types
+			-- do not add other node types
 		end
 	end
 	add(curr_row_s, curr_col_s, par_row_end, par_col_end)
@@ -39,7 +39,8 @@ local function prep(buf, node, meta, req)
 		return
 	end
 
-	if node:child_count() > 0 then
+	-- FIXME child count is not enough to detect emphasis nodes
+	if node:named_child_count() > 0 then
 		markdown_split_paragraph(buf, node, meta, req)
 	else
 		util.default_fn(buf, node, meta, req)
