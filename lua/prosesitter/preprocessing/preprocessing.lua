@@ -11,7 +11,7 @@ local fn_by_ftype = {
 		end
 		util.default_fn(buf, node, meta, req)
 	end,
-	markdown = require("lua.prosesitter.preprocessing.markdown")
+	markdown = require("prosesitter.preprocessing.markdown")
 }
 
 function M.get_fn(filetype)

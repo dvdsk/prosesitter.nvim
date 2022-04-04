@@ -52,8 +52,9 @@ function M:append_or_update(buf, id, start_col, end_col)
     meta_list[#meta_list+1] = new
 end
 
--- add text starting (including) from start_col (zero indexed)
-function M:add(buf, row, start_col, end_col)
+-- add text starting (including) start_col up till (excluding) end_col
+-- col is zero indexed. Row is zero indexed
+function M:add_row(buf, row, start_col, end_col)
     local id = nil
     local marks = api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, {})
     if #marks > 0 then
@@ -68,6 +69,17 @@ function M:add(buf, row, start_col, end_col)
     local meta = { buf = buf, id = id, col_start = start_col,
                    col_end = end_col }
     self.meta_by_mark[id] = { meta }
+end
+
+-- add multiple rows of text starting at (including) start_col up till (excluding) end_col
+-- col is zero indexed. Row is zero indexed
+function M:add_rows(buf, start_row, end_row, start_col, end_col)
+	assert(end_col ~= nil)
+	for i = start_row, end_row-1, 1 do
+		self:add_row(buf, i, start_col, 99999)
+		start_col = 0
+	end
+	self:add_row(buf, end_row, start_col, end_col)
 end
 
 -- add a string to the text send to the spell/grammer checker. Any feedback from the
@@ -167,7 +179,7 @@ function M:build()
 					buf_id = meta.buf,
 				}
 
-				req.text[#req.text+1] = string.sub(line, meta.col_start+1, meta.col_end+1)
+				req.text[#req.text+1] = string.sub(line, meta.col_start+1, meta.col_end)
 				local length = meta.col_end - meta.col_start
 				col = col + length -- why? why is this not before the req.areas?
 			end

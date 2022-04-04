@@ -2,10 +2,12 @@ local util = require "prosesitter.preprocessing.util"
 
 M = {}
 
+-- assumes a single line
 local function markdown_split_paragraph(buf, node, meta, req)
 	local add = function(row_start, col_start, row_end, col_end)
-		meta.content = {{row_start, col_start, row_end, col_end}}
-		util.default_fn(buf, node, meta, req)
+		if col_start ~= col_end then
+			req:add_rows(buf, row_start, row_end, col_start, col_end)
+		end
 	end
 
 	local curr_row_s, curr_col_s, par_row_end, par_col_end = util.range(node, meta)
@@ -27,11 +29,16 @@ local function markdown_split_paragraph(buf, node, meta, req)
 			add(curr_row_s, curr_col_s, child_row_start, child_col_start)
 			curr_row_s = child_row_end
 			curr_col_s = child_col_end
+			req:add_append_text(buf, curr_row_s, "code")
 		else
 			-- do not add other node types
 		end
 	end
-	add(curr_row_s, curr_col_s, par_row_end, par_col_end)
+
+	if par_col_end > curr_col_s then
+		add(curr_row_s, curr_col_s, par_row_end, par_col_end)
+	end
+	req:add_append_text(buf, curr_row_s, " ") -- add space at end of line
 end
 
 local function prep(buf, node, meta, req)
@@ -39,7 +46,6 @@ local function prep(buf, node, meta, req)
 		return
 	end
 
-	-- FIXME child count is not enough to detect emphasis nodes
 	if node:named_child_count() > 0 then
 		markdown_split_paragraph(buf, node, meta, req)
 	else

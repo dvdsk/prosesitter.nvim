@@ -7,7 +7,7 @@ local lintreq = require "prosesitter.linter.lintreq"
 local function markdown_buffer(buf)
     local content = {
     [[1nd paragraph. Italic, bold, and code ]],
-    [[    ]],
+    [[    ]], -- nice empty space to verify multi line paragraphs work
     [[2nd paragraph italics or bold ]],
     [[    ]],
     }
@@ -16,9 +16,9 @@ end
 
 local function emphasis_buffer(buf)
     local content = {
-    [[1nd paragraph. *Italic*, **bold**, and code `monospace` ]],
-    [[    ]],
-    [[2nd paragraph _italics_ or __bold__ ]],
+    [[1nd paragraph. *Italic*, **bold** and `fn testfunc()`]], -- using __bold__ subtily breaks the parser
+    [[    ]], -- nice empty space to verify multi line paragraphs work
+    [[2nd paragraph _italics_ or **bold** ]],
     [[    ]],
     }
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, content)
@@ -40,7 +40,6 @@ function FakeReq:add(_, row, start_col, end_col)
 end
 
 local buf = vim.api.nvim_create_buf(false, false)
-
 describe("preprocessing", function()
     after_each(function()
         vim.api.nvim_buf_delete(buf, { force = true })
@@ -58,12 +57,13 @@ describe("preprocessing", function()
 	-- 	assert.are.same("the url is: url. New sentence", lr:build().text)
 	-- end)
 
-	-- DISABLED as currently failing
 	it("markdown no emphasis", function()
 		markdown_buffer(buf)
 		vim.bo[buf].filetype = "markdown"
+
         local ok, parser = pcall(vim.treesitter.get_parser, buf)
         assert(ok, "failed to get parser")
+		parser:parse()
 
         local query_str = defaults.queries.markdown.strings
         local query = q.parse_query(parser:lang(), query_str)
@@ -81,7 +81,6 @@ describe("preprocessing", function()
 		assert.are.same("1nd paragraph. Italic, bold, and code       2nd paragraph italics or bold       ", req.text)
 	end)
 
-	-- -- DISABLED as currently failing
 	it("markdown emphasis stripping", function()
 		emphasis_buffer(buf)
 		vim.bo[buf].filetype = "markdown"
@@ -100,7 +99,7 @@ describe("preprocessing", function()
 			prepfn(buf, node, meta, lr)
         end
         local req = lr:build()
-		assert.are.same("1nd paragraph. Italic, bold, and code      2nd paragraph italics or bold     ", req.text)
+		assert.are.same("1nd paragraph. Italic, bold and code 2nd paragraph italics or bold ", req.text)
 	end)
 
 	-- DISABLED as docstrings are not supported yet

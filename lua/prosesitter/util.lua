@@ -94,7 +94,7 @@ function M.split_string(inputstr, sep)
     return t
 end
 
--- return true iif b (start_col, end_col) overlaps with a (start_col, end_col)
+-- return true iff b (start_col, end_col) overlaps with a (start_col, end_col)
 -- sharing an end point is conciderd overlap
 function M.overlap(a, b)
 	return a.col_start <= b.col_end and b.col_start <= a.col_end
