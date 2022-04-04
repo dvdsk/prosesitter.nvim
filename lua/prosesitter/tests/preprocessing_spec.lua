@@ -22,7 +22,7 @@ describe("preprocessing", function()
         buf = vim.api.nvim_create_buf(false, false)
     end)
 
-	it("minimal markdown", function()
+	it("minimal", function()
 		fill_buf(buf, "minimal.md")
 		vim.bo[buf].filetype = "markdown"
 
@@ -46,7 +46,7 @@ describe("preprocessing", function()
 		assert.are.same("1nd paragraph. Italic, bold, and code 2nd paragraph italics or bold ", req.text)
 	end)
 
-	it("markdown basic emphasis", function()
+	it("basic emphasis", function()
 		fill_buf(buf, "emphasis.md")
 		vim.bo[buf].filetype = "markdown"
         local ok, parser = pcall(vim.treesitter.get_parser, buf)
@@ -67,7 +67,7 @@ describe("preprocessing", function()
 		assert.are.same("1nd paragraph. Italic, bold and code 2nd paragraph italics or bold ", req.text)
 	end)
 
-	it("markdown paragraphs", function()
+	it("paragraphs", function()
 		fill_buf(buf, "paragraphs.md")
 		vim.bo[buf].filetype = "markdown"
         local ok, parser = pcall(vim.treesitter.get_parser, buf)
@@ -86,5 +86,26 @@ describe("preprocessing", function()
         end
         local req = lr:build()
 		assert.are.same("chapter Italics Paragraphs are separated by a blank line. 2nd paragraph. Italic, bold, and code. Itemized lists alternatively italics or bold look like:", req.text)
+	end)
+
+	it("inline links", function()
+		fill_buf(buf, "links.md")
+		vim.bo[buf].filetype = "markdown"
+        local ok, parser = pcall(vim.treesitter.get_parser, buf)
+        assert(ok, "failed to get parser")
+
+        local query_str = defaults.queries.markdown.strings
+        local query = q.parse_query(parser:lang(), query_str)
+
+        local tree = parser:trees()[1]
+        local root = tree:root()
+
+		local lr = lintreq.new()
+		local prepfn = prep.get_fn("markdown")
+        for _, node, meta in query:iter_captures(root, buf, 0, -1) do
+			prepfn(buf, node, meta, lr)
+        end
+        local req = lr:build()
+		assert.are.same("", req.text)
 	end)
 end)

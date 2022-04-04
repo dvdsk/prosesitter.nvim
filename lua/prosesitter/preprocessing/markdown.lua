@@ -32,8 +32,14 @@ local function markdown_split_paragraph(buf, node, meta, req)
 			curr_row_s = child_row_end
 			curr_col_s = child_col_end
 			req:add_append_text(buf, curr_row_s, "code")
-		else
-			-- do not add other node types
+		elseif child:type() == "inline_link" then
+			local child_row_start, child_col_start, child_row_end, child_col_end = child:range()
+			add(curr_row_s, curr_col_s, child_row_start, child_col_start)
+			local text_child = child:named_child(0)
+			local row_start, col_start, row_end, col_end = text_child:range()
+			add(row_start, col_start, row_end, col_end)
+			curr_row_s = child_row_end
+			curr_col_s = child_col_end
 		end
 	end
 
