@@ -71,12 +71,24 @@ function M:add_row(buf, row, start_col, end_col)
     self.meta_by_mark[id] = { meta }
 end
 
--- add multiple rows of text starting at (including) start_col up till (excluding) end_col
--- col is zero indexed. Row is zero indexed
+-- add multiple rows of text adding spaces in between.
+-- start at (including) start_col up till (excluding) end_col
+-- col is zero indexed. Row is zero indexed end inclusive
 function M:add_rows(buf, start_row, end_row, start_col, end_col)
 	assert(end_col ~= nil)
-	for i = start_row, end_row-1, 1 do
+
+	if end_row ~= start_row then
+		local line_len = #(vim.api.nvim_buf_get_lines(buf, start_row, start_row+1, false)[1])
+		if start_col < line_len then
+			self:add_row(buf, start_row, start_col, 99999)
+			self:add_append_text(buf, start_row, " ")
+		end
+		start_col = 0
+	end
+
+	for i = start_row+1, end_row-1, 1 do
 		self:add_row(buf, i, start_col, 99999)
+		self:add_append_text(buf, i, " ")
 		start_col = 0
 	end
 	self:add_row(buf, end_row, start_col, end_col)
@@ -142,9 +154,11 @@ function M:assert_meta_lists_sorted()
 				goto continue
 			end
 
+			assert(meta.col_start < meta.col_end, "col ends before it starts")
 			if meta.col_start < col then
-				assert(false, "meta_list is for mark: "..mark.."not sorted: "..meta_list)
+				assert(false, "meta_list for mark: "..mark..", not sorted: "..vim.inspect(meta_list))
 			end
+
 			col = meta.col_start
 			::continue::
 		end

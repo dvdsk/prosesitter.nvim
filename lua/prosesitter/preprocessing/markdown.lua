@@ -5,8 +5,10 @@ M = {}
 -- assumes a single line
 local function markdown_split_paragraph(buf, node, meta, req)
 	local add = function(row_start, col_start, row_end, col_end)
-		if col_start ~= col_end then
+		if row_start ~= row_end then
 			req:add_rows(buf, row_start, row_end, col_start, col_end)
+		elseif col_start ~= col_end then
+			req:add_row(buf, row_start, col_start, col_end)
 		end
 	end
 
@@ -37,8 +39,8 @@ local function markdown_split_paragraph(buf, node, meta, req)
 
 	if par_col_end > curr_col_s then
 		add(curr_row_s, curr_col_s, par_row_end, par_col_end)
+		req:add_append_text(buf, curr_row_s, " ")
 	end
-	req:add_append_text(buf, curr_row_s, " ") -- add space at end of line
 end
 
 local function prep(buf, node, meta, req)
@@ -49,7 +51,9 @@ local function prep(buf, node, meta, req)
 	if node:named_child_count() > 0 then
 		markdown_split_paragraph(buf, node, meta, req)
 	else
-		util.default_fn(buf, node, meta, req)
+		local start_row, start_col, end_row, end_col = util.range(node, meta)
+		req:add_rows(buf, start_row, end_row, start_col, end_col)
+		req:add_append_text(buf, end_row, " ")
 	end
 end
 

@@ -1,6 +1,8 @@
 -- local on_event = require("prosesitter/linter/on_event")
 local state = require("prosesitter/state")
 local langtool = require("prosesitter/backend/langtool")
+local Path = require("plenary.path")
+local util = require("prosesitter/util")
 
 local M = {}
 
@@ -33,6 +35,15 @@ end
 M.reset = function()
 	-- remove any buffer specific state
 	state.buf = {}
+end
+
+function M.read_file(file)
+	return Path:new("lua", "prosesitter", "tests", file):read()
+end
+
+function M.lines(file)
+	local text = M.read_file(file)
+	return util.split_string(text, "\n")
 end
 
 return M

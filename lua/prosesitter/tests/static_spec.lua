@@ -26,19 +26,11 @@ local function for_each_file(cb)
 	end
 end
 
-local function read_file(file)
-	return Path:new("lua", "prosesitter", "tests", file):read()
-end
-
-local function get_content(file)
-	return util.split_string(read_file(file), "\n")
-end
-
 local function get_marks(file)
 	local extension = file:match("^.+%.(.+)$")
 	local dir = file:match("^(.+/).+$")
 	local path = dir .. extension .. ".json"
-	local json = read_file(path)
+	local json = test_util.read_file(path)
 	return vim.fn.json_decode(json)
 end
 
@@ -71,14 +63,14 @@ describe("Static", function()
 		it(string.format(": %s", file), function()
 			assert.truthy("Pass.")
 
-			if file ~= "static/simple/coode.md" then
+			if file ~= "static/simple/code.md" then
 				return
 			end
 
 			local bufnr = vim.api.nvim_create_buf(false, false)
 			vim.api.nvim_win_set_buf(0, bufnr)
 			vim.bo[bufnr].filetype = filetype(file)
-			local content = get_content(file)
+			local content = test_util.lines(file)
 			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
 
 			local start_t = os.clock()
