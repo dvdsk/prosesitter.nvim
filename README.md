@@ -1,3 +1,6 @@
+# Development pauzed
+There are excellent alternatives for spell and grammer checking such as [ltex](https://valentjn.github.io/ltex/) which can check latex, markdown and comments. I have limited time and the need for me to work on this further has demished. It was a great project to hone my lua skills and learn about treesitter.
+
 # prosesitter
 
 Prosesitter uses treesitter and vale to bring true syntax aware prose linting to neovim. While it is reasonably feature complete it still **needs a lot of stability work**. There is a list of great alternative the end of the readme if you are looking for something right now.
